@@ -7,8 +7,6 @@
 #include "DSP/Debug.h"
 #include <daisy_seed.h>
 
-using namespace daisy;
-
 // const int PWM_FREQUENCY = 240;
 // const int PWM_CHANNEL = 1;
 
@@ -24,8 +22,9 @@ class DaisySeedHAL : public IHAL
 	// 	};
 
 public:
-	DaisySeedHAL(void)
-		: m_PWMResolution(0),
+	DaisySeedHAL(daisy::DaisySeed *Hardware)
+		: m_Hardware(Hardware),
+		  m_PWMResolution(0),
 		  m_PWMMaxDutyCycle(0),
 		  m_AnalogReadResolution(0),
 		  m_MaxAnalogValue(0)
@@ -194,12 +193,12 @@ public:
 
 	void Break(void) const override
 	{
-		// daisy::DaisySeed::
+		// DaisySeed::
 	}
 
 	void Delay(uint16 Ms) const override
 	{
-		System::Delay(Ms);
+		daisy::System::Delay(Ms);
 	}
 
 private:
@@ -249,6 +248,7 @@ private:
 	}
 
 private:
+	daisy::DaisySeed *m_Hardware;
 	// PWMChannel m_PWMChannels[SOC_LEDC_CHANNEL_NUM];
 	uint8 m_PWMResolution;
 	uint32 m_PWMMaxDutyCycle;
