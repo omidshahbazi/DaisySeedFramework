@@ -37,3 +37,5 @@ enum class GPIOPins
 	Pin30,	  // Digital
 	COUNT
 };
+
+#define ANALOG_PIN_COUNT 12
