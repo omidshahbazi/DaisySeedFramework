@@ -172,6 +172,7 @@ public:
 		config.pin = pin;
 		config.mode = (Mode == PinModes::Input ? daisy::GPIO::Mode::INPUT : daisy::GPIO::Mode::OUTPUT);
 		config.speed = daisy::GPIO::Speed::LOW;
+		config.pull = daisy::GPIO::Pull::PULLUP;
 
 		PinState<daisy::GPIO> &state = m_DigitalPins[GetDigitalPinIndex(Pin)];
 		state.Object.Init(config);
@@ -199,7 +200,7 @@ public:
 		ASSERT(IsADigitalPin(Pin), "Pin %i is not an digital pin", Pin);
 
 		PinState<daisy::GPIO> &state = const_cast<PinState<daisy::GPIO> &>(m_DigitalPins[GetDigitalPinIndex(Pin)]);
-		return state.Object.Read();
+		return !state.Object.Read();
 	}
 
 	void DigitalWrite(uint8 Pin, bool Value) override
@@ -312,6 +313,8 @@ private:
 		case 31:
 			return daisy::seed::D31;
 		}
+
+		ASSERT(false, "Invalid Pin %i", Pin);
 	}
 
 	uint8 GetAnalogPinIndex(uint8 Pin) const
