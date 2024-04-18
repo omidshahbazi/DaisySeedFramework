@@ -38,4 +38,20 @@ enum class GPIOPins
 	COUNT
 };
 
+enum class AnalogPins
+{
+	Pin0 = (uint8)GPIOPins::Pin15,
+	Pin1 = (uint8)GPIOPins::Pin16,
+	Pin2 = (uint8)GPIOPins::Pin17,
+	Pin3 = (uint8)GPIOPins::Pin18,
+	Pin4 = (uint8)GPIOPins::Pin19,
+	Pin5 = (uint8)GPIOPins::Pin20,
+	Pin6 = (uint8)GPIOPins::Pin21,
+	Pin7 = (uint8)GPIOPins::Pin22,
+	Pin8 = (uint8)GPIOPins::Pin23,
+	Pin9 = (uint8)GPIOPins::Pin24,
+	Pin10 = (uint8)GPIOPins::Pin25,
+	Pin11 = (uint8)GPIOPins::Pin28
+};
+
 #define ANALOG_PIN_COUNT 12

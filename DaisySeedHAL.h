@@ -12,15 +12,7 @@
 
 class DaisySeedHAL : public IHAL
 {
-	// private:
-	// 	struct PWMChannel
-	// 	{
-	// 	public:
-	// 		bool Used;
-	// 		uint8 Channel;
-	// 		uint8 Pin;
-	// 	};
-
+private:
 	template <typename T>
 	struct PinState
 	{
@@ -30,12 +22,22 @@ class DaisySeedHAL : public IHAL
 		bool Used;
 	};
 
+	struct PWMPinState
+	{
+	public:
+		PinState<daisy::GPIO> *State;
+		float TargetValue;
+		float CurrentValue;
+	};
+
 public:
 	DaisySeedHAL(daisy::DaisySeed *Hardware)
 		: m_Hardware(Hardware),
 		  m_AnalogPins{},
-		  m_LastFreeAnalogChannelIndex(0),
+		  m_LastFreeAnalogPinIndex(0),
 		  m_DigitalPins{},
+		  m_PWMPins{},
+		  m_LastFreePWMPinIndex(0),
 		  m_PWMResolution(0),
 		  m_PWMMaxDutyCycle(0)
 	{
@@ -46,7 +48,7 @@ public:
 		SetPWMResolution(16);
 	}
 
-	void InitializeADC(void)
+	void Initialize(void)
 	{
 		daisy::AdcChannelConfig adcConfigs[ANALOG_PIN_COUNT];
 		uint8 index = 0;
@@ -62,6 +64,23 @@ public:
 		{
 			m_Hardware->adc.Init(adcConfigs, index);
 			m_Hardware->adc.Start();
+		}
+	}
+
+	void Update(void)
+	{
+		const uint16 SAMPLE_RATE = 1000;
+		const float STEP = 120.0F / SAMPLE_RATE;
+
+		for (uint8 i = 0; i < m_LastFreePWMPinIndex; ++i)
+		{
+			PWMPinState &pwmPin = m_PWMPins[i];
+
+			pwmPin.CurrentValue += STEP;
+			if (pwmPin.CurrentValue > 1)
+				pwmPin.CurrentValue -= 1;
+
+			pwmPin.State->Object.Write(pwmPin.CurrentValue < pwmPin.TargetValue ? true : false);
 		}
 	}
 
@@ -141,7 +160,7 @@ public:
 
 		if (Mode == PinModes::Input && IsAnAnaloglPin(Pin))
 		{
-			PinState<daisy::AdcChannelConfig> *state = FindOrGetADCChannel(Pin);
+			PinState<daisy::AdcChannelConfig> *state = FindOrGetAnalogPin(Pin);
 			state->Object.InitSingle(pin);
 			state->Pin = Pin;
 			state->Used = true;
@@ -156,22 +175,37 @@ public:
 
 		PinState<daisy::GPIO> &state = m_DigitalPins[GetDigitalPinIndex(Pin)];
 		state.Object.Init(config);
+		state.Pin = Pin;
 		state.Used = true;
+
+		if (Mode == PinModes::PWM)
+		{
+			PWMPinState *pwmPinState = FindOrGetPWMPin(Pin);
+			pwmPinState->State = &state;
+			pwmPinState->CurrentValue = 0;
+			pwmPinState->TargetValue = 0;
+		}
 	}
 
 	float AnalogRead(uint8 Pin) const override
 	{
-		return m_Hardware->adc.GetFloat(GetADCChannelIndex(Pin));
+		ASSERT(IsAnAnaloglPin(Pin), "Pin %i is not an analog pin", Pin);
+
+		return m_Hardware->adc.GetFloat(GetAnalogPinIndex(Pin));
 	}
 
 	bool DigitalRead(uint8 Pin) const override
 	{
+		ASSERT(IsADigitalPin(Pin), "Pin %i is not an digital pin", Pin);
+
 		PinState<daisy::GPIO> &state = const_cast<PinState<daisy::GPIO> &>(m_DigitalPins[GetDigitalPinIndex(Pin)]);
 		return state.Object.Read();
 	}
 
 	void DigitalWrite(uint8 Pin, bool Value) override
 	{
+		ASSERT(IsADigitalPin(Pin), "Pin %i is not an digital pin", Pin);
+
 		PinState<daisy::GPIO> &state = const_cast<PinState<daisy::GPIO> &>(m_DigitalPins[GetDigitalPinIndex(Pin)]);
 		state.Object.Write(Value);
 	}
@@ -180,27 +214,15 @@ public:
 	{
 		ASSERT(0 <= Value && Value <= 1, "Invalid Value");
 
-		// PWMChannel *channel = nullptr, *it = m_PWMChannels;
-		// for (auto &pwmChannel : m_PWMChannels)
-		// {
-		// 	if (!pwmChannel.Used || pwmChannel.Pin != Pin)
-		// 	{
-		// 		++it;
-
-		// 		continue;
-		// 	}
-
-		// 	channel = it;
-
-		// 	break;
-		// }
-
-		// ASSERT(channel != nullptr, "Couldn't find the channel attached to the Pin %i", Pin);
-
-		// ledcWrite(channel->Channel, Value * m_PWMMaxDutyCycle);
+		FindOrGetPWMPin(Pin)->TargetValue = Math::Cube(Value);
 	}
 
-	void Print(const char *Value) const
+	float GetTimeSinceStartup(void) const override
+	{
+		return daisy::System::GetNow() / 1000.0F;
+	}
+
+	void Print(const char *Value) const override
 	{
 		daisy::DaisySeed::Print(Value);
 	}
@@ -211,6 +233,7 @@ public:
 
 		while (1)
 		{
+			Delay(1);
 		}
 	}
 
@@ -291,52 +314,7 @@ private:
 		}
 	}
 
-	void InitializePWM(uint8 Pin)
-	{
-		// PWMChannel *channel = nullptr, *it = m_PWMChannels;
-		// for (auto &pwmChannel : m_PWMChannels)
-		// {
-		// 	if (!pwmChannel.Used || pwmChannel.Pin != Pin)
-		// 	{
-		// 		++it;
-
-		// 		continue;
-		// 	}
-
-		// 	channel = it;
-
-		// 	break;
-		// }
-
-		// if (channel == nullptr)
-		// {
-		// 	it = m_PWMChannels;
-		// 	for (auto &pwmChannel : m_PWMChannels)
-		// 	{
-		// 		if (pwmChannel.Used)
-		// 		{
-		// 			++it;
-
-		// 			continue;
-		// 		}
-
-		// 		channel = it;
-
-		// 		break;
-		// 	}
-
-		// 	ASSERT(channel != nullptr, "Out of PWM channel");
-		// }
-
-		// channel->Pin = Pin;
-		// channel->Used = true;
-
-		// ledcSetup(channel->Channel, PWM_FREQUENCY, m_PWMResolution);
-
-		// ledcAttachPin(Pin, channel->Channel);
-	}
-
-	uint8 GetADCChannelIndex(uint8 Pin) const
+	uint8 GetAnalogPinIndex(uint8 Pin) const
 	{
 		uint8 index = 0;
 		for (auto &state : m_AnalogPins)
@@ -353,7 +331,7 @@ private:
 		ASSERT(false, "Couldn't find the state for pin %i", Pin);
 	}
 
-	PinState<daisy::AdcChannelConfig> *FindOrGetADCChannel(uint8 Pin)
+	PinState<daisy::AdcChannelConfig> *FindOrGetAnalogPin(uint8 Pin)
 	{
 		for (auto &state : m_AnalogPins)
 		{
@@ -363,9 +341,9 @@ private:
 			return &state;
 		}
 
-		ASSERT(m_LastFreeAnalogChannelIndex < ANALOG_PIN_COUNT, "Out of free Analog pins");
+		ASSERT(m_LastFreeAnalogPinIndex < ANALOG_PIN_COUNT, "Out of free Analog pins");
 
-		return &m_AnalogPins[m_LastFreeAnalogChannelIndex++];
+		return &m_AnalogPins[m_LastFreeAnalogPinIndex++];
 	}
 
 	uint8 GetDigitalPinIndex(uint8 Pin) const
@@ -375,14 +353,31 @@ private:
 		return (uint8)Pin - (uint8)GPIOPins::Pin0;
 	}
 
+	PWMPinState *FindOrGetPWMPin(uint8 Pin)
+	{
+		for (auto &state : m_PWMPins)
+		{
+			if (state.State == nullptr || state.State->Pin != Pin)
+				continue;
+
+			return &state;
+		}
+
+		ASSERT(m_LastFreePWMPinIndex < (uint8)GPIOPins::COUNT, "Out of free PWM pin states");
+
+		return &m_PWMPins[m_LastFreePWMPinIndex++];
+	}
+
 private:
 	daisy::DaisySeed *m_Hardware;
 	PinState<daisy::AdcChannelConfig> m_AnalogPins[ANALOG_PIN_COUNT];
-	uint8 m_LastFreeAnalogChannelIndex;
+	uint8 m_LastFreeAnalogPinIndex;
 
 	PinState<daisy::GPIO> m_DigitalPins[(uint8)GPIOPins::COUNT];
 
-	// PWMChannel m_PWMChannels[SOC_LEDC_CHANNEL_NUM];
+	PWMPinState m_PWMPins[(uint8)GPIOPins::COUNT];
+	uint8 m_LastFreePWMPinIndex;
+
 	uint8 m_PWMResolution;
 	uint32 m_PWMMaxDutyCycle;
 };
