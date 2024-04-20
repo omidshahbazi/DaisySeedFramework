@@ -3,6 +3,7 @@
 #define DAISY_SEED_HAL_H
 
 #include "DSP/IHAL.h"
+#include "DSP/Math.h"
 #include "Common.h"
 #include "DSP/Debug.h"
 #include <daisy_seed.h>
@@ -31,8 +32,11 @@ private:
 	};
 
 public:
-	DaisySeedHAL(daisy::DaisySeed *Hardware)
+	DaisySeedHAL(daisy::DaisySeed *Hardware, void *SDRAMAddress = nullptr, uint32 SDRAMSize = 0)
 		: m_Hardware(Hardware),
+		  m_SDRAMAddress(reinterpret_cast<uint8 *>(SDRAMAddress)),
+		  m_SDRAMSize(SDRAMSize),
+		  m_LastFreeSDRAMIndex(0),
 		  m_AnalogPins{},
 		  m_LastFreeAnalogPinIndex(0),
 		  m_DigitalPins{},
@@ -41,56 +45,32 @@ public:
 		  m_PWMResolution(0),
 		  m_PWMMaxDutyCycle(0)
 	{
-		// uint8 channelIndex = 0;
-		// for (auto &pwmChannel : m_PWMChannels)
-		// 	pwmChannel = {false, channelIndex++, 0};
+		ASSERT(SDRAMSize == 0 || SDRAMAddress != nullptr, "SDRAMAddress cannot be null");
+		ASSERT(SDRAMAddress == nullptr || SDRAMSize > 0, "SDRAMSize cannot be zero");
 
 		SetPWMResolution(16);
 	}
 
-	void Initialize(void)
+	void *Allocate(uint32 Size, bool OnSDRAM = false) override
 	{
-		daisy::AdcChannelConfig adcConfigs[ANALOG_PIN_COUNT];
-		uint8 index = 0;
-		for (const auto &state : m_AnalogPins)
+		if (OnSDRAM)
 		{
-			if (!state.Used)
-				continue;
+			ASSERT(m_SDRAMAddress != nullptr, "SDRAM is not initialized");
+			ASSERT(m_LastFreeSDRAMIndex + Size <= m_SDRAMSize, "Running out of SDRAM");
 
-			adcConfigs[index++] = state.Object;
+			uint8 *ptr = m_SDRAMAddress + m_LastFreeSDRAMIndex;
+			m_LastFreeAnalogPinIndex += Size;
+			return ptr;
 		}
 
-		if (index != 0)
-		{
-			m_Hardware->adc.Init(adcConfigs, index);
-			m_Hardware->adc.Start();
-		}
-	}
-
-	void Update(void)
-	{
-		const uint16 SAMPLE_RATE = 1000;
-		const float STEP = 120.0F / SAMPLE_RATE;
-
-		for (uint8 i = 0; i < m_LastFreePWMPinIndex; ++i)
-		{
-			PWMPinState &pwmPin = m_PWMPins[i];
-
-			pwmPin.CurrentValue += STEP;
-			if (pwmPin.CurrentValue > 1)
-				pwmPin.CurrentValue -= 1;
-
-			pwmPin.State->Object.Write(pwmPin.CurrentValue < pwmPin.TargetValue ? true : false);
-		}
-	}
-
-	void *Allocate(uint16 Size) override
-	{
 		return malloc(Size);
 	}
 
 	void Deallocate(void *Memory) override
 	{
+		if (m_SDRAMAddress != nullptr && m_SDRAMAddress <= Memory)
+			return;
+
 		free(Memory);
 	}
 
@@ -230,6 +210,8 @@ public:
 
 	void Break(void) const override
 	{
+		Delay(1000);
+
 		asm("bkpt 255");
 
 		while (1)
@@ -241,6 +223,43 @@ public:
 	void Delay(uint16 Ms) const override
 	{
 		daisy::System::Delay(Ms);
+	}
+
+protected:
+	void InitializeADC(void)
+	{
+		daisy::AdcChannelConfig adcConfigs[ANALOG_PIN_COUNT];
+		uint8 index = 0;
+		for (const auto &state : m_AnalogPins)
+		{
+			if (!state.Used)
+				continue;
+
+			adcConfigs[index++] = state.Object;
+		}
+
+		if (index != 0)
+		{
+			m_Hardware->adc.Init(adcConfigs, index);
+			m_Hardware->adc.Start();
+		}
+	}
+
+	void Update(void)
+	{
+		const uint16 SAMPLE_RATE = 1000;
+		const float STEP = 120.0F / SAMPLE_RATE;
+
+		for (uint8 i = 0; i < m_LastFreePWMPinIndex; ++i)
+		{
+			PWMPinState &pwmPin = m_PWMPins[i];
+
+			pwmPin.CurrentValue += STEP;
+			if (pwmPin.CurrentValue > 1)
+				pwmPin.CurrentValue -= 1;
+
+			pwmPin.State->Object.Write(pwmPin.CurrentValue < pwmPin.TargetValue ? true : false);
+		}
 	}
 
 private:
@@ -373,6 +392,11 @@ private:
 
 private:
 	daisy::DaisySeed *m_Hardware;
+
+	uint8 *m_SDRAMAddress;
+	uint32 m_SDRAMSize;
+	uint32 m_LastFreeSDRAMIndex;
+
 	PinState<daisy::AdcChannelConfig> m_AnalogPins[ANALOG_PIN_COUNT];
 	uint8 m_LastFreeAnalogPinIndex;
 
