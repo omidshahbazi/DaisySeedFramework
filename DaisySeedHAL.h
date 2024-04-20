@@ -59,7 +59,7 @@ public:
 			ASSERT(m_LastFreeSDRAMIndex + Size <= m_SDRAMSize, "Running out of SDRAM");
 
 			uint8 *ptr = m_SDRAMAddress + m_LastFreeSDRAMIndex;
-			m_LastFreeAnalogPinIndex += Size;
+			m_LastFreeSDRAMIndex += Size;
 			return ptr;
 		}
 
