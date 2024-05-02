@@ -152,7 +152,7 @@ public:
 		config.pin = pin;
 		config.mode = (Mode == PinModes::Input ? daisy::GPIO::Mode::INPUT : daisy::GPIO::Mode::OUTPUT);
 		config.speed = daisy::GPIO::Speed::LOW;
-		config.pull = daisy::GPIO::Pull::PULLDOWN; // TODO: check the result of this change
+		config.pull = daisy::GPIO::Pull::PULLUP;
 
 		PinState<daisy::GPIO> &state = m_DigitalPins[GetDigitalPinIndex(Pin)];
 		state.Object.Init(config);
