@@ -216,7 +216,7 @@ public:
 
 		while (1)
 		{
-			Delay(1);
+			Delay(1000);
 		}
 	}
 
