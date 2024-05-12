@@ -481,6 +481,7 @@ private:
 	GPIOPins m_PinSCLK, m_PinMOSI, m_PinNSS, m_PinDC, m_PinRST;
 	Orientations m_Orientation;
 
+	// TODO: This must be uin16* cause the colors are 16bit, but it makes artifacts
 	uint8 *m_ColorBuffer;
 	// TODO: Maybe uint16* instead of uint8
 	uint8 *m_FrameBuffer;
