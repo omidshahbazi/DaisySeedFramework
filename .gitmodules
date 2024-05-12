@@ -1,6 +1,9 @@
 [submodule "DSP"]
 	path = DSP
 	url = git@github.com:omidshahbazi/DigitalSignalProcessing.git
+	branch = master
 [submodule "libDaisy"]
 	path = libDaisy
 	url = https://github.com/electro-smith/libDaisy
+	branch = master
+

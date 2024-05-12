@@ -1,5 +1,5 @@
 # Project Name
-TARGET = MyProject
+TARGET = TemplateProject
 
 # Sources
 CPP_SOURCES = src/main.cpp

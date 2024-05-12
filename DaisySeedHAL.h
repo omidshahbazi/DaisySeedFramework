@@ -8,9 +8,6 @@
 #include "DSP/Debug.h"
 #include <daisy_seed.h>
 
-// const int PWM_FREQUENCY = 240;
-// const int PWM_CHANNEL = 1;
-
 class DaisySeedHAL : public IHAL
 {
 private:
@@ -132,13 +129,13 @@ public:
 
 	void SetPinMode(uint8 Pin, PinModes Mode) override
 	{
-		ASSERT(Mode != PinModes::Input || IsAnInputPin(Pin), "Pin %i is not an input pin", Pin);
-		ASSERT(Mode != PinModes::Output || IsAnOutputPin(Pin), "Pin %i is not an output pin", Pin);
+		ASSERT((Mode != PinModes::AnalogInput && Mode != PinModes::DigitalInput) || IsAnInputPin(Pin), "Pin %i is not an input pin", Pin);
+		ASSERT(Mode != PinModes::DigitalOutput || IsAnOutputPin(Pin), "Pin %i is not an output pin", Pin);
 		ASSERT(Mode != PinModes::PWM || IsAPWMPin(Pin), "Pin %i is not an PWM pin", Pin);
 
 		daisy::Pin pin = GetPin(Pin);
 
-		if (Mode == PinModes::Input && IsAnAnaloglPin(Pin))
+		if (Mode == PinModes::AnalogInput && IsAnAnaloglPin(Pin))
 		{
 			PinState<daisy::AdcChannelConfig> *state = FindOrGetAnalogPin(Pin);
 			state->Object.InitSingle(pin);
@@ -150,7 +147,7 @@ public:
 
 		daisy::GPIO::Config config;
 		config.pin = pin;
-		config.mode = (Mode == PinModes::Input ? daisy::GPIO::Mode::INPUT : daisy::GPIO::Mode::OUTPUT);
+		config.mode = (Mode == PinModes::DigitalInput ? daisy::GPIO::Mode::INPUT : daisy::GPIO::Mode::OUTPUT);
 		config.speed = daisy::GPIO::Speed::LOW;
 		config.pull = daisy::GPIO::Pull::PULLUP;
 
@@ -263,7 +260,62 @@ protected:
 	}
 
 private:
-	daisy::Pin GetPin(uint8 Pin) const
+	uint8 GetAnalogPinIndex(uint8 Pin) const
+	{
+		uint8 index = 0;
+		for (auto &state : m_AnalogPins)
+		{
+			if (state.Pin != Pin)
+			{
+				++index;
+				continue;
+			}
+
+			return index;
+		}
+
+		ASSERT(false, "Couldn't find the state for pin %i", Pin);
+	}
+
+	PinState<daisy::AdcChannelConfig> *FindOrGetAnalogPin(uint8 Pin)
+	{
+		for (auto &state : m_AnalogPins)
+		{
+			if (state.Pin != Pin)
+				continue;
+
+			return &state;
+		}
+
+		ASSERT(m_LastFreeAnalogPinIndex < ANALOG_PIN_COUNT, "Out of free Analog pins");
+
+		return &m_AnalogPins[m_LastFreeAnalogPinIndex++];
+	}
+
+	uint8 GetDigitalPinIndex(uint8 Pin) const
+	{
+		ASSERT(IsADigitalPin(Pin), "Pin %i is not an digital pin", Pin);
+
+		return (uint8)Pin - (uint8)GPIOPins::Pin0;
+	}
+
+	PWMPinState *FindOrGetPWMPin(uint8 Pin)
+	{
+		for (auto &state : m_PWMPins)
+		{
+			if (state.State == nullptr || state.State->Pin != Pin)
+				continue;
+
+			return &state;
+		}
+
+		ASSERT(m_LastFreePWMPinIndex < (uint8)GPIOPins::COUNT, "Out of free PWM pin states");
+
+		return &m_PWMPins[m_LastFreePWMPinIndex++];
+	}
+
+public:
+	static daisy::Pin GetPin(uint8 Pin)
 	{
 		switch (Pin)
 		{
@@ -334,60 +386,6 @@ private:
 		}
 
 		ASSERT(false, "Invalid Pin %i", Pin);
-	}
-
-	uint8 GetAnalogPinIndex(uint8 Pin) const
-	{
-		uint8 index = 0;
-		for (auto &state : m_AnalogPins)
-		{
-			if (state.Pin != Pin)
-			{
-				++index;
-				continue;
-			}
-
-			return index;
-		}
-
-		ASSERT(false, "Couldn't find the state for pin %i", Pin);
-	}
-
-	PinState<daisy::AdcChannelConfig> *FindOrGetAnalogPin(uint8 Pin)
-	{
-		for (auto &state : m_AnalogPins)
-		{
-			if (state.Pin != Pin)
-				continue;
-
-			return &state;
-		}
-
-		ASSERT(m_LastFreeAnalogPinIndex < ANALOG_PIN_COUNT, "Out of free Analog pins");
-
-		return &m_AnalogPins[m_LastFreeAnalogPinIndex++];
-	}
-
-	uint8 GetDigitalPinIndex(uint8 Pin) const
-	{
-		ASSERT(IsADigitalPin(Pin), "Pin %i is not an digital pin", Pin);
-
-		return (uint8)Pin - (uint8)GPIOPins::Pin0;
-	}
-
-	PWMPinState *FindOrGetPWMPin(uint8 Pin)
-	{
-		for (auto &state : m_PWMPins)
-		{
-			if (state.State == nullptr || state.State->Pin != Pin)
-				continue;
-
-			return &state;
-		}
-
-		ASSERT(m_LastFreePWMPinIndex < (uint8)GPIOPins::COUNT, "Out of free PWM pin states");
-
-		return &m_PWMPins[m_LastFreePWMPinIndex++];
 	}
 
 private:
