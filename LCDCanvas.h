@@ -4,6 +4,7 @@
 #include <daisy_seed.h>
 #include <string>
 
+// TODO: Scale needs to be done in this layer
 class LCDCanvas
 {
 public:

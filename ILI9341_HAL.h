@@ -1,7 +1,7 @@
 #pragma once
 
 #include "I_LCD_HAL.h"
-#include "DaisySeedHAL.h"
+#include "DSP/IHAL.h"
 #include "DSP/Math.h"
 #include <daisy_seed.h>
 
@@ -9,16 +9,16 @@ template <uint32 Width, uint32 Height>
 class ILI9341_HAL : public I_LCD_HAL
 {
 public:
-	ILI9341_HAL(DaisySeedHAL *DaisyHAL, GPIOPins SCLK, GPIOPins MOSI, GPIOPins NSS, GPIOPins DC, GPIOPins RST, Orientations Orientation)
-		: m_DaisyHAL(DaisyHAL),
+	ILI9341_HAL(IHAL *HAL, GPIOPins SCLK, GPIOPins MOSI, GPIOPins NSS, GPIOPins DC, GPIOPins RST, Orientations Orientation)
+		: m_HAL(HAL),
 		  m_PinSCLK(SCLK),
 		  m_PinMOSI(MOSI),
 		  m_PinNSS(NSS),
 		  m_PinDC(DC),
 		  m_PinRST(RST),
 		  m_Orientation(Orientation),
-		  m_ColorBuffer(nullptr),
 		  m_FrameBuffer(nullptr),
+		  m_FrameBufferDirty(nullptr),
 		  m_TargetFrameRate(0),
 		  m_RotatedWidth(0),
 		  m_RotatedHeight(0),
@@ -30,10 +30,8 @@ public:
 
 	void Init(void)
 	{
-		m_ColorBuffer = reinterpret_cast<uint8 *>(m_DaisyHAL->Allocate(COLOR_BUFFER_LENGTH, true));
-
-		// TODO: Shouldn't this be on the DMA_BUFFER instead of SDRAM_BUFFER? IT used to be originally, but it also work this way, investigate more
-		m_FrameBuffer = reinterpret_cast<uint8 *>(m_DaisyHAL->Allocate(FRAME_BUFFER_LENGTH, true));
+		m_FrameBuffer = Memory::Allocate<uint16>(FRAME_BUFFER_LENGTH, true);
+		m_FrameBufferDirty = Memory::Allocate<bool>(FRAME_BUFFER_CHUNK_COUNT, true);
 
 		InitializeSPI(m_PinSCLK, m_PinMOSI, m_PinNSS, m_PinDC, m_PinRST);
 
@@ -47,11 +45,9 @@ public:
 		if (m_IsDMABusy)
 			return;
 
-		if (m_DaisyHAL->GetTimeSinceStartup() < m_NextUpdateTime)
+		if (m_HAL->GetTimeSinceStartup() < m_NextUpdateTime)
 			return;
-		m_NextUpdateTime = m_DaisyHAL->GetTimeSinceStartup() + m_TargetFrameRate;
-
-		SetAddressWindow(0, 0, m_RotatedWidth - 1, m_RotatedHeight - 1);
+		m_NextUpdateTime = m_HAL->GetTimeSinceStartup() + m_TargetFrameRate;
 
 		SendTheEntireDataDMA();
 	}
@@ -63,13 +59,14 @@ public:
 
 	void Clear(Color Color) override
 	{
-		// TODO: This can be desolved into two different memsets to fill the buffer arrays
-
 		uint16 color = Color.R5G6B5();
+
+		// TODO: Here is a bug with this which is the colors became washed out when doing this with memset, tested with pure Green
+		// Memory::Set(m_FrameBuffer, SWAP_ENDIAN_16BIT(color), FRAME_BUFFER_LENGTH);
 
 		for (uint32 y = 0; y < m_RotatedHeight; ++y)
 			for (uint32 x = 0; x < m_RotatedWidth; ++x)
-				PaintPixel(x, y, color, Color.A);
+				m_FrameBuffer[x + (y * m_RotatedWidth)] = SWAP_ENDIAN_16BIT(color);
 	}
 
 	void DrawPixel(uint16 X, uint16 Y, Color Color) override
@@ -119,7 +116,7 @@ private:
 
 		// Software Reset
 		SendCommand(0x01);
-		m_DaisyHAL->Delay(100); // TODO: maybe less?
+		m_HAL->Delay(100);
 
 		// command list is based on https://github.com/martnak/STM32-ILI9341
 
@@ -279,14 +276,14 @@ private:
 
 		// EXIT SLEEP
 		SendCommand(0x11);
-		m_DaisyHAL->Delay(100);
+		m_HAL->Delay(100);
 
 		// TURN ON DISPLAY
 		SendCommand(0x29);
 
 		// MADCTL
 		SendCommand(0x36);
-		m_DaisyHAL->Delay(10);
+		m_HAL->Delay(10);
 		{
 			uint8 data[1] = {SetOrientationAndGetTheRotationBits(Orientation)};
 			SendData(data, 1);
@@ -300,7 +297,7 @@ private:
 		uint8 ili_my = 0x80;
 		uint8 ili_mv = 0x20;
 
-		uint8 rotationBits = 0;
+		uint8 rotationBits = ili_bgr;
 
 		switch (Orientation)
 		{
@@ -308,7 +305,7 @@ private:
 		{
 			m_RotatedWidth = Width;
 			m_RotatedHeight = Height;
-			rotationBits = ili_mx | ili_my | ili_mv | ili_bgr;
+			rotationBits |= ili_mx | ili_my | ili_mv;
 		}
 		break;
 
@@ -316,7 +313,7 @@ private:
 		{
 			m_RotatedWidth = Height;
 			m_RotatedHeight = Width;
-			rotationBits = ili_my | ili_bgr;
+			rotationBits |= ili_my;
 		}
 		break;
 
@@ -324,7 +321,7 @@ private:
 		{
 			m_RotatedWidth = Width;
 			m_RotatedHeight = Height;
-			rotationBits = ili_mx | ili_my | ili_mv | ili_bgr;
+			rotationBits |= ili_mx | ili_my | ili_mv;
 		}
 		break;
 
@@ -332,7 +329,7 @@ private:
 		{
 			m_RotatedWidth = Width;
 			m_RotatedHeight = Height;
-			rotationBits = ili_mv | ili_bgr;
+			rotationBits |= ili_mv;
 		}
 		break;
 		}
@@ -386,47 +383,46 @@ private:
 
 		if (Alpha != 255)
 		{
-			uint16 currentColor = m_ColorBuffer[index];
+			uint16 currentColor = SWAP_ENDIAN_16BIT(m_FrameBuffer[index]);
 			R5G6B5 = BlendR5G6B5(R5G6B5, currentColor, Alpha);
 		}
 
-		m_ColorBuffer[index] = R5G6B5;
+		m_FrameBuffer[index] = SWAP_ENDIAN_16BIT(R5G6B5);
 
-		index *= 2;
-		m_FrameBuffer[index] = R5G6B5 >> 8;
-		m_FrameBuffer[index + 1] = R5G6B5 & 0xFF;
-
-		// TODO: Lets divide the whole screen in 10 sectors, 32 pixel high each
-		// uint8 screen_sector     = y / 32;
-		// dirty_buff[screen_sector] = 1;
+		// TODO: Finish using of this, so it only sends the dirty data
+		m_FrameBufferDirty[Y / FRAME_BUFFER_CHUNK_COUNT] = true;
 	}
 
 	void Reset(void)
 	{
 		m_RST.Write(0);
-		m_DaisyHAL->Delay(100);
+		m_HAL->Delay(100);
 
 		m_RST.Write(1);
-		m_DaisyHAL->Delay(100);
+		m_HAL->Delay(100);
 	}
 
 	void SendTheEntireDataDMA(void)
 	{
+		SetAddressWindow(0, 0, m_RotatedWidth - 1, m_RotatedHeight - 1);
+
 		m_RemainingBufferLengthToSend = FRAME_BUFFER_LENGTH;
 
-		SendDataDMA(m_FrameBuffer, BUFFER_CHUNK_SIZE);
+		SendDataDMA(m_FrameBuffer, FRAME_BUFFER_CHUNK_SIZE);
 	}
 
-	void SendDataDMA(uint8 *Buffer, uint32 Length)
+	void SendDataDMA(uint16 *Buffer, uint32 Length)
 	{
 		m_IsDMABusy = true;
 
-		// Below line might help if there is draw artifacts
-		dsy_dma_clear_cache_for_buffer(Buffer, Length);
+		uint8 *data = reinterpret_cast<uint8 *>(Buffer);
+		uint32 length = Length * sizeof(uint16);
+
+		dsy_dma_clear_cache_for_buffer(data, length);
 
 		m_DC.Write(1);
 
-		m_SPI.DmaTransmit(Buffer, Length, nullptr, &OnDMATransmissionCompleted, this);
+		m_SPI.DmaTransmit(data, length, nullptr, &OnDMATransmissionCompleted, this);
 	}
 
 	static void OnDMATransmissionCompleted(void *Context, daisy::SpiHandle::Result Result)
@@ -436,10 +432,7 @@ private:
 
 		ILI9341_HAL *thisPtr = static_cast<ILI9341_HAL *>(Context);
 
-		uint32 transferSize = Math::Min(thisPtr->m_RemainingBufferLengthToSend, BUFFER_CHUNK_SIZE);
-		// uint32 transferSize = thisPtr->m_RemainingBufferLengthToSend < 2 * BUFFER_CHUNK_SIZE ? thisPtr->m_RemainingBufferLengthToSend : 2 * BUFFER_CHUNK_SIZE;
-
-		daisy::DaisySeed::PrintLine("%i %i", thisPtr->m_RemainingBufferLengthToSend, transferSize);
+		uint32 transferSize = Math::Min(thisPtr->m_RemainingBufferLengthToSend, FRAME_BUFFER_CHUNK_SIZE);
 
 		thisPtr->m_RemainingBufferLengthToSend -= transferSize;
 		if (thisPtr->m_RemainingBufferLengthToSend == 0)
@@ -448,11 +441,8 @@ private:
 			return;
 		}
 
-		uint8 *data = thisPtr->m_FrameBuffer + (FRAME_BUFFER_LENGTH - thisPtr->m_RemainingBufferLengthToSend);
+		uint16 *data = thisPtr->m_FrameBuffer + (FRAME_BUFFER_LENGTH - thisPtr->m_RemainingBufferLengthToSend);
 		thisPtr->SendDataDMA(data, transferSize);
-
-		// 16bit transfer
-		// thisPtr->SendDataDMA(&m_FrameBuffer[2 * BUFFER_CHUNK_SIZE], BUFFER_CHUNK_SIZE);
 	}
 
 	static uint16 BlendR5G6B5(uint16 ColorA, uint16 ColorB, uint8 Alpha)
@@ -477,14 +467,12 @@ private:
 	}
 
 private:
-	DaisySeedHAL *m_DaisyHAL;
+	IHAL *m_HAL;
 	GPIOPins m_PinSCLK, m_PinMOSI, m_PinNSS, m_PinDC, m_PinRST;
 	Orientations m_Orientation;
 
-	// TODO: This must be uin16* cause the colors are 16bit, but it makes artifacts
-	uint8 *m_ColorBuffer;
-	// TODO: Maybe uint16* instead of uint8
-	uint8 *m_FrameBuffer;
+	uint16 *m_FrameBuffer;
+	bool *m_FrameBufferDirty;
 
 	daisy::SpiHandle m_SPI;
 
@@ -500,10 +488,9 @@ private:
 	bool m_IsDMABusy;
 	uint32 m_RemainingBufferLengthToSend;
 
-	static const uint32 COLOR_BUFFER_LENGTH = Width * Height;
-	static const uint32 FRAME_BUFFER_LENGTH = COLOR_BUFFER_LENGTH * 2;
-	static const uint16 BUFFER_CHUNK_SIZE = FRAME_BUFFER_LENGTH / 3; // 8bit data
-																	 // const uint16 BUFFER_CHUNK_SIZE = FRAME_BUFFER_LENGTH / 4; // 16bit data
+	static const uint32 FRAME_BUFFER_LENGTH = Width * Height;
+	static const uint16 FRAME_BUFFER_CHUNK_COUNT = 4;
+	static const uint16 FRAME_BUFFER_CHUNK_SIZE = FRAME_BUFFER_LENGTH / FRAME_BUFFER_CHUNK_COUNT;
 };
 
 typedef ILI9341_HAL<320, 240> ILI9341_HAL_320_240;
