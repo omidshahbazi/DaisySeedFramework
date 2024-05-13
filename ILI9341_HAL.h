@@ -24,7 +24,7 @@ public:
 		  m_RotatedHeight(0),
 		  m_NextUpdateTime(0),
 		  m_IsDMABusy(false),
-		  m_RemainingBufferLengthToSend(0)
+		  m_FrameBufferDirtyIndex(0)
 	{
 	}
 
@@ -49,7 +49,7 @@ public:
 			return;
 		m_NextUpdateTime = m_HAL->GetTimeSinceStartup() + m_TargetFrameRate;
 
-		SendTheEntireDataDMA();
+		UpdateDataDMA();
 	}
 
 	void SetTargetFrameRate(uint8 Value)
@@ -67,6 +67,8 @@ public:
 		for (uint32 y = 0; y < m_RotatedHeight; ++y)
 			for (uint32 x = 0; x < m_RotatedWidth; ++x)
 				m_FrameBuffer[x + (y * m_RotatedWidth)] = SWAP_ENDIAN_16BIT(color);
+
+		Memory::Set(m_FrameBufferDirty, 0, FRAME_BUFFER_CHUNK_COUNT);
 	}
 
 	void DrawPixel(uint16 X, uint16 Y, Color Color) override
@@ -79,6 +81,22 @@ public:
 	}
 
 private:
+	void PaintPixel(uint16 X, uint16 Y, uint16 R5G6B5, uint8 Alpha)
+	{
+		uint32 index = X + (Y * m_RotatedWidth);
+
+		if (Alpha != 255)
+		{
+			uint16 currentColor = SWAP_ENDIAN_16BIT(m_FrameBuffer[index]);
+			R5G6B5 = BlendR5G6B5(R5G6B5, currentColor, Alpha);
+		}
+
+		m_FrameBuffer[index] = SWAP_ENDIAN_16BIT(R5G6B5);
+
+		// TODO: Finish using of this, so it only sends the dirty data
+		m_FrameBufferDirty[index / FRAME_BUFFER_CHUNK_SIZE] = true;
+	}
+
 	void InitializeSPI(GPIOPins SCLK, GPIOPins MOSI, GPIOPins NSS, GPIOPins DC, GPIOPins RST)
 	{
 		daisy::SpiHandle::Config spiConfig;
@@ -112,7 +130,11 @@ private:
 
 	void InitDriver(Orientations Orientation)
 	{
-		Reset();
+		m_RST.Write(0);
+		m_HAL->Delay(100);
+
+		m_RST.Write(1);
+		m_HAL->Delay(100);
 
 		// Software Reset
 		SendCommand(0x01);
@@ -377,52 +399,38 @@ private:
 		SendCommand(0x2C); // RAMWR
 	}
 
-	void PaintPixel(uint16 X, uint16 Y, uint16 R5G6B5, uint8 Alpha)
+	void UpdateDataDMA(void)
 	{
-		uint32 index = X + (Y * m_RotatedWidth);
+		uint8 dirtySectionIndex = m_FrameBufferDirtyIndex;
 
-		if (Alpha != 255)
+		if (m_FrameBufferDirtyIndex++ == FRAME_BUFFER_CHUNK_COUNT)
 		{
-			uint16 currentColor = SWAP_ENDIAN_16BIT(m_FrameBuffer[index]);
-			R5G6B5 = BlendR5G6B5(R5G6B5, currentColor, Alpha);
+			m_IsDMABusy = false;
+			m_FrameBufferDirtyIndex = 0;
 		}
 
-		m_FrameBuffer[index] = SWAP_ENDIAN_16BIT(R5G6B5);
+		if (!m_FrameBufferDirty[dirtySectionIndex])
+			return;
 
-		// TODO: Finish using of this, so it only sends the dirty data
-		m_FrameBufferDirty[Y / FRAME_BUFFER_CHUNK_COUNT] = true;
-	}
+		uint16 chunkHeight = FRAME_BUFFER_CHUNK_SIZE / m_RotatedWidth;
+		uint16 x0 = 0;
+		uint16 x1 = m_RotatedWidth - 1;
+		uint16 y0 = dirtySectionIndex * chunkHeight;
+		uint16 y1 = y0 + chunkHeight;
+		SetAddressWindow(x0, y0, x1, y1);
 
-	void Reset(void)
-	{
-		m_RST.Write(0);
-		m_HAL->Delay(100);
-
-		m_RST.Write(1);
-		m_HAL->Delay(100);
-	}
-
-	void SendTheEntireDataDMA(void)
-	{
-		SetAddressWindow(0, 0, m_RotatedWidth - 1, m_RotatedHeight - 1);
-
-		m_RemainingBufferLengthToSend = FRAME_BUFFER_LENGTH;
-
-		SendDataDMA(m_FrameBuffer, FRAME_BUFFER_CHUNK_SIZE);
-	}
-
-	void SendDataDMA(uint16 *Buffer, uint32 Length)
-	{
 		m_IsDMABusy = true;
 
-		uint8 *data = reinterpret_cast<uint8 *>(Buffer);
-		uint32 length = Length * sizeof(uint16);
+		uint8 *data = reinterpret_cast<uint8 *>(m_FrameBuffer + (dirtySectionIndex * FRAME_BUFFER_CHUNK_SIZE));
+		uint32 length = FRAME_BUFFER_CHUNK_SIZE * sizeof(uint16);
 
 		dsy_dma_clear_cache_for_buffer(data, length);
 
 		m_DC.Write(1);
 
 		m_SPI.DmaTransmit(data, length, nullptr, &OnDMATransmissionCompleted, this);
+
+		m_FrameBufferDirty[dirtySectionIndex] = false;
 	}
 
 	static void OnDMATransmissionCompleted(void *Context, daisy::SpiHandle::Result Result)
@@ -430,19 +438,7 @@ private:
 		if (Result != daisy::SpiHandle::Result::OK)
 			return;
 
-		ILI9341_HAL *thisPtr = static_cast<ILI9341_HAL *>(Context);
-
-		uint32 transferSize = Math::Min(thisPtr->m_RemainingBufferLengthToSend, FRAME_BUFFER_CHUNK_SIZE);
-
-		thisPtr->m_RemainingBufferLengthToSend -= transferSize;
-		if (thisPtr->m_RemainingBufferLengthToSend == 0)
-		{
-			thisPtr->m_IsDMABusy = false;
-			return;
-		}
-
-		uint16 *data = thisPtr->m_FrameBuffer + (FRAME_BUFFER_LENGTH - thisPtr->m_RemainingBufferLengthToSend);
-		thisPtr->SendDataDMA(data, transferSize);
+		static_cast<ILI9341_HAL *>(Context)->UpdateDataDMA();
 	}
 
 	static uint16 BlendR5G6B5(uint16 ColorA, uint16 ColorB, uint8 Alpha)
@@ -486,7 +482,7 @@ private:
 
 	float m_NextUpdateTime;
 	bool m_IsDMABusy;
-	uint32 m_RemainingBufferLengthToSend;
+	uint8 m_FrameBufferDirtyIndex;
 
 	static const uint32 FRAME_BUFFER_LENGTH = Width * Height;
 	static const uint16 FRAME_BUFFER_CHUNK_COUNT = 4;
