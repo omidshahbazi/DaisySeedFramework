@@ -1,10 +1,12 @@
 #pragma once
 
 #include "I_LCD_HAL.h"
+#include "DSP/Math.h"
 #include <daisy_seed.h>
 #include <string>
 
 // TODO: Scale needs to be done in this layer
+// TODO: Add Assertions
 class LCDCanvas
 {
 public:

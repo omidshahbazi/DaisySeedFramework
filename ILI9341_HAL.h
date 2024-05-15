@@ -5,9 +5,16 @@
 #include "DSP/Math.h"
 #include <daisy_seed.h>
 
+// TODO: Add Assertions
 template <uint32 Width, uint32 Height>
 class ILI9341_HAL : public I_LCD_HAL
 {
+	static_assert(Width != 0, "Width must be greater than zero");
+	static_assert(Height != 0, "Height must be greater than zero");
+
+public:
+	typedef std::function<void(void)> RenderEventHandler;
+
 public:
 	ILI9341_HAL(IHAL *HAL, GPIOPins SCLK, GPIOPins MOSI, GPIOPins NSS, GPIOPins DC, GPIOPins RST, Orientations Orientation)
 		: m_HAL(HAL),
@@ -24,12 +31,16 @@ public:
 		  m_RotatedHeight(0),
 		  m_NextUpdateTime(0),
 		  m_IsDMABusy(false),
-		  m_FrameBufferDirtyIndex(0)
+		  m_LastFrameBufferDirtyIndex(0)
 	{
 	}
 
-	void Init(void)
+	void Init(RenderEventHandler &&RenderCallback)
 	{
+		ASSERT(RenderCallback != nullptr, "RenderCallback cannot be null");
+
+		m_RenderCallback = RenderCallback;
+
 		m_FrameBuffer = Memory::Allocate<uint16>(FRAME_BUFFER_LENGTH, true);
 		m_FrameBufferDirty = Memory::Allocate<bool>(FRAME_BUFFER_CHUNK_COUNT, true);
 
@@ -37,7 +48,7 @@ public:
 
 		InitDriver(m_Orientation);
 
-		SetTargetFrameRate(60);
+		SetTargetFrameRate(MAX_FRAME_RATE);
 	}
 
 	void Update(void) override
@@ -49,26 +60,25 @@ public:
 			return;
 		m_NextUpdateTime = m_HAL->GetTimeSinceStartup() + m_TargetFrameRate;
 
+		m_RenderCallback();
+
 		UpdateDataDMA();
 	}
 
 	void SetTargetFrameRate(uint8 Value)
 	{
-		m_TargetFrameRate = 1.0 / Value;
+		m_TargetFrameRate = 1.0 / Math::Min(MAX_FRAME_RATE, Value);
 	}
 
 	void Clear(Color Color) override
 	{
 		uint16 color = Color.R5G6B5();
 
-		// TODO: Here is a bug with this which is the colors became washed out when doing this with memset, tested with pure Green
-		// Memory::Set(m_FrameBuffer, SWAP_ENDIAN_16BIT(color), FRAME_BUFFER_LENGTH);
-
 		for (uint32 y = 0; y < m_RotatedHeight; ++y)
 			for (uint32 x = 0; x < m_RotatedWidth; ++x)
 				m_FrameBuffer[x + (y * m_RotatedWidth)] = SWAP_ENDIAN_16BIT(color);
 
-		Memory::Set(m_FrameBufferDirty, 0, FRAME_BUFFER_CHUNK_COUNT);
+		Memory::Set(m_FrameBufferDirty, 1, FRAME_BUFFER_CHUNK_COUNT);
 	}
 
 	void DrawPixel(uint16 X, uint16 Y, Color Color) override
@@ -93,7 +103,6 @@ private:
 
 		m_FrameBuffer[index] = SWAP_ENDIAN_16BIT(R5G6B5);
 
-		// TODO: Finish using of this, so it only sends the dirty data
 		m_FrameBufferDirty[index / FRAME_BUFFER_CHUNK_SIZE] = true;
 	}
 
@@ -401,27 +410,31 @@ private:
 
 	void UpdateDataDMA(void)
 	{
-		uint8 dirtySectionIndex = m_FrameBufferDirtyIndex;
-
-		if (m_FrameBufferDirtyIndex++ == FRAME_BUFFER_CHUNK_COUNT)
+		bool found = false;
+		for (uint8 i = m_LastFrameBufferDirtyIndex; i < FRAME_BUFFER_CHUNK_COUNT; ++i)
 		{
-			m_IsDMABusy = false;
-			m_FrameBufferDirtyIndex = 0;
+			if (!m_FrameBufferDirty[i])
+				continue;
+
+			m_LastFrameBufferDirtyIndex = i;
+			found = true;
+			break;
 		}
 
-		if (!m_FrameBufferDirty[dirtySectionIndex])
+		if (!found)
 			return;
 
-		uint16 chunkHeight = FRAME_BUFFER_CHUNK_SIZE / m_RotatedWidth;
-		uint16 x0 = 0;
-		uint16 x1 = m_RotatedWidth - 1;
-		uint16 y0 = dirtySectionIndex * chunkHeight;
-		uint16 y1 = y0 + chunkHeight;
+		const uint16 chunkHeight = FRAME_BUFFER_CHUNK_SIZE / m_RotatedWidth;
+
+		const uint16 x0 = 0;
+		const uint16 y0 = m_LastFrameBufferDirtyIndex * chunkHeight;
+		const uint16 x1 = m_RotatedWidth - 1;
+		const uint16 y1 = y0 + chunkHeight;
 		SetAddressWindow(x0, y0, x1, y1);
 
 		m_IsDMABusy = true;
 
-		uint8 *data = reinterpret_cast<uint8 *>(m_FrameBuffer + (dirtySectionIndex * FRAME_BUFFER_CHUNK_SIZE));
+		uint8 *data = reinterpret_cast<uint8 *>(m_FrameBuffer + (m_LastFrameBufferDirtyIndex * FRAME_BUFFER_CHUNK_SIZE));
 		uint32 length = FRAME_BUFFER_CHUNK_SIZE * sizeof(uint16);
 
 		dsy_dma_clear_cache_for_buffer(data, length);
@@ -429,8 +442,6 @@ private:
 		m_DC.Write(1);
 
 		m_SPI.DmaTransmit(data, length, nullptr, &OnDMATransmissionCompleted, this);
-
-		m_FrameBufferDirty[dirtySectionIndex] = false;
 	}
 
 	static void OnDMATransmissionCompleted(void *Context, daisy::SpiHandle::Result Result)
@@ -438,7 +449,19 @@ private:
 		if (Result != daisy::SpiHandle::Result::OK)
 			return;
 
-		static_cast<ILI9341_HAL *>(Context)->UpdateDataDMA();
+		ILI9341_HAL *thisPtr = static_cast<ILI9341_HAL *>(Context);
+
+		thisPtr->m_FrameBufferDirty[thisPtr->m_LastFrameBufferDirtyIndex] = false;
+
+		if (++thisPtr->m_LastFrameBufferDirtyIndex == FRAME_BUFFER_CHUNK_COUNT)
+		{
+			thisPtr->m_IsDMABusy = false;
+			thisPtr->m_LastFrameBufferDirtyIndex = 0;
+
+			return;
+		}
+
+		thisPtr->UpdateDataDMA();
 	}
 
 	static uint16 BlendR5G6B5(uint16 ColorA, uint16 ColorB, uint8 Alpha)
@@ -467,6 +490,8 @@ private:
 	GPIOPins m_PinSCLK, m_PinMOSI, m_PinNSS, m_PinDC, m_PinRST;
 	Orientations m_Orientation;
 
+	RenderEventHandler m_RenderCallback;
+
 	uint16 *m_FrameBuffer;
 	bool *m_FrameBufferDirty;
 
@@ -482,11 +507,14 @@ private:
 
 	float m_NextUpdateTime;
 	bool m_IsDMABusy;
-	uint8 m_FrameBufferDirtyIndex;
+	uint8 m_LastFrameBufferDirtyIndex;
 
+	static const uint8 MAX_FRAME_RATE = 60;
 	static const uint32 FRAME_BUFFER_LENGTH = Width * Height;
-	static const uint16 FRAME_BUFFER_CHUNK_COUNT = 4;
-	static const uint16 FRAME_BUFFER_CHUNK_SIZE = FRAME_BUFFER_LENGTH / FRAME_BUFFER_CHUNK_COUNT;
+	static const uint16 FRAME_BUFFER_CHUNK_COUNT = 10;
+	static const uint32 FRAME_BUFFER_CHUNK_SIZE = FRAME_BUFFER_LENGTH / FRAME_BUFFER_CHUNK_COUNT;
+
+	static_assert(FRAME_BUFFER_CHUNK_COUNT > 2, "FRAME_BUFFER_CHUNK_COUNT must be greater than 2, cause the HAL_SPI_Transmit_DMA accepts the length as uint16");
 };
 
 typedef ILI9341_HAL<320, 240> ILI9341_HAL_320_240;
