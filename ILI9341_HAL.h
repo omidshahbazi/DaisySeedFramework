@@ -3,6 +3,7 @@
 #include "I_LCD_HAL.h"
 #include "DSP/IHAL.h"
 #include "DSP/Math.h"
+#include "DSP/ContextCallback.h"
 #include <daisy_seed.h>
 
 // TODO: Add Assertions
@@ -13,7 +14,7 @@ class ILI9341_HAL : public I_LCD_HAL
 	static_assert(Height != 0, "Height must be greater than zero");
 
 public:
-	typedef std::function<void(void)> RenderEventHandler;
+	typedef ContextCallback<void> RenderEventHandler;
 
 public:
 	ILI9341_HAL(IHAL *HAL, GPIOPins SCLK, GPIOPins MOSI, GPIOPins NSS, GPIOPins DC, GPIOPins RST, Orientations Orientation)
@@ -35,10 +36,8 @@ public:
 	{
 	}
 
-	void Init(RenderEventHandler &&RenderCallback)
+	void Init(RenderEventHandler RenderCallback)
 	{
-		ASSERT(RenderCallback != nullptr, "RenderCallback cannot be null");
-
 		m_RenderCallback = RenderCallback;
 
 		m_FrameBuffer = Memory::Allocate<uint16>(FRAME_BUFFER_LENGTH, true);

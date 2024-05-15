@@ -2,8 +2,6 @@
 
 #include "I_LCD_HAL.h"
 #include "DSP/Math.h"
-#include <daisy_seed.h>
-#include <string>
 
 // TODO: Scale needs to be done in this layer
 // TODO: Add Assertions
@@ -292,13 +290,27 @@ public:
 		}
 	}
 
-	void DrawString(uint16 X, uint16 Y, const char *String, FontDef Font, I_LCD_HAL::Color Color)
+	void DrawString(uint16 X, uint16 Y, const char *const String, FontDef Font, I_LCD_HAL::Color Color)
 	{
+		ASSERT(String != nullptr, "String cannot be null");
+
+		uint16 len = 0;
+		while (String[len] != '\0')
+			++len;
+
+		if (len == 0)
+			return;
+
 		DrawString(X, Y, String, std::strlen(String), Font, Color);
 	}
 
 	void DrawString(uint16 X, uint16 Y, const char *String, uint16 Length, FontDef Font, I_LCD_HAL::Color Color)
 	{
+		ASSERT(String != nullptr, "String cannot be null");
+
+		if (Length == 0)
+			return;
+
 		uint16 x = X;
 
 		for (uint16 i = 0; i < Length; ++i)
