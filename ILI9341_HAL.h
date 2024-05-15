@@ -117,22 +117,22 @@ private:
 		spiConfig.clock_phase = daisy::SpiHandle::Config::ClockPhase::ONE_EDGE;
 		spiConfig.nss = daisy::SpiHandle::Config::NSS::HARD_OUTPUT;
 		spiConfig.datasize = 8;
-		spiConfig.pin_config.sclk = DaisySeedHAL::GetPin((uint8)SCLK);
-		spiConfig.pin_config.mosi = DaisySeedHAL::GetPin((uint8)MOSI);
-		spiConfig.pin_config.nss = DaisySeedHAL::GetPin((uint8)NSS);
+		spiConfig.pin_config.sclk = DaisySeedHALBase::GetPin((uint8)SCLK);
+		spiConfig.pin_config.mosi = DaisySeedHALBase::GetPin((uint8)MOSI);
+		spiConfig.pin_config.nss = DaisySeedHALBase::GetPin((uint8)NSS);
 
 		m_SPI.Init(spiConfig);
 
 		daisy::GPIO::Config pinConfig;
 		pinConfig.mode = daisy::GPIO::Mode::OUTPUT;
 
-		pinConfig.pin = DaisySeedHAL::GetPin((uint8)DC);
+		pinConfig.pin = DaisySeedHALBase::GetPin((uint8)DC);
 		m_DC.Init(pinConfig);
 
-		pinConfig.pin = DaisySeedHAL::GetPin((uint8)RST);
+		pinConfig.pin = DaisySeedHALBase::GetPin((uint8)RST);
 		m_RST.Init(pinConfig);
 
-		pinConfig.pin = DaisySeedHAL::GetPin((uint8)NSS);
+		pinConfig.pin = DaisySeedHALBase::GetPin((uint8)NSS);
 		m_CS.Init(pinConfig);
 		m_CS.Write(0);
 	}
