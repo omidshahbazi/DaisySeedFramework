@@ -8,20 +8,29 @@
 class LCDCanvas
 {
 public:
-	LCDCanvas(I_LCD_HAL *HAL)
-		: m_HAL(HAL),
+	LCDCanvas(void)
+		: m_HAL(nullptr),
 		  m_CharacterSpacing(0),
 		  m_LineSpacing(0)
 	{
 	}
 
+	void Initialize(I_LCD_HAL *HAL)
+	{
+		m_HAL = HAL;
+	}
+
 	void Clear(I_LCD_HAL::Color Color)
 	{
+		ASSERT(m_HAL != nullptr, "m_HAL cannot be null");
+
 		m_HAL->Clear(Color);
 	}
 
 	void DrawPixel(uint16 X, uint16 Y, I_LCD_HAL::Color Color)
 	{
+		ASSERT(m_HAL != nullptr, "m_HAL cannot be null");
+
 		m_HAL->DrawPixel(X, Y, Color);
 	}
 

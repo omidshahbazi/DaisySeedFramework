@@ -1,7 +1,7 @@
 #pragma once
 
 #include "I_LCD_HAL.h"
-#include "DSP/IHAL.h"
+#include "DaisySeedHAL.h"
 #include "DSP/Math.h"
 #include "DSP/ContextCallback.h"
 #include <daisy_seed.h>
@@ -36,10 +36,8 @@ public:
 	{
 	}
 
-	void Init(RenderEventHandler RenderCallback)
+	void Initialize(void)
 	{
-		m_RenderCallback = RenderCallback;
-
 		m_FrameBuffer = Memory::Allocate<uint16>(FRAME_BUFFER_LENGTH, true);
 		m_FrameBufferDirty = Memory::Allocate<bool>(FRAME_BUFFER_CHUNK_COUNT, true);
 
@@ -50,16 +48,22 @@ public:
 		SetTargetFrameRate(MAX_FRAME_RATE);
 	}
 
+	void SetOnRender(RenderEventHandler Listener)
+	{
+		m_RenderListener = Listener;
+	}
+
 	void Update(void) override
 	{
 		if (m_IsDMABusy)
 			return;
 
-		if (m_HAL->GetTimeSinceStartup() < m_NextUpdateTime)
+		float time = m_HAL->GetTimeSinceStartup();
+		if (time < m_NextUpdateTime)
 			return;
-		m_NextUpdateTime = m_HAL->GetTimeSinceStartup() + m_TargetFrameRate;
+		m_NextUpdateTime = time + m_TargetFrameRate;
 
-		m_RenderCallback();
+		m_RenderListener();
 
 		UpdateDataDMA();
 	}
@@ -489,7 +493,7 @@ private:
 	GPIOPins m_PinSCLK, m_PinMOSI, m_PinNSS, m_PinDC, m_PinRST;
 	Orientations m_Orientation;
 
-	RenderEventHandler m_RenderCallback;
+	RenderEventHandler m_RenderListener;
 
 	uint16 *m_FrameBuffer;
 	bool *m_FrameBufferDirty;
