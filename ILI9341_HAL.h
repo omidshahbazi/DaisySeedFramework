@@ -1,4 +1,8 @@
 #pragma once
+#ifndef ILI9341_HAL_H
+#define ILI9341_HAL_H
+#pragma GCC push_options
+#pragma GCC optimize("Os")
 
 #include "I_LCD_HAL.h"
 #include "DaisySeedHAL.h"
@@ -28,8 +32,6 @@ public:
 		  m_FrameBuffer(nullptr),
 		  m_FrameBufferDirty(nullptr),
 		  m_TargetFrameRate(0),
-		  m_RotatedWidth(0),
-		  m_RotatedHeight(0),
 		  m_NextUpdateTime(0),
 		  m_IsDMABusy(false),
 		  m_LastFrameBufferDirtyIndex(0)
@@ -77,26 +79,31 @@ public:
 	{
 		uint16 color = Color.R5G6B5();
 
-		for (uint32 y = 0; y < m_RotatedHeight; ++y)
-			for (uint32 x = 0; x < m_RotatedWidth; ++x)
-				m_FrameBuffer[x + (y * m_RotatedWidth)] = SWAP_ENDIAN_16BIT(color);
+		for (uint32 y = 0; y < m_Dimension.Y; ++y)
+			for (uint32 x = 0; x < m_Dimension.X; ++x)
+				m_FrameBuffer[x + (y * m_Dimension.X)] = SWAP_ENDIAN_16BIT(color);
 
 		Memory::Set(m_FrameBufferDirty, 1, FRAME_BUFFER_CHUNK_COUNT);
 	}
 
-	void DrawPixel(uint16 X, uint16 Y, Color Color) override
+	void DrawPixel(Point Position, Color Color) override
 	{
-		if (X < 0 || Y < 0 ||
-			X >= m_RotatedWidth || Y >= m_RotatedHeight)
+		if (Position.X < 0 || Position.Y < 0 ||
+			Position.X >= m_Dimension.X || Position.Y >= m_Dimension.Y)
 			return;
 
-		PaintPixel(X, Y, Color.R5G6B5(), Color.A);
+		PaintPixel(Position.X, Position.Y, Color.R5G6B5(), Color.A);
+	}
+
+	const Point &GetDimension(void) const override
+	{
+		return m_Dimension;
 	}
 
 private:
 	void PaintPixel(uint16 X, uint16 Y, uint16 R5G6B5, uint8 Alpha)
 	{
-		uint32 index = X + (Y * m_RotatedWidth);
+		uint32 index = X + (Y * m_Dimension.X);
 
 		if (Alpha != 255)
 		{
@@ -337,32 +344,28 @@ private:
 		{
 		case Orientations::Upright:
 		{
-			m_RotatedWidth = Width;
-			m_RotatedHeight = Height;
+			m_Dimension = {Width, Height};
 			rotationBits |= ili_mx | ili_my | ili_mv;
 		}
 		break;
 
 		case Orientations::UpsideDown:
 		{
-			m_RotatedWidth = Height;
-			m_RotatedHeight = Width;
+			m_Dimension = {Height, Width};
 			rotationBits |= ili_my;
 		}
 		break;
 
 		case Orientations::ToRight:
 		{
-			m_RotatedWidth = Width;
-			m_RotatedHeight = Height;
+			m_Dimension = {Width, Height};
 			rotationBits |= ili_mx | ili_my | ili_mv;
 		}
 		break;
 
 		case Orientations::ToLeft:
 		{
-			m_RotatedWidth = Width;
-			m_RotatedHeight = Height;
+			m_Dimension = {Width, Height};
 			rotationBits |= ili_mv;
 		}
 		break;
@@ -427,11 +430,11 @@ private:
 		if (!found)
 			return;
 
-		const uint16 chunkHeight = FRAME_BUFFER_CHUNK_SIZE / m_RotatedWidth;
+		const uint16 chunkHeight = FRAME_BUFFER_CHUNK_SIZE / m_Dimension.X;
 
 		const uint16 x0 = 0;
 		const uint16 y0 = m_LastFrameBufferDirtyIndex * chunkHeight;
-		const uint16 x1 = m_RotatedWidth - 1;
+		const uint16 x1 = m_Dimension.X - 1;
 		const uint16 y1 = y0 + chunkHeight;
 		SetAddressWindow(x0, y0, x1, y1);
 
@@ -505,8 +508,7 @@ private:
 	daisy::GPIO m_CS;
 
 	float m_TargetFrameRate;
-	uint16 m_RotatedWidth;
-	uint16 m_RotatedHeight;
+	Point m_Dimension;
 
 	float m_NextUpdateTime;
 	bool m_IsDMABusy;
@@ -521,3 +523,6 @@ private:
 };
 
 typedef ILI9341_HAL<320, 240> ILI9341_HAL_320_240;
+
+#pragma GCC pop_options
+#endif
