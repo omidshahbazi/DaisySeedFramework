@@ -524,5 +524,5 @@ private:
 
 typedef ILI9341_HAL<320, 240> ILI9341_HAL_320_240;
 
-#pragma GCC pop_options
 #endif
+#pragma GCC pop_options

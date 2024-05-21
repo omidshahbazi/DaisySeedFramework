@@ -1,6 +1,8 @@
 #pragma once
 #ifndef DAISY_SEED_HAL_H
 #define DAISY_SEED_HAL_H
+#pragma GCC push_options
+#pragma GCC optimize("Os")
 
 #include "DSP/IHAL.h"
 #include "DSP/Math.h"
@@ -506,3 +508,4 @@ private:
 };
 
 #endif
+#pragma GCC pop_options
