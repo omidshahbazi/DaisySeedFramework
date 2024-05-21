@@ -56,49 +56,6 @@ enum class AnalogPins
 
 #define ANALOG_PIN_COUNT 12
 
-struct Color
-{
-public:
-	Color(void)
-		: R(0),
-		  G(0),
-		  B(0),
-		  A(255)
-	{
-	}
-
-	Color(uint8 R, uint8 G, uint8 B)
-		: R(R),
-		  G(G),
-		  B(B),
-		  A(255)
-	{
-	}
-
-	Color(uint8 R, uint8 G, uint8 B, uint8 A)
-		: R(R),
-		  G(G),
-		  B(B),
-		  A(A)
-	{
-	}
-
-	uint16 R5G6B5(void)
-	{
-		uint16 b = (B >> 3) & 0x1f;
-		uint16 g = ((G >> 2) & 0x3f) << 5;
-		uint16 r = ((R >> 3) & 0x1f) << 11;
-
-		return (uint16)(r | g | b);
-	}
-
-public:
-	uint8 R;
-	uint8 G;
-	uint8 B;
-	uint8 A;
-};
-
 struct Point
 {
 public:
