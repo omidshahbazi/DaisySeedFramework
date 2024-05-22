@@ -10,7 +10,6 @@
 #include "DSP/ContextCallback.h"
 #include <daisy_seed.h>
 
-// TODO: Add Assertions
 template <uint32 Width, uint32 Height>
 class ILI9341_HAL : public I_LCD_HAL
 {
@@ -36,6 +35,7 @@ public:
 		  m_IsDMABusy(false),
 		  m_LastFrameBufferDirtyIndex(0)
 	{
+		ASSERT(m_HAL != nullptr, "m_HAL cannot be null");
 	}
 
 	void Initialize(void)
@@ -72,6 +72,8 @@ public:
 
 	void SetTargetFrameRate(uint8 Value)
 	{
+		ASSERT(Value != 0, "Invalid Value");
+
 		m_TargetFrameRate = 1.0 / Math::Min(MAX_FRAME_RATE, Value);
 	}
 
@@ -108,7 +110,7 @@ private:
 		if (Alpha != 255)
 		{
 			uint16 currentColor = SWAP_ENDIAN_16BIT(m_FrameBuffer[index]);
-			R5G6B5 = BlendR5G6B5(R5G6B5, currentColor, Alpha);
+			R5G6B5 = Color::BlendR5G6B5(R5G6B5, currentColor, Alpha);
 		}
 
 		m_FrameBuffer[index] = SWAP_ENDIAN_16BIT(R5G6B5);
@@ -374,18 +376,18 @@ private:
 		return rotationBits;
 	}
 
-	void SendCommand(uint8 cmd)
+	void SendCommand(uint8 Command)
 	{
 		m_DC.Write(0);
 
-		m_SPI.BlockingTransmit(&cmd, 1);
+		m_SPI.BlockingTransmit(&Command, 1);
 	}
 
-	void SendData(uint8 *buff, uint32 size)
+	void SendData(uint8 *Buffer, uint32 Size)
 	{
 		m_DC.Write(1);
 
-		m_SPI.BlockingTransmit(buff, size);
+		m_SPI.BlockingTransmit(Buffer, Size);
 	}
 
 	void SetAddressWindow(uint16 X0, uint16 Y0, uint16 X1, uint16 Y1)
@@ -468,27 +470,6 @@ private:
 		}
 
 		thisPtr->UpdateDataDMA();
-	}
-
-	static uint16 BlendR5G6B5(uint16 ColorA, uint16 ColorB, uint8 Alpha)
-	{
-		//   rrrrrggggggbbbbb
-		const uint16 MASK_RB = 63519;		// 0b1111100000011111
-		const uint16 MASK_G = 2016;			// 0b0000011111100000
-		const uint32 MASK_MUL_RB = 4065216; // 0b1111100000011111000000
-		const uint32 MASK_MUL_G = 129024;	// 0b0000011111100000000000
-		const uint16 MAX_ALPHA = 64;		// 6bits+1 with rounding
-
-		// alpha for foreground multiplication
-		// convert from 8bit to (6bit+1) with rounding
-		// will be in [0..64] inclusive
-		Alpha = (Alpha + 2) >> 2;
-		// "beta" for background multiplication; (6bit+1);
-		// will be in [0..64] inclusive
-		uint8 beta = MAX_ALPHA - Alpha;
-		// so (0..64)*alpha + (0..64)*beta always in 0..64
-
-		return (uint16)((((Alpha * (uint32)(ColorA & MASK_RB) + beta * (uint32)(ColorB & MASK_RB)) & MASK_MUL_RB) | ((Alpha * (ColorA & MASK_G) + beta * (ColorB & MASK_G)) & MASK_MUL_G)) >> 6);
 	}
 
 private:

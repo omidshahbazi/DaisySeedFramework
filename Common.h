@@ -56,6 +56,15 @@ enum class AnalogPins
 
 #define ANALOG_PIN_COUNT 12
 
+uint16 GetStringLength(const char *String)
+{
+	uint16 len = 0;
+	while (String[len] != '\0')
+		++len;
+
+	return len;
+}
+
 struct Point
 {
 public:

@@ -153,12 +153,18 @@ public:
 	{
 		if (OnSDRAM)
 		{
+			const uint8 ALIGNMENT = 16;
+
 			ASSERT(m_SDRAMAddress != nullptr, "SDRAM is not initialized");
 			ASSERT(m_LastFreeSDRAMIndex + Size <= m_SDRAMSize, "Running out of SDRAM");
 
 			uint8 *ptr = m_SDRAMAddress + m_LastFreeSDRAMIndex;
-			m_LastFreeSDRAMIndex += Size;
-			return ptr;
+
+			uint8 *alignedPtr = reinterpret_cast<uint8 *>(((reinterpret_cast<uint32>(ptr) + (ALIGNMENT - 1)) / ALIGNMENT) * ALIGNMENT);
+
+			m_LastFreeSDRAMIndex += (alignedPtr - ptr) + Size;
+
+			return alignedPtr;
 		}
 
 		return malloc(Size);

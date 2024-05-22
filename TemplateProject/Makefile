@@ -4,15 +4,14 @@ TARGET = TemplateProject
 # Sources
 CPP_SOURCES = src/main.cpp
 
+#https://forum.electro-smith.com/t/debugging-app-in-sram-daisy/3213
+#https://github.com/bkshepherd/DaisySeedProjects/blob/main/Software/GuitarPedal/Makefile
 ifeq ($(DEBUG), 1)
 OPT = -O0
 else
 OPT = -Os
+APP_TYPE = BOOT_SRAM
 endif
-
-#https://forum.electro-smith.com/t/debugging-app-in-sram-daisy/3213
-#https://github.com/bkshepherd/DaisySeedProjects/blob/main/Software/GuitarPedal/Makefile
-# APP_TYPE = BOOT_SRAM
 
 LDFLAGS += -u _printf_float
 
