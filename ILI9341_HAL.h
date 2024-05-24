@@ -16,6 +16,13 @@ class ILI9341_HAL : public I_LCD_HAL
 	static_assert(Width != 0, "Width must be greater than zero");
 	static_assert(Height != 0, "Height must be greater than zero");
 
+	static constexpr uint8 MAX_FRAME_RATE = 60;
+	static constexpr uint32 FRAME_BUFFER_LENGTH = Width * Height;
+	static constexpr uint16 FRAME_BUFFER_CHUNK_COUNT = 10;
+	static constexpr uint32 FRAME_BUFFER_CHUNK_SIZE = FRAME_BUFFER_LENGTH / FRAME_BUFFER_CHUNK_COUNT;
+
+	static_assert(FRAME_BUFFER_CHUNK_COUNT > 2, "FRAME_BUFFER_CHUNK_COUNT must be greater than 2, cause the HAL_SPI_Transmit_DMA accepts the length as uint16");
+
 public:
 	typedef ContextCallback<void> RenderEventHandler;
 
@@ -494,13 +501,6 @@ private:
 	float m_NextUpdateTime;
 	bool m_IsDMABusy;
 	uint8 m_LastFrameBufferDirtyIndex;
-
-	static const uint8 MAX_FRAME_RATE = 60;
-	static const uint32 FRAME_BUFFER_LENGTH = Width * Height;
-	static const uint16 FRAME_BUFFER_CHUNK_COUNT = 10;
-	static const uint32 FRAME_BUFFER_CHUNK_SIZE = FRAME_BUFFER_LENGTH / FRAME_BUFFER_CHUNK_COUNT;
-
-	static_assert(FRAME_BUFFER_CHUNK_COUNT > 2, "FRAME_BUFFER_CHUNK_COUNT must be greater than 2, cause the HAL_SPI_Transmit_DMA accepts the length as uint16");
 };
 
 typedef ILI9341_HAL<320, 240> ILI9341_HAL_320_240;

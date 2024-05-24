@@ -360,7 +360,7 @@ public:
 		return daisy::System::GetNow() / 1000.0F;
 	}
 
-	void Print(const char *Value) const override
+	void Print(cstr Value) const override
 	{
 		daisy::DaisySeed::Print(Value);
 	}
