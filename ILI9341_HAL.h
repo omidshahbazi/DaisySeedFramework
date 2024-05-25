@@ -1,8 +1,6 @@
 #pragma once
 #ifndef ILI9341_HAL_H
 #define ILI9341_HAL_H
-#pragma GCC push_options
-#pragma GCC optimize("Os")
 
 #include "I_LCD_HAL.h"
 #include "DaisySeedHAL.h"
@@ -506,4 +504,3 @@ private:
 typedef ILI9341_HAL<320, 240> ILI9341_HAL_320_240;
 
 #endif
-#pragma GCC pop_options

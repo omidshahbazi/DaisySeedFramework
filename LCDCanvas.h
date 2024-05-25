@@ -1,8 +1,6 @@
 #pragma once
 #ifndef LCD_CANVAS_H
 #define LCD_CANVAS_H
-#pragma GCC push_options
-#pragma GCC optimize("Os")
 
 #include "I_LCD_HAL.h"
 #include "DSP/Math.h"
@@ -686,5 +684,4 @@ static constexpr uint16 DUBAI_BOLD_16_DATA[] = {
 
 static constexpr Font Font_DUBAI_BOLD_16 = {14, 16, DUBAI_BOLD_16_DATA, 1};
 
-#pragma GCC pop_options
 #endif
