@@ -61,8 +61,8 @@ public:
 
 			int32 deltaX = Math::Absolute((int16)x1 - (int16)x0);
 			int32 deltaY = Math::Absolute((int16)Y1 - (int16)Y0);
-			int32 signX = Math::Sign(deltaX);
-			int32 signY = Math::Sign(deltaY);
+			int32 signX = Math::Sign((int16)x1 - (int16)x0);
+			int32 signY = Math::Sign((int16)Y1 - (int16)Y0);
 			int32 error = deltaX - deltaY;
 
 			DrawPixel(x1, Y1, Color);
@@ -351,6 +351,7 @@ public:
 		}
 	}
 
+	// https://www.cambridgeincolour.com/tutorials/image-interpolation.htm
 	void DrawCharacter(uint16 X, uint16 Y, char Char, const Font &Font, Color Color)
 	{
 		const uint8 MAX_SCALED_SIZE = 128;

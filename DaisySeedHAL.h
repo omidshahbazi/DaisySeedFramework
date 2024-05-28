@@ -353,9 +353,14 @@ public:
 		m_PersistentStorage.Save();
 	}
 
+	uint32 GetTimeSinceStartupMs(void) const override
+	{
+		return daisy::System::GetNow();
+	}
+
 	float GetTimeSinceStartup(void) const override
 	{
-		return daisy::System::GetNow() / 1000.0F;
+		return GetTimeSinceStartupMs() / 1000.0;
 	}
 
 	void Print(cstr Value) const override

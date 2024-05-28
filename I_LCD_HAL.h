@@ -18,6 +18,9 @@ public:
 public:
 	virtual void Update(void) = 0;
 
+	virtual void SetTargetFrameRate(uint8 Value) = 0;
+	virtual uint8 GetTargetFrameRate(void) const = 0;
+
 	virtual void Clear(Color Color) = 0;
 
 	virtual void DrawPixel(Point Position, Color Color) = 0;

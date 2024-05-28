@@ -36,6 +36,7 @@ public:
 		  m_FrameBuffer(nullptr),
 		  m_FrameBufferDirty(nullptr),
 		  m_TargetFrameRate(0),
+		  m_UpdateStep(0),
 		  m_NextUpdateTime(0),
 		  m_IsDMABusy(false),
 		  m_LastFrameBufferDirtyIndex(0)
@@ -65,10 +66,10 @@ public:
 		if (m_IsDMABusy)
 			return;
 
-		float time = m_HAL->GetTimeSinceStartup();
+		uint32 time = m_HAL->GetTimeSinceStartupMs();
 		if (time < m_NextUpdateTime)
 			return;
-		m_NextUpdateTime = time + m_TargetFrameRate;
+		m_NextUpdateTime = time + m_UpdateStep;
 
 		m_RenderListener();
 
@@ -79,7 +80,14 @@ public:
 	{
 		ASSERT(Value != 0, "Invalid Value");
 
-		m_TargetFrameRate = 1.0 / Math::Min(MAX_FRAME_RATE, Value);
+		m_TargetFrameRate = Math::Min(MAX_FRAME_RATE, Value);
+
+		m_UpdateStep = 1000 / m_TargetFrameRate;
+	}
+
+	uint8 GetTargetFrameRate(void) const
+	{
+		return m_TargetFrameRate;
 	}
 
 	void Clear(Color Color) override
@@ -462,7 +470,7 @@ private:
 		if (Result != daisy::SpiHandle::Result::OK)
 			return;
 
-		ILI9341_HAL *thisPtr = static_cast<ILI9341_HAL *>(Context);
+		auto *thisPtr = static_cast<ILI9341_HAL *>(Context);
 
 		thisPtr->m_FrameBufferDirty[thisPtr->m_LastFrameBufferDirtyIndex] = false;
 
@@ -493,10 +501,11 @@ private:
 	daisy::GPIO m_DC;
 	daisy::GPIO m_CS;
 
-	float m_TargetFrameRate;
+	uint8 m_TargetFrameRate;
 	Point m_Dimension;
 
-	float m_NextUpdateTime;
+	uint16 m_UpdateStep;
+	uint32 m_NextUpdateTime;
 	bool m_IsDMABusy;
 	uint8 m_LastFrameBufferDirtyIndex;
 };
