@@ -55,8 +55,8 @@ public:
 
 		for (uint8 t = 0; t < Thickness; ++t)
 		{
-			int16 x0 = (X0 - (Thickness == 0 ? 0 : Thickness / 2)) + t;
-			int16 x1 = (X1 - (Thickness == 0 ? 0 : Thickness / 2)) + t;
+			int16 x0 = (X0 - Thickness / 2) + t;
+			int16 x1 = (X1 - Thickness / 2) + t;
 			int16 y0 = Y0;
 
 			int32 deltaX = Math::Absolute((int16)x1 - (int16)x0);
@@ -270,7 +270,9 @@ public:
 
 	void DrawCircle(uint16 X0, uint16 Y0, uint16 Radius, Color Color, uint8 Thickness = 1)
 	{
-		for (int16 r = -(Thickness == 0 ? 0 : Thickness / 2); r < Thickness; ++r)
+		--Radius;
+
+		for (int16 r = -Thickness / 2; r < Thickness; ++r)
 		{
 			int16 radius = Radius + r;
 
@@ -311,6 +313,8 @@ public:
 
 	void DrawFilledCircle(uint16 X0, uint16 Y0, uint16 Radius, Color Color)
 	{
+		--Radius;
+
 		DrawLine(X0, Y0 - Radius, X0, Y0 + Radius + 1, Color);
 
 		const uint8 CORNER_NAME = 3;
@@ -563,7 +567,13 @@ public:
 private:
 	void DrawVerticalLine(uint16 X, uint16 Y, int16 Height, Color Color, uint8 Thickness = 1)
 	{
-		int16 x = X - (Thickness == 0 ? 0 : Thickness / 2);
+		int16 x = X - (Thickness / 2);
+
+		if (Height < 0)
+		{
+			Y = Math::Max(0, Y + Height);
+			Height *= -1;
+		}
 
 		for (uint8 tX = 0; tX < Thickness; ++tX)
 			for (uint16 i = Y; i < Y + Height; ++i)
@@ -572,7 +582,13 @@ private:
 
 	void DrawHorizontalLine(uint16 X, uint16 Y, int16 Width, Color Color, uint8 Thickness = 1)
 	{
-		int16 y = Y - (Thickness == 0 ? 0 : Thickness / 2);
+		int16 y = Y - (Thickness / 2);
+
+		if (Width < 0)
+		{
+			X = Math::Max(0, X + Width);
+			Width *= -1;
+		}
 
 		for (uint8 tY = 0; tY < Thickness; ++tY)
 			for (uint16 i = X; i < X + Width; ++i)
