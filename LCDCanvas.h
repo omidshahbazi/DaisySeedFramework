@@ -381,24 +381,24 @@ public:
 				ALPHA_VALUE(x * Font.Scale, y * Font.Scale) = (((1 << x) & data) == 0 ? 0 : 255);
 		}
 
-		if (Font.Scale != 1)
-			for (uint8 y = 0; y < newHeight; ++y)
-				for (uint8 x = 0; x < newWidth; ++x)
-				{
-					uint8 value = ALPHA_VALUE(x, y);
-					if (value == 255)
-						continue;
+		// if (Font.Scale != 1)
+		// 	for (uint8 y = 0; y < newHeight; ++y)
+		// 		for (uint8 x = 0; x < newWidth; ++x)
+		// 		{
+		// 			uint8 value = ALPHA_VALUE(x, y);
+		// 			if (value == 255)
+		// 				continue;
 
-					uint16 sum = 0;
-					sum += (x == 0 ? 0 : ALPHA_VALUE(x - 1, y));
-					sum += (x + 1 == newWidth ? 0 : ALPHA_VALUE(x + 1, y));
-					sum += (y == 0 ? 0 : ALPHA_VALUE(x, y - 1));
-					sum += (y + 1 == newWidth ? 0 : ALPHA_VALUE(x, y + 1));
+		// 			uint16 sum = 0;
+		// 			sum += (x == 0 ? 0 : ALPHA_VALUE(x - 1, y));
+		// 			sum += (x + 1 == newWidth ? 0 : ALPHA_VALUE(x + 1, y));
+		// 			sum += (y == 0 ? 0 : ALPHA_VALUE(x, y - 1));
+		// 			sum += (y + 1 == newWidth ? 0 : ALPHA_VALUE(x, y + 1));
 
-					uint8 avg = sum / 4;
+		// 			uint8 avg = sum / 4;
 
-					ALPHA_VALUE(x, y) = avg * 1.5;
-				}
+		// 			ALPHA_VALUE(x, y) = avg * 1.5;
+		// 		}
 
 		for (uint8 y = 0; y < newHeight; ++y)
 			for (uint8 x = 0; x < newWidth; ++x)
@@ -498,9 +498,9 @@ public:
 		DrawLine(Position0.X, Position0.Y, Position1.X, Position1.Y, Color, Thickness);
 	}
 
-	void DrawRectangle(Rect Rect, Color Color)
+	void DrawRectangle(Rect Rect, Color Color, uint8 Thickness = 1)
 	{
-		DrawRectangle(Rect.Position.X, Rect.Position.Y, Rect.Dimension.X, Rect.Dimension.Y, Color);
+		DrawRectangle(Rect.Position.X, Rect.Position.Y, Rect.Dimension.X, Rect.Dimension.Y, Color, Thickness);
 	}
 
 	void DrawFilledRectangle(Rect Rect, Color Color)
@@ -508,9 +508,9 @@ public:
 		DrawFilledRectangle(Rect.Position.X, Rect.Position.Y, Rect.Dimension.X, Rect.Dimension.Y, Color);
 	}
 
-	void DrawParallelogram(Point LeftTop, Point LeftBottom, Point RightTop, Point RightBottom, Color Color)
+	void DrawParallelogram(Point LeftTop, Point LeftBottom, Point RightTop, Point RightBottom, Color Color, uint8 Thickness = 1)
 	{
-		DrawParallelogram(LeftTop.X, LeftTop.Y, LeftBottom.X, LeftBottom.Y, RightTop.X, RightTop.Y, RightBottom.X, RightBottom.Y, Color);
+		DrawParallelogram(LeftTop.X, LeftTop.Y, LeftBottom.X, LeftBottom.Y, RightTop.X, RightTop.Y, RightBottom.X, RightBottom.Y, Color, Thickness);
 	}
 
 	void DrawFilledParallelogram(Point LeftTop, Point LeftBottom, Point RightTop, Point RightBottom, Color Color)
@@ -518,9 +518,9 @@ public:
 		DrawFilledParallelogram(LeftTop.X, LeftTop.Y, LeftBottom.X, LeftBottom.Y, RightTop.X, RightTop.Y, RightBottom.X, RightBottom.Y, Color);
 	}
 
-	void DrawTriangle(Point Position0, Point Position1, Point Position2, Color Color)
+	void DrawTriangle(Point Position0, Point Position1, Point Position2, Color Color, uint8 Thickness = 1)
 	{
-		DrawTriangle(Position0.X, Position0.Y, Position1.X, Position1.Y, Position2.X, Position2.Y, Color);
+		DrawTriangle(Position0.X, Position0.Y, Position1.X, Position1.Y, Position2.X, Position2.Y, Color, Thickness);
 	}
 
 	void DrawFilledTriangle(Point Position0, Point Position1, Point Position2, Color Color)

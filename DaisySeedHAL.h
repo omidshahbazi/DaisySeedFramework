@@ -85,7 +85,7 @@ public:
 	}
 };
 
-template <uint16 PersistentSlotCount, uint8 PersistentSlotSize>
+template <uint16 PersistentSlotCount, uint16 PersistentSlotSize>
 class DaisySeedHAL : public DaisySeedHALBase, public IHAL
 {
 	static_assert(PersistentSlotCount == 0 || PersistentSlotSize != 0, "PersistentSlotSize must be greater than zero");
@@ -317,7 +317,7 @@ public:
 		return GetPersistentSlot(ID)->IsInitialized;
 	}
 
-	void SetPersistentData(uint16 ID, const void *const Data, uint8 Size) override
+	void SetPersistentData(uint16 ID, const void *const Data, uint16 Size) override
 	{
 		ASSERT(PersistentSlotCount != 0, "PersistentSlotCount cannot be zero");
 		ASSERT(Size <= PersistentSlotSize, "Size cannot be greater than PersistentSlotSize");
@@ -328,7 +328,7 @@ public:
 		Memory::Copy(reinterpret_cast<const uint8 *const>(Data), slot->Data, Size);
 	}
 
-	void GetPersistentData(uint16 ID, void *Data, uint8 Size) override
+	void GetPersistentData(uint16 ID, void *Data, uint16 Size) override
 	{
 		ASSERT(PersistentSlotCount != 0, "PersistentSlotCount cannot be zero");
 		ASSERT(Size <= PersistentSlotSize, "Size cannot be greater than PersistentSlotSize");
