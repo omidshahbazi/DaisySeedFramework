@@ -2,10 +2,11 @@
 #ifndef DAISY_SEED_HAL_H
 #define DAISY_SEED_HAL_H
 
+#include "Common.h"
 #include "DSP/IHAL.h"
 #include "DSP/Math.h"
-#include "Common.h"
 #include "DSP/Debug.h"
+#include "DaisyUSBInterface.h"
 #include <daisy_seed.h>
 
 class DaisySeedHALBase
@@ -129,6 +130,7 @@ private:
 public:
 	DaisySeedHAL(daisy::DaisySeed *Hardware, void *SDRAMAddress = nullptr, uint32 SDRAMSize = 0)
 		: m_Hardware(Hardware),
+		  m_USBInterface(Hardware),
 		  m_SDRAMAddress(reinterpret_cast<uint8 *>(SDRAMAddress)),
 		  m_SDRAMSize(SDRAMSize),
 		  m_LastFreeSDRAMIndex(0),
@@ -145,6 +147,48 @@ public:
 		ASSERT(SDRAMAddress == nullptr || SDRAMSize > 0, "SDRAMSize cannot be zero");
 
 		SetPWMResolution(16);
+	}
+	
+	void Setup(uint8 FrameLength, uint32 SampleRate, bool Boost, bool USBTransmissionMode, bool WaitForDebugger) override
+	{
+		m_Hardware->Init(Boost);
+		m_Hardware->SetAudioBlockSize(FrameLength);
+
+		m_USBInterface.Start(USBTransmissionMode, WaitForDebugger);
+
+		daisy::SaiHandle::Config::SampleRate daisySampleRate;
+		switch (SampleRate)
+		{
+		case SAMPLE_RATE_8000:
+			daisySampleRate = daisy::SaiHandle::Config::SampleRate::SAI_8KHZ;
+			break;
+
+		case SAMPLE_RATE_16000:
+			daisySampleRate = daisy::SaiHandle::Config::SampleRate::SAI_16KHZ;
+			break;
+
+		case SAMPLE_RATE_32000:
+			daisySampleRate = daisy::SaiHandle::Config::SampleRate::SAI_32KHZ;
+			break;
+
+		case SAMPLE_RATE_48000:
+			daisySampleRate = daisy::SaiHandle::Config::SampleRate::SAI_48KHZ;
+			break;
+
+		case SAMPLE_RATE_96000:
+			daisySampleRate = daisy::SaiHandle::Config::SampleRate::SAI_96KHZ;
+			break;
+
+		default:
+			ASSERT(false, "No sutaible sample rate for %i found in the daisy", SAMPLE_RATE);
+		}
+
+		m_Hardware->SetAudioSampleRate(daisySampleRate);
+	}
+
+	void StartAudio(AudioPassthrough Callback) override
+	{
+		m_Hardware->StartAudio(Callback);
 	}
 
 	void *Allocate(uint32 Size, bool OnSDRAM = false) override
@@ -363,9 +407,12 @@ public:
 		return GetTimeSinceStartupMs() / 1000.0;
 	}
 
-	void Print(cstr Value) const override
+	void Print(cstr Value) override
 	{
-		daisy::DaisySeed::Print(Value);
+		const uint16 Code = 1;
+
+		m_USBInterface.Transmit(&Code, sizeof(Code));
+		m_USBInterface.Transmit((const uint8*)Value, strlen(Value));
 	}
 
 	void Break(void) const override
@@ -383,6 +430,11 @@ public:
 	void Delay(uint16 Ms) const override
 	{
 		daisy::System::Delay(Ms);
+	}
+
+	IUSBInterface* GetUSBInterface(void) override
+	{
+		return &m_USBInterface;
 	}
 
 protected:
@@ -407,6 +459,8 @@ protected:
 
 	void Update(void)
 	{
+		m_USBInterface.Update();
+
 		const uint16 SAMPLE_RATE = 1000;
 		const float STEP = 120.0F / SAMPLE_RATE;
 
@@ -497,6 +551,7 @@ private:
 
 private:
 	daisy::DaisySeed *m_Hardware;
+	DaisyUSBInterface m_USBInterface;
 
 	uint8 *m_SDRAMAddress;
 	uint32 m_SDRAMSize;
