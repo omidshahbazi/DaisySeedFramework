@@ -411,7 +411,7 @@ public:
 	{
 		const uint16 Code = 1;
 
-		m_USBInterface.Transmit(&Code, sizeof(Code));
+		m_USBInterface.Transmit((const uint8*)&Code, sizeof(Code));
 		m_USBInterface.Transmit((const uint8*)Value, strlen(Value));
 	}
 

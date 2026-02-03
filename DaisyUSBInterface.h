@@ -11,6 +11,10 @@ class DaisyUSBInterface : public IUSBInterface
 	friend class DaisySeedHAL;
 
 private:
+	typedef daisy::FixedCapStr<1024> BufferType;
+	typedef daisy::FIFO<BufferType, 4> StackType;
+
+private:
 	DaisyUSBInterface(daisy::DaisySeed *Hardware)
 		: m_Hardware(Hardware)
 	{
@@ -19,19 +23,22 @@ private:
 private:
 	void Start(bool TransmissionMode, bool WaitForDebugger)
 	{
+		m_Hardware->usb_handle.Init(daisy::UsbHandle::UsbPeriph::FS_EXTERNAL);
    		m_Hardware->StartLog(WaitForDebugger);
 		
 		if (TransmissionMode)
-			m_Hardware->usb_handle.SetReceiveCallback(Callback, daisy::UsbHandle::UsbPeriph::FS_INTERNAL);
+			m_Hardware->usb_handle.SetReceiveCallback(Callback, daisy::UsbHandle::UsbPeriph::FS_EXTERNAL);
 	}
 
 	void Update(void)
 	{
 		while(!GetStack()->IsEmpty())
         {
-           auto msg = GetStack()->PopFront();
+           const BufferType &buffer = GetStack()->Front();
 		   
-		   m_Callback((const uint8*)msg.Cstr(), msg.Size());
+		   m_Callback((const uint8*)buffer.Cstr(), buffer.Size());
+		   
+		   GetStack()->PopFront();
         }
 	}
 
@@ -47,18 +54,20 @@ public:
 	}
 
 private:
-	static void Callback(uint8_t *Buffer, uint32_t *Length)
+	static void Callback(uint8 *Buffer, uint32_t *Length)
 	{
-		if(Buffer && Length)
-		{
-			daisy::FixedCapStr<128> rx((const char *)Buffer, *Length);
-			GetStack()->PushBack(rx);
-		}
+		if(Buffer == nullptr)
+			return;
+			
+		if (Length == 0)
+			return;
+
+		GetStack()->PushBack(BufferType((const char *)Buffer, *Length));
 	}
 
-	static daisy::FIFO<daisy::FixedCapStr<128>, 16> *GetStack(void)
+	static StackType *GetStack(void)
 	{
-		static daisy::FIFO<daisy::FixedCapStr<128>, 16> stack;
+		static StackType stack;
 
 		return &stack;
 	}
