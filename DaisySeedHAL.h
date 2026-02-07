@@ -268,7 +268,7 @@ public:
 
 	void SetPWMResolution(uint8 Value) override
 	{
-		ASSERT(8 <= Value && Value <= 16, "Invalid Value");
+		ASSERT(8 <= Value && Value <= 16, "Invalid Value %f", Value);
 
 		m_PWMResolution = Value;
 		m_PWMMaxDutyCycle = (1 << m_PWMResolution) - 1;
@@ -342,14 +342,14 @@ public:
 
 	void PWMWrite(uint8 Pin, float Value) override
 	{
-		ASSERT(0 <= Value && Value <= 1, "Invalid Value");
+		ASSERT(0 <= Value && Value <= 1, "Invalid Value %f", Value);
 
 		FindOrGetPWMPin(Pin)->TargetValue = Math::Cube(Value);
 	}
 
 	void InitializePersistentData(uint16 ID) override
 	{
-		Log::WriteWarning("5");
+		Log::WriteWarning("Save-DaisySeedHALBase::InitializePersistentData %i", ID);
 		ASSERT(PersistentSlotCount != 0, "PersistentSlotCount cannot be zero");
 
 		PersistentSlot *slot = GetPersistentSlot(ID);
@@ -360,6 +360,7 @@ public:
 
 	bool ContainsPersistentData(uint16 ID) override
 	{
+		Log::WriteWarning("Save-DaisySeedHALBase::ContainsPersistentData %i", ID);
 		ASSERT(PersistentSlotCount != 0, "PersistentSlotCount cannot be zero");
 
 		return GetPersistentSlot(ID)->IsInitialized;
@@ -367,6 +368,7 @@ public:
 
 	void SetPersistentData(uint16 ID, const void *const Data, uint16 Size) override
 	{
+		Log::WriteWarning("Save-DaisySeedHALBase::SetPersistentData %i", ID);
 		ASSERT(PersistentSlotCount != 0, "PersistentSlotCount cannot be zero");
 		ASSERT(Size <= PersistentSlotSize, "Size cannot be greater than PersistentSlotSize");
 
@@ -378,7 +380,7 @@ public:
 
 	void GetPersistentData(uint16 ID, void *Data, uint16 Size) override
 	{
-		Log::WriteWarning("4");
+		Log::WriteWarning("Save-DaisySeedHALBase::GetPersistentData %i", ID);
 		ASSERT(PersistentSlotCount != 0, "PersistentSlotCount cannot be zero");
 		ASSERT(Size <= PersistentSlotSize, "Size cannot be greater than PersistentSlotSize");
 
@@ -390,13 +392,15 @@ public:
 
 	void EreasPersistentData(void) override
 	{
+		Log::WriteWarning("Save-DaisySeedHALBase::EreasPersistentData");
 		ASSERT(PersistentSlotCount != 0, "PersistentSlotCount cannot be zero");
-
+		
 		m_PersistentStorage.RestoreDefaults();
 	}
 
 	void SavePersistentData(void) override
 	{
+		Log::WriteWarning("Save-DaisySeedHALBase::SavePersistentData");
 		ASSERT(PersistentSlotCount != 0, "PersistentSlotCount cannot be zero");
 
 		m_PersistentStorage.Save();
@@ -540,6 +544,7 @@ private:
 
 	PersistentSlot *GetPersistentSlot(uint16 ID)
 	{
+		Log::WriteWarning("Save-DaisySeedHALBase::GetPersistentSlot %i", ID);
 		static bool isInitialized = false;
 		if (PersistentSlotCount != 0 && !isInitialized)
 		{

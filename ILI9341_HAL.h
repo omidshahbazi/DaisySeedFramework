@@ -78,7 +78,7 @@ public:
 
 	void SetTargetFrameRate(uint8 Value)
 	{
-		ASSERT(Value != 0, "Invalid Value");
+		ASSERT(Value != 0, "Invalid Value %f", Value);
 
 		m_TargetFrameRate = Math::Min(MAX_FRAME_RATE, Value);
 
