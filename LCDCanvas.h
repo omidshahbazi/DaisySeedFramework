@@ -6,6 +6,8 @@
 #include "DSP/Math.h"
 #include "DSP/Debug.h"
 
+#define TO_UINT16(Value) static_cast<uint16>(Value)
+
 class LCDCanvas
 {
 public:
@@ -449,7 +451,7 @@ public:
 		if (Character == '\n' || Character == '\r')
 			return {};
 
-		return {(Font.Width * Font.Scale) + m_CharacterSpacing, (Font.Height * Font.Scale) + m_LineSpacing};
+		return {TO_UINT16((Font.Width * Font.Scale) + m_CharacterSpacing), TO_UINT16((Font.Height * Font.Scale) + m_LineSpacing)};
 	}
 
 	Point MeasureStringDimension(cstr String, const Font &Font)
@@ -485,7 +487,7 @@ public:
 				maxCharCountPerLine = charCount;
 		}
 
-		return {((Font.Width * Font.Scale) + m_CharacterSpacing) * maxCharCountPerLine, ((Font.Height * Font.Scale) + m_LineSpacing) * lineCount};
+		return {TO_UINT16(((Font.Width * Font.Scale) + m_CharacterSpacing) * maxCharCountPerLine), TO_UINT16(((Font.Height * Font.Scale) + m_LineSpacing) * lineCount)};
 	}
 
 	void DrawPixel(Point Position, Color Color)

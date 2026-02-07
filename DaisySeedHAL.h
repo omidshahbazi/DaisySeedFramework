@@ -154,7 +154,10 @@ public:
 		m_Hardware->Init(Boost);
 		m_Hardware->SetAudioBlockSize(FrameLength);
 
-		m_USBInterface.Start(USBTransmissionMode, WaitForDebugger);
+   		m_Hardware->StartLog(WaitForDebugger);
+
+		if (USBTransmissionMode)
+			m_USBInterface.Start();
 
 		daisy::SaiHandle::Config::SampleRate daisySampleRate;
 		switch (SampleRate)
@@ -346,6 +349,7 @@ public:
 
 	void InitializePersistentData(uint16 ID) override
 	{
+		Log::WriteWarning("5");
 		ASSERT(PersistentSlotCount != 0, "PersistentSlotCount cannot be zero");
 
 		PersistentSlot *slot = GetPersistentSlot(ID);
@@ -374,6 +378,7 @@ public:
 
 	void GetPersistentData(uint16 ID, void *Data, uint16 Size) override
 	{
+		Log::WriteWarning("4");
 		ASSERT(PersistentSlotCount != 0, "PersistentSlotCount cannot be zero");
 		ASSERT(Size <= PersistentSlotSize, "Size cannot be greater than PersistentSlotSize");
 
@@ -409,6 +414,8 @@ public:
 
 	void Print(cstr Value) override
 	{
+		m_Hardware->PrintLine(Value);
+
 		const uint16 Code = 1;
 
 		m_USBInterface.Transmit((const uint8*)&Code, sizeof(Code));

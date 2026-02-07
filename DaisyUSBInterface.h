@@ -21,13 +21,11 @@ private:
 	}
 
 private:
-	void Start(bool TransmissionMode, bool WaitForDebugger)
+	void Start()
 	{
 		m_Hardware->usb_handle.Init(daisy::UsbHandle::UsbPeriph::FS_EXTERNAL);
-   		m_Hardware->StartLog(WaitForDebugger);
 		
-		if (TransmissionMode)
-			m_Hardware->usb_handle.SetReceiveCallback(Callback, daisy::UsbHandle::UsbPeriph::FS_EXTERNAL);
+		m_Hardware->usb_handle.SetReceiveCallback(Callback, daisy::UsbHandle::UsbPeriph::FS_EXTERNAL);
 	}
 
 	void Update(void)
