@@ -57,7 +57,7 @@
       "dependsOn": [
         "build libdaisy"
       ],
-      "label": "build and program release",
+      "label": "build and program release (SRAM)",
       "options": {
         "cwd": "${workspaceFolder}"
       },
@@ -83,7 +83,59 @@
       "dependsOn": [
         "build libdaisy"
       ],
-      "label": "build and program debug",
+      "label": "build and program debug (SRAM)",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": {
+          "owner": "cpp",
+          "fileLocation": [
+              "relative",
+              "${workspaceRoot}"
+          ],
+          "pattern": {
+              "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+              "file": 1,
+              "line": 2,
+              "column": 3,
+              "severity": 4,
+              "message": 5
+          }
+      },
+      "type": "shell"
+    },
+    {
+      "command": "make clean; USE_SRAM=0 make; USE_SRAM=0 make program-dfu",
+      "dependsOn": [
+        "build libdaisy"
+      ],
+      "label": "build and program release (QSPI)",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": {
+          "owner": "cpp",
+          "fileLocation": [
+              "relative",
+              "${workspaceRoot}"
+          ],
+          "pattern": {
+              "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+              "file": 1,
+              "line": 2,
+              "column": 3,
+              "severity": 4,
+              "message": 5
+          }
+      },
+      "type": "shell"
+    },
+    {
+      "command": "make clean; DEBUG=1 USE_SRAM=0 make; USE_SRAM=0 make program-dfu",
+      "dependsOn": [
+        "build libdaisy"
+      ],
+      "label": "build and program debug (QSPI)",
       "options": {
         "cwd": "${workspaceFolder}"
       },
@@ -160,7 +212,7 @@
       "command": "make",
       "label": "build libdaisy",
       "options": {
-        "cwd": "${workspaceFolder}/include/framework/libDaisy"
+        "cwd": "${workspaceFolder}/../../DaisySeedFramework/libDaisy"
       },
       "problemMatcher": {
           "owner": "cpp",
