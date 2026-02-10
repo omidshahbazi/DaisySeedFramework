@@ -2,6 +2,8 @@
 
 #include "DSP/Common.h"
 
+#define FONT_32_BITS
+
 enum class GPIOPins
 {
 	Pin0 = 0, // Digital
@@ -102,9 +104,22 @@ public:
 
 struct Font
 {
+#ifdef FONT_32_BITS
+typedef uint32 DataType;
+#else
+typedef uint16 DataType;
+#endif
+
 public:
 	uint8 Width;
 	uint8 Height;
-	const uint16 *const Data;
+	const DataType *const Data;
 	float Scale;
+	uint8 BitsPerPixel;
 };
+
+#include "libDaisy/src/dev/sdram.h"
+
+#define DEFINE_LARGE_MEMORY_BUFFER(Name, Size) \
+	static constexpr uint32 Name##_Size = Size; \
+	uint8 DSY_SDRAM_BSS g_##Name[Name##_Size];
