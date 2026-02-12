@@ -2,8 +2,6 @@
 
 #include "DSP/Common.h"
 
-#define FONT_32_BITS
-
 enum class GPIOPins
 {
 	Pin0 = 0, // Digital
@@ -113,6 +111,8 @@ public:
 	const DataType *const Data;
 	float Scale;
 	uint8 BitsPerPixel;
+	char FirstCharacter;
+	char LastCharacter;
 };
 
 #include "libDaisy/src/dev/sdram.h"
