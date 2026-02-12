@@ -104,11 +104,8 @@ public:
 
 struct Font
 {
-#ifdef FONT_32_BITS
-typedef uint32 DataType;
-#else
-typedef uint16 DataType;
-#endif
+public:
+	typedef uint64 DataType;
 
 public:
 	uint8 Width;

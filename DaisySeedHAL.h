@@ -98,6 +98,7 @@ private:
 	public:
 		T Object;
 		uint8 Pin;
+		PinModes Mode;
 		bool Used;
 	};
 
@@ -261,6 +262,22 @@ public:
 		return true;
 	}
 
+	bool IsInInputMode(uint8 Pin) const override
+	{
+		return !IsInOutputMode(Pin);
+	}
+
+	bool IsInOutputMode(uint8 Pin) const override
+	{
+		const PinState<daisy::AdcChannelConfig> *analogPinState = FindAnalogPin(Pin);
+		if (analogPinState != nullptr)
+			return false;
+
+		const PinState<daisy::GPIO> &digitalPinState = GetDigitalPinState(Pin);
+
+		return (digitalPinState.Mode == PinModes::DigitalOutput || digitalPinState.Mode == PinModes::PWM);
+	}
+
 	bool IsAPWMPin(uint8 Pin) const override
 	{
 		return true;
@@ -289,10 +306,11 @@ public:
 
 		if (Mode == PinModes::AnalogInput && IsAnAnaloglPin(Pin))
 		{
-			PinState<daisy::AdcChannelConfig> *state = FindOrGetAnalogPin(Pin);
+			PinState<daisy::AdcChannelConfig> *state = FindOrGetNewAnalogPin(Pin);
 			state->Object.InitSingle(pin);
 			state->Pin = Pin;
 			state->Used = true;
+			state->Mode = Mode;
 
 			return;
 		}
@@ -303,10 +321,11 @@ public:
 		config.speed = daisy::GPIO::Speed::LOW;
 		config.pull = daisy::GPIO::Pull::PULLUP;
 
-		PinState<daisy::GPIO> &state = m_DigitalPins[GetDigitalPinIndex(Pin)];
+		PinState<daisy::GPIO> &state = GetDigitalPinState(Pin);
 		state.Object.Init(config);
 		state.Pin = Pin;
 		state.Used = true;
+		state.Mode = Mode;
 
 		if (Mode == PinModes::PWM)
 		{
@@ -327,22 +346,25 @@ public:
 	bool DigitalRead(uint8 Pin) const override
 	{
 		ASSERT(IsADigitalPin(Pin), "Pin %i is not an digital pin", Pin);
+		ASSERT(IsInInputMode(Pin), "Pin %i is not in input mode", Pin);
 
-		PinState<daisy::GPIO> &state = const_cast<PinState<daisy::GPIO> &>(m_DigitalPins[GetDigitalPinIndex(Pin)]);
+		PinState<daisy::GPIO> &state = const_cast<PinState<daisy::GPIO> &>(GetDigitalPinState(Pin));
 		return !state.Object.Read();
 	}
 
 	void DigitalWrite(uint8 Pin, bool Value) override
 	{
 		ASSERT(IsADigitalPin(Pin), "Pin %i is not an digital pin", Pin);
+		ASSERT(IsInOutputMode(Pin), "Pin %i is not in output mode", Pin);
 
-		PinState<daisy::GPIO> &state = const_cast<PinState<daisy::GPIO> &>(m_DigitalPins[GetDigitalPinIndex(Pin)]);
+		PinState<daisy::GPIO> &state = const_cast<PinState<daisy::GPIO> &>(GetDigitalPinState(Pin));
 		state.Object.Write(Value);
 	}
 
 	void PWMWrite(uint8 Pin, float Value) override
 	{
 		ASSERT(0 <= Value && Value <= 1, "Invalid Value %f", Value);
+		ASSERT(IsInOutputMode(Pin), "Pin %i is not in output mode", Pin);
 
 		FindOrGetPWMPin(Pin)->TargetValue = Math::Cube(Value);
 	}
@@ -505,7 +527,7 @@ private:
 		ASSERT(false, "Couldn't find the state for pin %i", Pin);
 	}
 
-	PinState<daisy::AdcChannelConfig> *FindOrGetAnalogPin(uint8 Pin)
+	PinState<daisy::AdcChannelConfig> *FindAnalogPin(uint8 Pin)
 	{
 		for (auto &state : m_AnalogPins)
 		{
@@ -514,10 +536,42 @@ private:
 
 			return &state;
 		}
+		
+		return nullptr;
+	}
+
+	const PinState<daisy::AdcChannelConfig> *FindAnalogPin(uint8 Pin) const
+	{
+		for (auto &state : m_AnalogPins)
+		{
+			if (state.Pin != Pin)
+				continue;
+
+			return &state;
+		}
+		
+		return nullptr;
+	}
+
+	PinState<daisy::AdcChannelConfig> *FindOrGetNewAnalogPin(uint8 Pin)
+	{
+		PinState<daisy::AdcChannelConfig> *state = FindAnalogPin(Pin);
+		if (state != nullptr)
+			return state;
 
 		ASSERT(m_LastFreeAnalogPinIndex < ANALOG_PIN_COUNT, "Out of free Analog pins");
 
 		return &m_AnalogPins[m_LastFreeAnalogPinIndex++];
+	}
+
+	PinState<daisy::GPIO> &GetDigitalPinState(uint8 Pin)
+	{
+		return m_DigitalPins[GetDigitalPinIndex(Pin)];
+	}
+
+	const PinState<daisy::GPIO> &GetDigitalPinState(uint8 Pin) const
+	{
+		return m_DigitalPins[GetDigitalPinIndex(Pin)];
 	}
 
 	uint8 GetDigitalPinIndex(uint8 Pin) const
