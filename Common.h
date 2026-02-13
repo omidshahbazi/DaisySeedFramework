@@ -106,13 +106,22 @@ public:
 	typedef uint64 DataType;
 
 public:
-	uint8 Width;
+	uint8 MaxWidth;
 	uint8 Height;
 	const DataType *const Data;
 	float Scale;
 	uint8 BitsPerPixel;
 	char FirstCharacter;
 	char LastCharacter;
+	bool HasWidth;
+
+public:
+	static constexpr Font CreateScaled(const Font& ReferenceFont, uint8 TargetHeight)
+	{
+		Font font = ReferenceFont;
+		font.Scale = (float)TargetHeight / ReferenceFont.Height;
+		return font;
+	}
 };
 
 #include "libDaisy/src/dev/sdram.h"
