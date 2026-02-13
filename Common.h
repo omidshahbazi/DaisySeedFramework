@@ -113,7 +113,7 @@ public:
 	uint8 BitsPerPixel;
 	char FirstCharacter;
 	char LastCharacter;
-	bool HasWidth;
+	bool HasGlyphData;
 
 public:
 	static constexpr Font CreateScaled(const Font& ReferenceFont, uint8 TargetHeight)
