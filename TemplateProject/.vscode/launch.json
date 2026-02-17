@@ -60,9 +60,7 @@
       "servertype": "openocd",
       "showDevDebugOutput": "both",
       "svdFile": "${workspaceRoot}/.vscode/STM32H750x.svd",
-      "type": "cortex-debug",
-      "comment1": "Connect ST-Link as well as the Internal USB, put daisy in DFU program mode, then run through this",
-      "comment2": "https://forum.electro-smith.com/t/out-of-flash-memory-walkthrough-with-samples/4370"
+      "type": "cortex-debug"
     },
     {
       "configFiles": [
@@ -93,9 +91,7 @@
       "servertype": "openocd",
       "showDevDebugOutput": "both",
       "svdFile": "${workspaceRoot}/.vscode/STM32H750x.svd",
-      "type": "cortex-debug",
-      "comment1": "Connect ST-Link as well as the Internal USB, put daisy in DFU program mode, then run through this",
-      "comment2": "https://forum.electro-smith.com/t/out-of-flash-memory-walkthrough-with-samples/4370"
+      "type": "cortex-debug"
     },
     {
       "configFiles": [
@@ -126,9 +122,37 @@
       "servertype": "openocd",
       "showDevDebugOutput": "both",
       "svdFile": "${workspaceRoot}/.vscode/STM32H750x.svd",
-      "type": "cortex-debug",
-      "comment1": "Connect ST-Link as well as the Internal USB, put daisy in DFU program mode, then run through this",
-      "comment2": "https://forum.electro-smith.com/t/out-of-flash-memory-walkthrough-with-samples/4370"
+      "type": "cortex-debug"
+    },
+    {
+      "configFiles": [
+        "interface/stlink.cfg",
+        "target/stm32h7x.cfg"
+      ],
+      "cwd": "${workspaceFolder}",
+      "debuggerArgs": [
+        "-d",
+        "${workspaceRoot}"
+      ],
+      "executable": "${workspaceRoot}/build/GuitarMultiEffect.elf",
+      "interface": "swd",
+      "name": "Attach to Process",
+      "openOCDLaunchCommands": [
+        "init",
+        "reset init",
+        "gdb_breakpoint_override hard"
+      ],
+      "preRestartCommands": [
+        "load",
+        "enable breakpoint",
+        "monitor reset"
+      ],
+      "request": "launch",
+      "runToEntryPoint": "main",
+      "servertype": "openocd",
+      "showDevDebugOutput": "both",
+      "svdFile": "${workspaceRoot}/.vscode/STM32H750x.svd",
+      "type": "cortex-debug"
     }
   ],
   "version": "0.2.0"
