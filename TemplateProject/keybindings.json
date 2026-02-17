@@ -3,6 +3,6 @@
     {
         "key": "F4",
         "command": "workbench.action.tasks.runTask",
-        "args": "build and program debug (QSPI)"
+        "args": "build and program debug (SRAM)"
     }
 ]
