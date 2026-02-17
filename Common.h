@@ -126,6 +126,4 @@ public:
 
 #include "libDaisy/src/dev/sdram.h"
 
-#define DEFINE_LARGE_MEMORY_BUFFER(Name, Size) \
-	static constexpr uint32 Name##_Size = Size; \
-	uint8 DSY_SDRAM_BSS g_##Name[Name##_Size];
+#define DEFINE_LARGE_MEMORY_BUFFER(Name, Size) static constexpr uint32 Name##_Size = Size; uint8 DSY_SDRAM_BSS g_##Name[Name##_Size];

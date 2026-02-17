@@ -5,15 +5,13 @@
       "compilerPath": "arm-none-eabi-g++.exe",
       "cppStandard": "c++17",
       "defines": [
-        "DEBUG",
         "UNICODE", 
-        "_UNICODE",
-        "USE_SRAM=0"
+        "_UNICODE"
       ],
       "includePath": [
         "${workspaceFolder}/include/**",
-        "${workspaceFolder}/../../include/DaisySeedFramework/**",
-        "${workspaceFolder}/../../include/DaisySeedFramework/libDaisy/**"
+        "${workspaceFolder}/include/framework/**",
+        "${workspaceFolder}/include/framework/libDaisy/**"
       ],
       "name": "Win32",
       "intelliSenseMode": "gcc-x64",

@@ -1,0 +1,8 @@
+// Place your key bindings in this file to override the defaults
+[
+    {
+        "key": "F4",
+        "command": "workbench.action.tasks.runTask",
+        "args": "build and program debug (QSPI)"
+    }
+]

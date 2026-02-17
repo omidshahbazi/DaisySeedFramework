@@ -1,11 +1,12 @@
 {
   "tasks": [
+    
     {
-      "command": "make clean; make",
+      "command": "make clean; USE_FLASH=1 make; USE_FLASH=1 make program-dfu",
       "dependsOn": [
         "build libdaisy"
       ],
-      "label": "build release",
+      "label": "build and program release (FLASH)",
       "options": {
         "cwd": "${workspaceFolder}"
       },
@@ -27,11 +28,11 @@
       "type": "shell"
     },
     {
-      "command": "make clean; DEBUG=1 make",
+      "command": "make clean; DEBUG=1 USE_FLASH=1 make; USE_FLASH=1 make program-dfu",
       "dependsOn": [
         "build libdaisy"
       ],
-      "label": "build debug",
+      "label": "build and program debug (FLASH)",
       "options": {
         "cwd": "${workspaceFolder}"
       },
@@ -105,7 +106,7 @@
       "type": "shell"
     },
     {
-      "command": "make clean; USE_SRAM=0 make; USE_SRAM=0 make program-dfu",
+      "command": "make clean; USE_QSPI=1 make; USE_QSPI=1 make program-dfu",
       "dependsOn": [
         "build libdaisy"
       ],
@@ -131,7 +132,7 @@
       "type": "shell"
     },
     {
-      "command": "make clean; DEBUG=1 USE_SRAM=0 make; USE_SRAM=0 make program-dfu",
+      "command": "make clean; DEBUG=1 USE_QSPI=1 make; USE_QSPI=1 make program-dfu",
       "dependsOn": [
         "build libdaisy"
       ],
@@ -157,11 +158,11 @@
       "type": "shell"
     },
     {
-      "command": "make clean; make; make program",
+      "command": "make clean; DEBUG=1 USE_FLASH=1 DEBUGGER_PRESENT=1 make",
       "dependsOn": [
         "build libdaisy"
       ],
-      "label": "build and program release ST-Link",
+      "label": "build and debug (ST-Link) (Flash)",
       "options": {
         "cwd": "${workspaceFolder}"
       },
@@ -183,11 +184,63 @@
       "type": "shell"
     },
     {
-      "command": "make clean;DEBUG=1 make; DEBUG=1 make program",
+      "command": "make clean; DEBUG=1 USE_FLASH=1 DEBUGGER_PRESENT=1 make; DEBUG=1 USE_FLASH=1 DEBUGGER_PRESENT=1 make program-dfu",
       "dependsOn": [
         "build libdaisy"
       ],
-      "label": "build and program debug ST-Link",
+      "label": "build, program and debug (DFU) (Flash)",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": {
+          "owner": "cpp",
+          "fileLocation": [
+              "relative",
+              "${workspaceRoot}"
+          ],
+          "pattern": {
+              "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+              "file": 1,
+              "line": 2,
+              "column": 3,
+              "severity": 4,
+              "message": 5
+          }
+      },
+      "type": "shell"
+    },
+    {
+      "command": "make clean; DEBUG=1 USE_SRAM=1 DEBUGGER_PRESENT=1 make; DEBUG=1 USE_SRAM=1 DEBUGGER_PRESENT=1 make program-dfu",
+      "dependsOn": [
+        "build libdaisy"
+      ],
+      "label": "build, program and debug (DFU) (SRAM)",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": {
+          "owner": "cpp",
+          "fileLocation": [
+              "relative",
+              "${workspaceRoot}"
+          ],
+          "pattern": {
+              "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+              "file": 1,
+              "line": 2,
+              "column": 3,
+              "severity": 4,
+              "message": 5
+          }
+      },
+      "type": "shell"
+    },
+    {
+      "command": "make clean; DEBUG=1 USE_QSPI=1 DEBUGGER_PRESENT=1 make; DEBUG=1 USE_QSPI=1 DEBUGGER_PRESENT=1 make program-dfu",
+      "dependsOn": [
+        "build libdaisy"
+      ],
+      "label": "build, program and debug (DFU) (QSPI)",
       "options": {
         "cwd": "${workspaceFolder}"
       },
