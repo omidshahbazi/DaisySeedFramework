@@ -136,7 +136,7 @@
       ],
       "executable": "${workspaceRoot}/build/GuitarMultiEffect.elf",
       "interface": "swd",
-      "name": "Attach to Process",
+      "name": "Attach to Process (FLASH, SRAM)",
       "openOCDLaunchCommands": [
         "init",
         "reset init",
