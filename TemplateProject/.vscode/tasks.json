@@ -1,292 +1,8 @@
 {
   "tasks": [
-    
     {
-      "command": "make clean; USE_FLASH=1 make; USE_FLASH=1 make program-dfu",
-      "dependsOn": [
-        "build libdaisy"
-      ],
-      "label": "build and program release (FLASH)",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": {
-          "owner": "cpp",
-          "fileLocation": [
-              "relative",
-              "${workspaceRoot}"
-          ],
-          "pattern": {
-              "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
-              "file": 1,
-              "line": 2,
-              "column": 3,
-              "severity": 4,
-              "message": 5
-          }
-      },
-      "type": "shell"
-    },
-    {
-      "command": "make clean; DEBUG=1 USE_FLASH=1 make; USE_FLASH=1 make program-dfu",
-      "dependsOn": [
-        "build libdaisy"
-      ],
-      "label": "build and program debug (FLASH)",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": {
-          "owner": "cpp",
-          "fileLocation": [
-              "relative",
-              "${workspaceRoot}"
-          ],
-          "pattern": {
-              "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
-              "file": 1,
-              "line": 2,
-              "column": 3,
-              "severity": 4,
-              "message": 5
-          }
-      },
-      "type": "shell"
-    },
-    {
-      "command": "make clean; USE_SRAM=1 make; USE_SRAM=1 make program-dfu",
-      "dependsOn": [
-        "build libdaisy"
-      ],
-      "label": "build and program release (SRAM)",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": {
-          "owner": "cpp",
-          "fileLocation": [
-              "relative",
-              "${workspaceRoot}"
-          ],
-          "pattern": {
-              "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
-              "file": 1,
-              "line": 2,
-              "column": 3,
-              "severity": 4,
-              "message": 5
-          }
-      },
-      "type": "shell"
-    },
-    {
-      "command": "make clean; DEBUG=1 USE_SRAM=1 make; USE_SRAM=1 make program-dfu",
-      "dependsOn": [
-        "build libdaisy"
-      ],
-      "label": "build and program debug (SRAM)",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": {
-          "owner": "cpp",
-          "fileLocation": [
-              "relative",
-              "${workspaceRoot}"
-          ],
-          "pattern": {
-              "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
-              "file": 1,
-              "line": 2,
-              "column": 3,
-              "severity": 4,
-              "message": 5
-          }
-      },
-      "type": "shell"
-    },
-    {
-      "command": "make clean; USE_QSPI=1 make; USE_QSPI=1 make program-dfu",
-      "dependsOn": [
-        "build libdaisy"
-      ],
-      "label": "build and program release (QSPI)",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": {
-          "owner": "cpp",
-          "fileLocation": [
-              "relative",
-              "${workspaceRoot}"
-          ],
-          "pattern": {
-              "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
-              "file": 1,
-              "line": 2,
-              "column": 3,
-              "severity": 4,
-              "message": 5
-          }
-      },
-      "type": "shell"
-    },
-    {
-      "command": "make clean; DEBUG=1 USE_QSPI=1 make; USE_QSPI=1 make program-dfu",
-      "dependsOn": [
-        "build libdaisy"
-      ],
-      "label": "build and program debug (QSPI)",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": {
-          "owner": "cpp",
-          "fileLocation": [
-              "relative",
-              "${workspaceRoot}"
-          ],
-          "pattern": {
-              "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
-              "file": 1,
-              "line": 2,
-              "column": 3,
-              "severity": 4,
-              "message": 5
-          }
-      },
-      "type": "shell"
-    },
-    {
-      "command": "make clean; DEBUG=1 USE_FLASH=1 DEBUGGER_PRESENT=1 make",
-      "dependsOn": [
-        "build libdaisy"
-      ],
-      "label": "build and debug (ST-Link) (Flash)",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": {
-          "owner": "cpp",
-          "fileLocation": [
-              "relative",
-              "${workspaceRoot}"
-          ],
-          "pattern": {
-              "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
-              "file": 1,
-              "line": 2,
-              "column": 3,
-              "severity": 4,
-              "message": 5
-          }
-      },
-      "type": "shell"
-    },
-    {
-      "command": "make clean; DEBUG=1 USE_FLASH=1 DEBUGGER_PRESENT=1 make; DEBUG=1 USE_FLASH=1 DEBUGGER_PRESENT=1 make program-dfu",
-      "dependsOn": [
-        "build libdaisy"
-      ],
-      "label": "build, program and debug (DFU) (Flash)",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": {
-          "owner": "cpp",
-          "fileLocation": [
-              "relative",
-              "${workspaceRoot}"
-          ],
-          "pattern": {
-              "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
-              "file": 1,
-              "line": 2,
-              "column": 3,
-              "severity": 4,
-              "message": 5
-          }
-      },
-      "type": "shell"
-    },
-    {
-      "command": "make clean; DEBUG=1 USE_SRAM=1 DEBUGGER_PRESENT=1 make; DEBUG=1 USE_SRAM=1 DEBUGGER_PRESENT=1 make program-dfu",
-      "dependsOn": [
-        "build libdaisy"
-      ],
-      "label": "build, program and debug (DFU) (SRAM)",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": {
-          "owner": "cpp",
-          "fileLocation": [
-              "relative",
-              "${workspaceRoot}"
-          ],
-          "pattern": {
-              "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
-              "file": 1,
-              "line": 2,
-              "column": 3,
-              "severity": 4,
-              "message": 5
-          }
-      },
-      "type": "shell"
-    },
-    {
-      "command": "make clean; DEBUG=1 USE_QSPI=1 DEBUGGER_PRESENT=1 make; DEBUG=1 USE_QSPI=1 DEBUGGER_PRESENT=1 make program-dfu",
-      "dependsOn": [
-        "build libdaisy"
-      ],
-      "label": "build, program and debug (DFU) (QSPI)",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": {
-          "owner": "cpp",
-          "fileLocation": [
-              "relative",
-              "${workspaceRoot}"
-          ],
-          "pattern": {
-              "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
-              "file": 1,
-              "line": 2,
-              "column": 3,
-              "severity": 4,
-              "message": 5
-          }
-      },
-      "type": "shell"
-    },
-    {
-      "command": "make",
-      "label": "build libdaisy",
-      "options": {
-        "cwd": "${workspaceFolder}/../../DaisySeedFramework/libDaisy"
-      },
-      "problemMatcher": {
-          "owner": "cpp",
-          "fileLocation": [
-              "relative",
-              "${workspaceRoot}"
-          ],
-          "pattern": {
-              "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
-              "file": 1,
-              "line": 2,
-              "column": 3,
-              "severity": 4,
-              "message": 5
-          }
-      },
-      "type": "shell"
-    },
-    {
-      "command": "make program-boot",
-      "label": "program bootloader",
+      "command": "make clean",
+      "label": "Clean",
       "options": {
         "cwd": "${workspaceFolder}"
       },
@@ -294,6 +10,344 @@
         "$gcc"
       ],
       "type": "shell"
+    },
+    {
+      "command": "make",
+      "label": "Build libDaisy",
+      "options": {
+        "cwd": "${workspaceFolder}/include/framework/libDaisy"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "type": "shell"
+    },
+    {
+      "command": "USE_FLASH=1 make",
+      "label": "Build (Release) (FLASH)",
+      "dependsOn": [
+        "Build libDaisy"
+      ],
+      "dependsOrder": "sequence",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "type": "shell"
+    },
+    {
+      "command": "DEBUG=1 USE_FLASH=1 make",
+      "label": "Build (Debug) (FLASH)",
+      "dependsOn": [
+        "Build libDaisy"
+      ],
+      "dependsOrder": "sequence",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "type": "shell"
+    },
+    {
+      "command": "DEBUG=1 USE_FLASH=1 DEBUGGER_PRESENT=1 make",
+      "label": "Build (Debugger) (FLASH)",
+      "dependsOn": [
+        "Build libDaisy"
+      ],
+      "dependsOrder": "sequence",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "type": "shell"
+    },
+    {
+      "command": "USE_SRAM=1 make",
+      "label": "Build (Release) (SRAM)",
+      "dependsOn": [
+        "Build libDaisy"
+      ],
+      "dependsOrder": "sequence",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "type": "shell"
+    },
+    {
+      "command": "DEBUG=1 USE_SRAM=1 make",
+      "label": "Build (Debug) (SRAM)",
+      "dependsOn": [
+        "Build libDaisy"
+      ],
+      "dependsOrder": "sequence",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "type": "shell"
+    },
+    {
+      "command": "DEBUG=1 USE_SRAM=1 DEBUGGER_PRESENT=1 make",
+      "label": "Build (Debugger) (SRAM)",
+      "dependsOn": [
+        "Build libDaisy"
+      ],
+      "dependsOrder": "sequence",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "type": "shell"
+    },
+    {
+      "command": "USE_QSPI=1 make",
+      "label": "Build (Release) (QSPI)",
+      "dependsOn": [
+        "Build libDaisy"
+      ],
+      "dependsOrder": "sequence",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "type": "shell"
+    },
+    {
+      "command": "DEBUG=1 USE_QSPI=1 make",
+      "label": "Build (Debug) (QSPI)",
+      "dependsOn": [
+        "Build libDaisy"
+      ],
+      "dependsOrder": "sequence",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "type": "shell"
+    },
+    {
+      "command": "DEBUG=1 USE_QSPI=1 DEBUGGER_PRESENT=1 make",
+      "label": "Build (Debugger) (QSPI)",
+      "dependsOn": [
+        "Build libDaisy"
+      ],
+      "dependsOrder": "sequence",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "type": "shell"
+    },
+    {
+      "command": "make program-boot",
+      "label": "Program Bootloader",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "type": "shell"
+    },
+    {
+      "command": "make program-dfu",
+      "label": "Program (DFU)",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "type": "shell"
+    },
+    {
+      "label": "Build and Program (Release) (FLASH)",
+      "dependsOn": [
+        "Build (Release) (FLASH)",
+        "Program (DFU)"
+      ],
+      "dependsOrder": "sequence",
+    },
+    {
+      "label": "Clean Build and Program (Release) (FLASH)",
+      "dependsOn": [
+        "Clean",
+        "Build (Release) (FLASH)",
+        "Program (DFU)"
+      ],
+      "dependsOrder": "sequence",
+    },
+    {
+      "label": "Build and Program (Debug) (FLASH)",
+      "dependsOn": [
+        "Build (Debug) (FLASH)",
+        "Program (DFU)"
+      ],
+      "dependsOrder": "sequence",
+    },
+    {
+      "label": "Clean Build and Program (Debug) (FLASH)",
+      "dependsOn": [
+        "Clean",
+        "Build (Debug) (FLASH)",
+        "Program (DFU)"
+      ],
+      "dependsOrder": "sequence",
+    },
+    {
+      "label": "Build and Program (Release) (SRAM)",
+      "dependsOn": [
+        "Build (Release) (SRAM)",
+        "Program (DFU)"
+      ],
+      "dependsOrder": "sequence",
+    },
+    {
+      "label": "Clean Build and Program (Release) (SRAM)",
+      "dependsOn": [
+        "Clean",
+        "Build (Release) (SRAM)",
+        "Program (DFU)"
+      ],
+      "dependsOrder": "sequence",
+    },
+    {
+      "label": "Build and Program (Debug) (SRAM)",
+      "dependsOn": [
+        "Build (Debug) (SRAM)",
+        "Program (DFU)"
+      ],
+      "dependsOrder": "sequence",
+    },
+    {
+      "label": "Clean Build and Program (Debug) (SRAM)",
+      "dependsOn": [
+        "Clean",
+        "Build (Debug) (SRAM)",
+        "Program (DFU)"
+      ],
+      "dependsOrder": "sequence",
+    },
+    {
+      "label": "Build and Program (Release) (QSPI)",
+      "dependsOn": [
+        "Build (Release) (QSPI)",
+        "Program (DFU)"
+      ],
+      "dependsOrder": "sequence",
+    },
+    {
+      "label": "Clean Build and Program (Release) (QSPI)",
+      "dependsOn": [
+        "Clean",
+        "Build (Release) (QSPI)",
+        "Program (DFU)"
+      ],
+      "dependsOrder": "sequence",
+    },
+    {
+      "label": "Build and Program (Debug) (QSPI)",
+      "dependsOn": [
+        "Build (Debug) (QSPI)",
+        "Program (DFU)"
+      ],
+      "dependsOrder": "sequence",
+    },
+    {
+      "label": "Clean Build and Program (Debug) (QSPI)",
+      "dependsOn": [
+        "Clean",
+        "Build (Debug) (QSPI)",
+        "Program (DFU)"
+      ],
+      "dependsOrder": "sequence",
+    },
+    {
+      "command": "DEBUG=1 USE_FLASH=1 DEBUGGER_PRESENT=1 make",
+      "label": "Build and Debug (ST-Link) (Flash)",
+      "dependsOn": [
+        "Build (Debugger) (FLASH)"
+      ],
+      "dependsOrder": "sequence",
+    },
+    {
+      "command": "DEBUG=1 USE_FLASH=1 DEBUGGER_PRESENT=1 make",
+      "label": "Clean Build and Debug (ST-Link) (Flash)",
+      "dependsOn": [
+        "Clean",
+        "Build (Debugger) (FLASH)"
+      ],
+      "dependsOrder": "sequence",
+    },
+    {
+      "label": "Build, Program and Debug (DFU) (Flash)",
+      "dependsOn": [
+        "Build (Debugger) (FLASH)",
+        "Program (DFU)"
+      ],
+      "dependsOrder": "sequence",
+    },
+    {
+      "label": "Clean Build, Program and Debug (DFU) (Flash)",
+      "dependsOn": [
+        "Clean",
+        "Build (Debugger) (FLASH)",
+        "Program (DFU)"
+      ],
+      "dependsOrder": "sequence",
+    },
+    {
+      "label": "Build, Program and Debug (DFU) (SRAM)",
+      "dependsOn": [
+        "Build (Debugger) (SRAM)",
+        "Program (DFU)"
+      ],
+      "dependsOrder": "sequence",
+    },
+    {
+      "label": "Clean Build, Program and Debug (DFU) (SRAM)",
+      "dependsOn": [
+        "Clean",
+        "Build (Debugger) (SRAM)",
+        "Program (DFU)"
+      ],
+      "dependsOrder": "sequence",
+    },
+    {
+      "label": "Build, Program and Debug (DFU) (QSPI)",
+      "dependsOn": [
+        "Build (Debugger) (QSPI)",
+        "Program (DFU)"
+      ],
+      "dependsOrder": "sequence",
+    },
+    {
+      "label": "Clean Build, Program and Debug (DFU) (QSPI)",
+      "dependsOn": [
+        "Clean",
+        "Build (Debugger) (QSPI)",
+        "Program (DFU)"
+      ],
+      "dependsOrder": "sequence",
     }
   ],
   "version": "2.0.0"

@@ -3,6 +3,11 @@
     {
         "key": "F4",
         "command": "workbench.action.tasks.runTask",
-        "args": "build and program debug (SRAM)"
+        "args": "Build and Program (Debug) (SRAM)"
+    },
+    {
+        "key": "F8",
+        "command": "workbench.action.tasks.runTask",
+        "args": "Clean Build and Program (Debug) (SRAM)"
     }
 ]
