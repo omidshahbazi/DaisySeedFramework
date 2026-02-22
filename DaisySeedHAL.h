@@ -91,6 +91,9 @@ class DaisySeedHAL : public DaisySeedHALBase, public IHAL
 {
 	static_assert(PersistentSlotCount == 0 || PersistentSlotSize != 0, "PersistentSlotSize must be greater than zero");
 
+public:
+	typedef void (*CrashHandler)(void);
+
 private:
 	template <typename T>
 	struct PinState
@@ -129,8 +132,9 @@ private:
 	};
 
 public:
-	DaisySeedHAL(daisy::DaisySeed *Hardware, void *SDRAMAddress = nullptr, uint32 SDRAMSize = 0)
+	DaisySeedHAL(daisy::DaisySeed *Hardware, void *SDRAMAddress = nullptr, uint32 SDRAMSize = 0, CrashHandler CrashHandler = nullptr)
 		: m_Hardware(Hardware),
+		  m_CrashHandler(CrashHandler),
 		  m_USBInterface(Hardware),
 		  m_SDRAMAddress(reinterpret_cast<uint8 *>(SDRAMAddress)),
 		  m_SDRAMSize(SDRAMSize),
@@ -149,13 +153,13 @@ public:
 
 		SetPWMResolution(16);
 	}
-	
+
 	void Setup(uint8 FrameLength, uint32 SampleRate, bool Boost, bool USBTransmissionMode, bool WaitForDebugger) override
 	{
 		m_Hardware->Init(Boost);
 		m_Hardware->SetAudioBlockSize(FrameLength);
 
-   		m_Hardware->StartLog(WaitForDebugger);
+		m_Hardware->StartLog(WaitForDebugger);
 
 		if (USBTransmissionMode)
 			m_USBInterface.Start();
@@ -434,14 +438,25 @@ public:
 
 		const uint16 Code = 1;
 
-		m_USBInterface.Transmit((const uint8*)&Code, sizeof(Code));
-		m_USBInterface.Transmit((const uint8*)Value, GetStringLength(Value));
+		m_USBInterface.Transmit((const uint8 *)&Code, sizeof(Code));
+		m_USBInterface.Transmit((const uint8 *)Value, GetStringLength(Value));
+	}
+
+	void Crash(void) const override
+	{
+		Delay(1000);
+
+		if (m_CrashHandler != nullptr)
+		{
+			m_CrashHandler();
+			return;
+		}
+
+		Break();
 	}
 
 	void Break(void) const override
 	{
-		Delay(1000);
-
 		asm("bkpt 255");
 
 		while (1)
@@ -450,12 +465,17 @@ public:
 		}
 	}
 
+	void Reset(void) const override
+	{
+		daisy::System::ResetToBootloader(daisy::System::BootloaderMode::DAISY_INFINITE_TIMEOUT);
+	}
+
 	void Delay(uint16 Ms) const override
 	{
 		daisy::System::Delay(Ms);
 	}
 
-	IUSBInterface* GetUSBInterface(void) override
+	IUSBInterface *GetUSBInterface(void) override
 	{
 		return &m_USBInterface;
 	}
@@ -526,7 +546,7 @@ private:
 
 			return &state;
 		}
-		
+
 		return nullptr;
 	}
 
@@ -539,7 +559,7 @@ private:
 
 			return &state;
 		}
-		
+
 		return nullptr;
 	}
 
@@ -606,6 +626,8 @@ private:
 
 private:
 	daisy::DaisySeed *m_Hardware;
+	CrashHandler m_CrashHandler;
+
 	DaisyUSBInterface m_USBInterface;
 
 	uint8 *m_SDRAMAddress;

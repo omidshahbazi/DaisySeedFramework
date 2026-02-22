@@ -470,7 +470,7 @@ private:
 		if (Result != daisy::SpiHandle::Result::OK)
 			return;
 
-		auto *thisPtr = static_cast<ILI9341_HAL *>(Context);
+		ILI9341_HAL *thisPtr = static_cast<ILI9341_HAL *>(Context);
 
 		thisPtr->m_FrameBufferDirty[thisPtr->m_LastFrameBufferDirtyIndex] = false;
 

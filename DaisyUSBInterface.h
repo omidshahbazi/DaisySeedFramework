@@ -3,6 +3,7 @@
 #define DAISY_USB_INTERFACE_H
 
 #include "DSP/IUSBInterface.h"
+#include "StaticStack.h"
 #include <daisy_seed.h>
 
 class DaisyUSBInterface : public IUSBInterface
@@ -12,7 +13,7 @@ class DaisyUSBInterface : public IUSBInterface
 
 private:
 	typedef daisy::FixedCapStr<1024> BufferType;
-	typedef daisy::FIFO<BufferType, 4> StackType;
+	typedef StaticStack<BufferType, 4> StackType;
 
 private:
 	DaisyUSBInterface(daisy::DaisySeed *Hardware)
@@ -36,7 +37,7 @@ private:
 		   
 		   m_Callback((const uint8*)buffer.Cstr(), buffer.Size());
 		   
-		   GetStack()->PopFront();
+		   GetStack()->Pop();
         }
 	}
 
@@ -60,7 +61,7 @@ private:
 		if (Length == 0)
 			return;
 
-		GetStack()->PushBack(BufferType((const char *)Buffer, *Length));
+		GetStack()->Push(BufferType((const char *)Buffer, *Length));
 	}
 
 	static StackType *GetStack(void)
