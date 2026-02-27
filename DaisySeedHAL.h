@@ -92,7 +92,7 @@ class DaisySeedHAL : public DaisySeedHALBase, public IHAL
 	static_assert(PersistentSlotCount == 0 || PersistentSlotSize != 0, "PersistentSlotSize must be greater than zero");
 
 public:
-	typedef void (*CrashHandler)(void);
+	typedef void (*CrashHandler)(const IHAL* HAL);
 
 private:
 	template <typename T>
@@ -448,7 +448,7 @@ public:
 
 		if (m_CrashHandler != nullptr)
 		{
-			m_CrashHandler();
+			m_CrashHandler(this);
 			return;
 		}
 

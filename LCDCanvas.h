@@ -12,7 +12,7 @@ class LCDCanvas
 {
 #define DEFINE_GLYPH_VALUES()                                                                                    \
 	const uint8 BitsInDataType = sizeof(Font::DataType) * 8;                                                     \
-	const uint8 Pitch = Math::Max(1, (Font.Height * Font.BitsPerPixel) / BitsInDataType);                        \
+	const uint8 Pitch = Math::Max(1, Math::Ceil((Font.Height * Font.BitsPerPixel) / (float)BitsInDataType));     \
 	const uint8 CharIndex = Character - Font.FirstCharacter;                                                     \
 	const uint8 GlyphDataElementOffset = (Font.HasGlyphData ? 1 : 0);                                            \
 	const Font::DataType *CharData = Font.Data + (CharIndex * (GlyphDataElementOffset + (Font.Height * Pitch))); \
@@ -496,16 +496,15 @@ public:
 		return totalDimensions;
 	}
 
-	void DrawBitmap(uint16 X, uint16 Y, const Bitmap &Bitmap, Color Color)
+	void DrawBitmap(uint16 X, uint16 Y, const Bitmap &Bitmap, Color Color, float Scale = 1)
 	{
 		const uint8 CHANNEL_VALUES[] = {0, 255, 85, 170};
 
 		const uint8 BitsInDataType = sizeof(Bitmap::DataType) * 8;
-		const uint8 Pitch = Math::Max(1, (Bitmap.Height * Bitmap.BitsPerPixel) / BitsInDataType);
+		const uint8 Pitch = Math::Max(1, Math::Ceil(((float)Bitmap.Width * Bitmap.BitsPerPixel) / BitsInDataType));
 
 		const uint8 BitsPerValue = Math::Min(2, Bitmap.BitsPerPixel);
 		const uint8 Mask = (1 << BitsPerValue) - 1;
-		const float Scale = 1;
 		const uint16 TargetWidth = Bitmap.Width * Scale;
 		const uint16 TargetHeight = Bitmap.Height * Scale;
 
@@ -531,12 +530,27 @@ public:
 				{
 					bitIndex += BitsPerValue;
 					value = CHANNEL_VALUES[(data >> bitIndex) & Mask];
-					
+
 					color *= value;
 				}
 
 				DrawPixel(X + tx, Y + ty, color);
 			}
+	}
+
+	void DrawFontBitmap(uint16 X, uint16 Y, uint8 ID, const Font &Font, Color Color, float Scale = 1)
+	{
+		::Font font = Font;
+		font.Scale = Scale;
+
+		DrawCharacter(X, Y, ID, font, Color);
+	}
+
+	Point MeasureFontBitmapDimension(uint8 ID, const Font &Font)
+	{
+		Point dimensions = GetCharacterDimesion(ID, Font, false);
+
+		return {TO_UINT16(dimensions.X + Font.Scale), TO_UINT16(dimensions.Y * Font.Scale)};
 	}
 
 	void DrawPixel(Point Position, Color Color)
@@ -604,9 +618,14 @@ public:
 		DrawString(Position.X, Position.Y, String, Length, Font, Color);
 	}
 
-	void DrawBitmap(Point Position, const Bitmap &Bitmap, Color Color)
+	void DrawBitmap(Point Position, const Bitmap &Bitmap, Color Color, float Scale = 1)
 	{
-		DrawBitmap(Position.X, Position.Y, Bitmap, Color);
+		DrawBitmap(Position.X, Position.Y, Bitmap, Color, Scale);
+	}
+
+	void DrawFontBitmap(Point Position, uint8 ID, const Font &Font, Color Color, float Scale = 1)
+	{
+		DrawFontBitmap(Position.X, Position.Y, ID, Font, Color, Scale);
 	}
 
 	void SetStringSpacing(int8 Character, int8 Line)
