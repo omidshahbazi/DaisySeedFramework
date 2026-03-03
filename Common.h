@@ -65,15 +65,76 @@ public:
 	{
 	}
 
-	Point(uint16 X, uint16 Y)
-		: X(X),
-		  Y(Y)
+	template <typename T, typename U>
+	Point(T X, U Y)
+		: X(static_cast<int16>(X)),
+		  Y(static_cast<int16>(Y))
 	{
 	}
 
+	template <typename T>
+	Point operator*(T Value) const
+	{
+		Point point = *this;
+		point *= Value;
+		return point;
+	}
+
+	Point operator+(Point Other) const
+	{
+		Point point = *this;
+		point += Other;
+		return point;
+	}
+
+	template <typename T>
+	Point operator+(T Value) const
+	{
+		Point point = *this;
+		point += Value;
+		return point;
+	}
+
+	Point operator-(Point Other) const
+	{
+		Point point = *this;
+		point -= Other;
+		return point;
+	}
+
+	template <typename T>
+	Point &operator*=(T Value)
+	{
+		X *= Value;
+		Y *= Value;
+		return *this;
+	}
+
+	Point &operator+=(Point Other)
+	{
+		X += Other.X;
+		Y += Other.Y;
+		return *this;
+	}
+
+	Point &operator-=(Point Other)
+	{
+		X -= Other.X;
+		Y -= Other.Y;
+		return *this;
+	}
+
+	template <typename T>
+	Point &operator+=(T Value)
+	{
+		X += Value;
+		Y += Value;
+		return *this;
+	}
+
 public:
-	uint16 X;
-	uint16 Y;
+	int16 X;
+	int16 Y;
 };
 
 struct Rect
@@ -89,7 +150,7 @@ public:
 	{
 	}
 
-	Rect(uint16 X, uint16 Y, uint16 Width, uint16 Height)
+	Rect(int16 X, int16 Y, int16 Width, int16 Height)
 		: Position(X, Y),
 		  Dimension(Width, Height)
 	{
@@ -111,12 +172,11 @@ public:
 	const DataType *const Data;
 	float Scale;
 	uint8 BitsPerPixel;
-	char FirstCharacter;
-	char LastCharacter;
 	bool HasGlyphData;
+	cstr Glyphs;
 
 public:
-	static constexpr Font CreateScaled(const Font& ReferenceFont, uint8 TargetHeight)
+	static constexpr Font CreateScaled(const Font &ReferenceFont, uint8 TargetHeight)
 	{
 		Font font = ReferenceFont;
 		font.Scale = (float)TargetHeight / ReferenceFont.Height;
@@ -138,4 +198,6 @@ public:
 
 #include "libDaisy/src/dev/sdram.h"
 
-#define DEFINE_LARGE_MEMORY_BUFFER(Name, Size) static constexpr uint32 Name##_Size = Size; uint8 DSY_SDRAM_BSS g_##Name[Name##_Size];
+#define DEFINE_LARGE_MEMORY_BUFFER(Name, Size)  \
+	static constexpr uint32 Name##_Size = Size; \
+	uint8 DSY_SDRAM_BSS g_##Name[Name##_Size];

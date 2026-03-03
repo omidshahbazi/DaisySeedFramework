@@ -116,7 +116,7 @@ public:
 	}
 
 private:
-	void PaintPixel(uint16 X, uint16 Y, uint16 R5G6B5, uint8 Alpha)
+	void PaintPixel(int16 X, int16 Y, uint16 R5G6B5, uint8 Alpha)
 	{
 		uint32 index = X + (Y * m_Dimension.X);
 
