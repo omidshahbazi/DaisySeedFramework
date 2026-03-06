@@ -92,7 +92,7 @@ class DaisySeedHAL : public DaisySeedHALBase, public IHAL
 	static_assert(PersistentSlotCount == 0 || PersistentSlotSize != 0, "PersistentSlotSize must be greater than zero");
 
 public:
-	typedef void (*CrashHandler)(const IHAL* HAL);
+	typedef void (*CrashHandler)(const IHAL *HAL);
 
 private:
 	template <typename T>
@@ -146,7 +146,9 @@ public:
 		  m_LastFreePWMPinIndex(0),
 		  m_PWMResolution(0),
 		  m_PWMMaxDutyCycle(0),
-		  m_PersistentStorage(m_Hardware->qspi)
+		  m_PersistentStorage(m_Hardware->qspi),
+		  m_PersistentStorageSaveRequested(false),
+		  m_PersistentStorageSaveTime(0)
 	{
 		ASSERT(SDRAMSize == 0 || SDRAMAddress != nullptr, "SDRAMAddress cannot be null");
 		ASSERT(SDRAMAddress == nullptr || SDRAMSize > 0, "SDRAMSize cannot be zero");
@@ -417,9 +419,10 @@ public:
 		m_PersistentStorage.RestoreDefaults();
 	}
 
-	void SavePersistentData(void) override
+	void SavePersistentData(bool Force = false) override
 	{
-		m_PersistentStorage.Save();
+		m_PersistentStorageSaveRequested = true;
+		m_PersistentStorageSaveTime = GetTimeSinceStartup() + (Force ? 0 : 2);
 	}
 
 	uint32 GetTimeSinceStartupMs(void) const override
@@ -516,6 +519,13 @@ protected:
 				pwmPin.CurrentValue -= 1;
 
 			pwmPin.State->Object.Write(pwmPin.CurrentValue < pwmPin.TargetValue ? true : false);
+		}
+
+		if (m_PersistentStorageSaveRequested && m_PersistentStorageSaveTime <= GetTimeSinceStartup())
+		{
+			m_PersistentStorage.Save();
+
+			m_PersistentStorageSaveRequested = false;
 		}
 	}
 
@@ -614,7 +624,7 @@ private:
 			m_PersistentStorage.Init({});
 
 			if (m_PersistentStorage.GetState() == daisy::PersistentStorage<PersistentData>::State::FACTORY)
-				SavePersistentData();
+				SavePersistentData(true);
 
 			isInitialized = true;
 		}
@@ -646,6 +656,8 @@ private:
 	uint32 m_PWMMaxDutyCycle;
 
 	daisy::PersistentStorage<PersistentData> m_PersistentStorage;
+	bool m_PersistentStorageSaveRequested;
+	float m_PersistentStorageSaveTime;
 };
 
 #endif

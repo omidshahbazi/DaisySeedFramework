@@ -72,14 +72,6 @@ public:
 	{
 	}
 
-	template <typename T>
-	Point operator*(T Value) const
-	{
-		Point point = *this;
-		point *= Value;
-		return point;
-	}
-
 	Point operator+(Point Other) const
 	{
 		Point point = *this;
@@ -103,17 +95,55 @@ public:
 	}
 
 	template <typename T>
-	Point &operator*=(T Value)
+	Point operator-(T Value) const
 	{
-		X *= Value;
-		Y *= Value;
-		return *this;
+		Point point = *this;
+		point -= Value;
+		return point;
+	}
+
+	Point operator*(Point Other) const
+	{
+		Point point = *this;
+		point *= Other;
+		return point;
+	}
+
+	template <typename T>
+	Point operator*(T Value) const
+	{
+		Point point = *this;
+		point *= Value;
+		return point;
+	}
+
+	Point operator/(Point Other) const
+	{
+		Point point = *this;
+		point /= Other;
+		return point;
+	}
+
+	template <typename T>
+	Point operator/(T Value) const
+	{
+		Point point = *this;
+		point /= Value;
+		return point;
 	}
 
 	Point &operator+=(Point Other)
 	{
 		X += Other.X;
 		Y += Other.Y;
+		return *this;
+	}
+
+	template <typename T>
+	Point &operator+=(T Value)
+	{
+		X += Value;
+		Y += Value;
 		return *this;
 	}
 
@@ -125,10 +155,40 @@ public:
 	}
 
 	template <typename T>
-	Point &operator+=(T Value)
+	Point &operator-=(T Value)
 	{
-		X += Value;
-		Y += Value;
+		X -= Value;
+		Y -= Value;
+		return *this;
+	}
+
+	Point &operator*=(Point Other)
+	{
+		X *= Other.X;
+		Y *= Other.Y;
+		return *this;
+	}
+
+	template <typename T>
+	Point &operator*=(T Value)
+	{
+		X *= Value;
+		Y *= Value;
+		return *this;
+	}
+
+	Point &operator/=(Point Other)
+	{
+		X /= Other.X;
+		Y /= Other.Y;
+		return *this;
+	}
+
+	template <typename T>
+	Point &operator/=(T Value)
+	{
+		X /= Value;
+		Y /= Value;
 		return *this;
 	}
 
