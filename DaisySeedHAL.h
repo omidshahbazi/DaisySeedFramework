@@ -6,11 +6,16 @@
 #include "DSP/IHAL.h"
 #include "DSP/Math.h"
 #include "DSP/Debug.h"
+#include "DSP/Memory.h"
 #include "DaisyUSBInterface.h"
 #include <daisy_seed.h>
 
 class DaisySeedHALBase
 {
+public:
+	static constexpr uint8 CHANNEL_LEFT = 0;
+	static constexpr uint8 CHANNEL_RIGHT = 1;
+
 public:
 	static daisy::Pin GetPin(uint8 Pin)
 	{
@@ -158,6 +163,8 @@ public:
 
 	void Setup(uint8 FrameLength, uint32 SampleRate, bool Boost, bool USBTransmissionMode, bool WaitForDebugger) override
 	{
+		ASSERT(FrameLength != 0, "Invalid FrameLength %i", FrameLength);
+
 		m_Hardware->Init(Boost);
 		m_Hardware->SetAudioBlockSize(FrameLength);
 
@@ -190,7 +197,7 @@ public:
 			break;
 
 		default:
-			ASSERT(false, "No sutaible sample rate for %i found in the daisy", SAMPLE_RATE);
+			ASSERT(false, "No sutaible sample rate for %i found in the daisy", SampleRate);
 		}
 
 		m_Hardware->SetAudioSampleRate(daisySampleRate);
@@ -503,10 +510,11 @@ protected:
 		}
 	}
 
-	void Update(void)
+	virtual void Update(void)
 	{
 		m_USBInterface.Update();
 
+		const float Time = GetTimeSinceStartup();
 		const uint16 SAMPLE_RATE = 1000;
 		const float STEP = 120.0F / SAMPLE_RATE;
 
@@ -521,7 +529,7 @@ protected:
 			pwmPin.State->Object.Write(pwmPin.CurrentValue < pwmPin.TargetValue ? true : false);
 		}
 
-		if (m_PersistentStorageSaveRequested && m_PersistentStorageSaveTime <= GetTimeSinceStartup())
+		if (m_PersistentStorageSaveRequested && m_PersistentStorageSaveTime <= Time)
 		{
 			m_PersistentStorage.Save();
 
