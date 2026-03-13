@@ -64,3 +64,5 @@ LIBDAISY_DIR ?= include/framework/libDaisy
 SYSTEM_FILES_DIR = $(LIBDAISY_DIR)/core
 
 include $(SYSTEM_FILES_DIR)/Makefile
+
+MAKEFLAGS += -j4

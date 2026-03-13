@@ -8,6 +8,9 @@ template <typename T, uint8 MaxSize>
 struct StaticStack
 {
 public:
+	typedef T ItemType;
+
+public:
 	StaticStack(void)
 		: m_Buffer{},
 		  m_Count(0)
@@ -16,7 +19,7 @@ public:
 
 	void Push(const T &Value)
 	{
-		ASSERT(m_Count + 1 < MaxSize, "Out of Size");
+		ASSERT(m_Count < MaxSize, "Out of Size");
 
 		m_Buffer[m_Count++] = Value;
 	}
@@ -90,14 +93,14 @@ public:
 	{
 		return m_Count == 0;
 	}
-	
+
 	T &operator[](uint8 Index)
 	{
 		ASSERT(Index < MaxSize, "Out of Size");
 
 		return m_Buffer[Index];
 	}
-	
+
 	const T &operator[](uint8 Index) const
 	{
 		ASSERT(Index < MaxSize, "Out of Size");
