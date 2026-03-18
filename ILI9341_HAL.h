@@ -48,6 +48,7 @@ public:
 	{
 		m_FrameBuffer = Memory::Allocate<uint16>(FRAME_BUFFER_LENGTH, true);
 		m_FrameBufferDirty = Memory::Allocate<bool>(FRAME_BUFFER_CHUNK_COUNT, true);
+		Clear(ColorBlack);
 
 		InitializeSPI(m_PinSCLK, m_PinMOSI, m_PinNSS, m_PinDC, m_PinRST);
 
@@ -142,22 +143,22 @@ private:
 		spiConfig.clock_phase = daisy::SpiHandle::Config::ClockPhase::ONE_EDGE;
 		spiConfig.nss = daisy::SpiHandle::Config::NSS::HARD_OUTPUT;
 		spiConfig.datasize = 8;
-		spiConfig.pin_config.sclk = DaisySeedHALBase::GetPin((uint8)SCLK);
-		spiConfig.pin_config.mosi = DaisySeedHALBase::GetPin((uint8)MOSI);
-		spiConfig.pin_config.nss = DaisySeedHALBase::GetPin((uint8)NSS);
+		spiConfig.pin_config.sclk = DaisySeedHAL::GetPin((uint8)SCLK);
+		spiConfig.pin_config.mosi = DaisySeedHAL::GetPin((uint8)MOSI);
+		spiConfig.pin_config.nss = DaisySeedHAL::GetPin((uint8)NSS);
 
 		m_SPI.Init(spiConfig);
 
 		daisy::GPIO::Config pinConfig;
 		pinConfig.mode = daisy::GPIO::Mode::OUTPUT;
 
-		pinConfig.pin = DaisySeedHALBase::GetPin((uint8)DC);
+		pinConfig.pin = DaisySeedHAL::GetPin((uint8)DC);
 		m_DC.Init(pinConfig);
 
-		pinConfig.pin = DaisySeedHALBase::GetPin((uint8)RST);
+		pinConfig.pin = DaisySeedHAL::GetPin((uint8)RST);
 		m_RST.Init(pinConfig);
 
-		pinConfig.pin = DaisySeedHALBase::GetPin((uint8)NSS);
+		pinConfig.pin = DaisySeedHAL::GetPin((uint8)NSS);
 		m_CS.Init(pinConfig);
 		m_CS.Write(0);
 	}
@@ -333,6 +334,13 @@ private:
 		// EXIT SLEEP
 		SendCommand(0x11);
 		m_HAL->Delay(100);
+
+		// SET BACKGROUND TO BLACK
+		SetAddressWindow(0, 0, m_Dimension.X - 1, m_Dimension.Y - 1);
+		m_DC.Write(1);
+		uint8_t black[2] = {0, 0};
+		for (uint32_t i = 0; i < (uint32_t)Width * Height; i++)
+			m_SPI.BlockingTransmit(black, 2);
 
 		// TURN ON DISPLAY
 		SendCommand(0x29);

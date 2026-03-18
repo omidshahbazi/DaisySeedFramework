@@ -53,6 +53,21 @@
       "type": "shell"
     },
     {
+      "command": "DEBUG=1 USE_FLASH=1 DEBUGGER_PRESENT=1 OPTIMIZATION_OFF=1 make",
+      "label": "Build (Debugger) (Optimizer Off) (FLASH)",
+      "dependsOn": [
+        "Build libDaisy"
+      ],
+      "dependsOrder": "sequence",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "type": "shell"
+    },
+    {
       "command": "DEBUG=1 USE_FLASH=1 DEBUGGER_PRESENT=1 make",
       "label": "Build (Debugger) (FLASH)",
       "dependsOn": [
@@ -98,6 +113,21 @@
       "type": "shell"
     },
     {
+      "command": "DEBUG=1 USE_SRAM=1 DEBUGGER_PRESENT=1 OPTIMIZATION_OFF=1 make",
+      "label": "Build (Debugger) (Optimizer Off) (SRAM)",
+      "dependsOn": [
+        "Build libDaisy"
+      ],
+      "dependsOrder": "sequence",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "type": "shell"
+    },
+    {
       "command": "DEBUG=1 USE_SRAM=1 DEBUGGER_PRESENT=1 make",
       "label": "Build (Debugger) (SRAM)",
       "dependsOn": [
@@ -130,6 +160,21 @@
     {
       "command": "DEBUG=1 USE_QSPI=1 make",
       "label": "Build (Debug) (QSPI)",
+      "dependsOn": [
+        "Build libDaisy"
+      ],
+      "dependsOrder": "sequence",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "type": "shell"
+    },
+    {
+      "command": "DEBUG=1 USE_QSPI=1 DEBUGGER_PRESENT=1 OPTIMIZATION_OFF=1 make",
+      "label": "Build (Debugger) (Optimizer Off) (QSPI)",
       "dependsOn": [
         "Build libDaisy"
       ],
@@ -282,10 +327,27 @@
       "dependsOrder": "sequence",
     },
     {
+      "command": "DEBUG=1 USE_FLASH=1 DEBUGGER_PRESENT=1 OPTIMIZATION_OFF=1 make",
+      "label": "Build and Debug (ST-Link) (Optimizer Off) (Flash)",
+      "dependsOn": [
+        "Build (Debugger) (Optimizer Off) (FLASH)"
+      ],
+      "dependsOrder": "sequence",
+    },
+    {
       "command": "DEBUG=1 USE_FLASH=1 DEBUGGER_PRESENT=1 make",
       "label": "Build and Debug (ST-Link) (Flash)",
       "dependsOn": [
         "Build (Debugger) (FLASH)"
+      ],
+      "dependsOrder": "sequence",
+    },
+    {
+      "command": "DEBUG=1 USE_FLASH=1 DEBUGGER_PRESENT=1 OPTIMIZATION_OFF=1 make",
+      "label": "Clean Build and Debug (ST-Link) (Optimizer Off) (Flash)",
+      "dependsOn": [
+        "Clean",
+        "Build (Debugger) (Optimizer Off) (FLASH)"
       ],
       "dependsOrder": "sequence",
     },
@@ -299,9 +361,26 @@
       "dependsOrder": "sequence",
     },
     {
+      "label": "Build, Program and Debug (DFU) (Optimizer Off) (Flash)",
+      "dependsOn": [
+        "Build (Debugger) (Optimizer Off) (FLASH)",
+        "Program (DFU)"
+      ],
+      "dependsOrder": "sequence",
+    },
+    {
       "label": "Build, Program and Debug (DFU) (Flash)",
       "dependsOn": [
         "Build (Debugger) (FLASH)",
+        "Program (DFU)"
+      ],
+      "dependsOrder": "sequence",
+    },
+    {
+      "label": "Clean Build, Program and Debug (DFU) (Optimizer Off) (Flash)",
+      "dependsOn": [
+        "Clean",
+        "Build (Debugger) (Optimizer Off) (FLASH)",
         "Program (DFU)"
       ],
       "dependsOrder": "sequence",
@@ -316,9 +395,26 @@
       "dependsOrder": "sequence",
     },
     {
+      "label": "Build, Program and Debug (DFU) (Optimizer Off) (SRAM)",
+      "dependsOn": [
+        "Build (Debugger) (Optimizer Off) (SRAM)",
+        "Program (DFU)"
+      ],
+      "dependsOrder": "sequence",
+    },
+    {
       "label": "Build, Program and Debug (DFU) (SRAM)",
       "dependsOn": [
         "Build (Debugger) (SRAM)",
+        "Program (DFU)"
+      ],
+      "dependsOrder": "sequence",
+    },
+    {
+      "label": "Clean Build, Program and Debug (DFU) (Optimizer Off) (SRAM)",
+      "dependsOn": [
+        "Clean",
+        "Build (Debugger) (Optimizer Off) (SRAM)",
         "Program (DFU)"
       ],
       "dependsOrder": "sequence",
@@ -333,6 +429,14 @@
       "dependsOrder": "sequence",
     },
     {
+      "label": "Build, Program and Debug (DFU) (Optimizer Off) (QSPI)",
+      "dependsOn": [
+        "Build (Debugger) (Optimizer Off) (QSPI)",
+        "Program (DFU)"
+      ],
+      "dependsOrder": "sequence",
+    },
+    {
       "label": "Build, Program and Debug (DFU) (QSPI)",
       "dependsOn": [
         "Build (Debugger) (QSPI)",
@@ -340,6 +444,15 @@
       ],
       "dependsOrder": "sequence",
     },
+    {
+      "label": "Clean Build, Program and Debug (DFU) (Optimizer Off) (QSPI)",
+      "dependsOn": [
+        "Clean",
+        "Build (Debugger) (Optimizer Off) (QSPI)",
+        "Program (DFU)"
+      ],
+      "dependsOrder": "sequence",
+    }
     {
       "label": "Clean Build, Program and Debug (DFU) (QSPI)",
       "dependsOn": [

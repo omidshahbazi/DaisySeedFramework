@@ -8,7 +8,6 @@
 
 class DaisyUSBInterface : public IUSBInterface
 {
-	template <uint16 PersistentSlotCount, uint16 PersistentSlotSize>
 	friend class DaisySeedHAL;
 
 private:

@@ -1,6 +1,6 @@
 #pragma once
-#ifndef STACK_H
-#define STACK_H
+#ifndef STATIC_STACK_H
+#define STATIC_STACK_H
 
 #include "DSP/Debug.h"
 

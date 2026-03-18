@@ -10,94 +10,14 @@
 #include "DaisyUSBInterface.h"
 #include <daisy_seed.h>
 
-class DaisySeedHALBase
+class DaisySeedHAL : public IHAL
 {
+public:
+	typedef void (*CrashHandler)(const IHAL *HAL);
+
 public:
 	static constexpr uint8 CHANNEL_LEFT = 0;
 	static constexpr uint8 CHANNEL_RIGHT = 1;
-
-public:
-	static daisy::Pin GetPin(uint8 Pin)
-	{
-		switch (Pin)
-		{
-		case 0:
-			return daisy::seed::D0;
-		case 1:
-			return daisy::seed::D1;
-		case 2:
-			return daisy::seed::D2;
-		case 3:
-			return daisy::seed::D3;
-		case 4:
-			return daisy::seed::D4;
-		case 5:
-			return daisy::seed::D5;
-		case 6:
-			return daisy::seed::D6;
-		case 7:
-			return daisy::seed::D7;
-		case 8:
-			return daisy::seed::D8;
-		case 9:
-			return daisy::seed::D9;
-		case 10:
-			return daisy::seed::D10;
-		case 11:
-			return daisy::seed::D11;
-		case 12:
-			return daisy::seed::D12;
-		case 13:
-			return daisy::seed::D13;
-		case 14:
-			return daisy::seed::D14;
-		case 15:
-			return daisy::seed::D15;
-		case 16:
-			return daisy::seed::D16;
-		case 17:
-			return daisy::seed::D17;
-		case 18:
-			return daisy::seed::D18;
-		case 19:
-			return daisy::seed::D19;
-		case 20:
-			return daisy::seed::D20;
-		case 21:
-			return daisy::seed::D21;
-		case 22:
-			return daisy::seed::D22;
-		case 23:
-			return daisy::seed::D23;
-		case 24:
-			return daisy::seed::D24;
-		case 25:
-			return daisy::seed::D25;
-		case 26:
-			return daisy::seed::D26;
-		case 27:
-			return daisy::seed::D27;
-		case 28:
-			return daisy::seed::D28;
-		case 29:
-			return daisy::seed::D29;
-		case 30:
-			return daisy::seed::D30;
-		case 31:
-			return daisy::seed::D31;
-		}
-
-		ASSERT(false, "Invalid Pin %i", Pin);
-	}
-};
-
-template <uint16 PersistentSlotCount, uint16 PersistentSlotSize>
-class DaisySeedHAL : public DaisySeedHALBase, public IHAL
-{
-	static_assert(PersistentSlotCount == 0 || PersistentSlotSize != 0, "PersistentSlotSize must be greater than zero");
-
-public:
-	typedef void (*CrashHandler)(const IHAL *HAL);
 
 private:
 	template <typename T>
@@ -118,24 +38,6 @@ private:
 		float CurrentValue;
 	};
 
-	struct PersistentSlot
-	{
-	public:
-		bool IsInitialized;
-		uint8 Data[PersistentSlotSize];
-	};
-
-	struct PersistentData
-	{
-	public:
-		PersistentSlot Data[PersistentSlotCount];
-
-		bool operator!=(const PersistentData &Other)
-		{
-			return true;
-		}
-	};
-
 public:
 	DaisySeedHAL(daisy::DaisySeed *Hardware, void *SDRAMAddress = nullptr, uint32 SDRAMSize = 0, CrashHandler CrashHandler = nullptr)
 		: m_Hardware(Hardware),
@@ -150,10 +52,7 @@ public:
 		  m_PWMPins{},
 		  m_LastFreePWMPinIndex(0),
 		  m_PWMResolution(0),
-		  m_PWMMaxDutyCycle(0),
-		  m_PersistentStorage(m_Hardware->qspi),
-		  m_PersistentStorageSaveRequested(false),
-		  m_PersistentStorageSaveTime(0)
+		  m_PWMMaxDutyCycle(0)
 	{
 		ASSERT(SDRAMSize == 0 || SDRAMAddress != nullptr, "SDRAMAddress cannot be null");
 		ASSERT(SDRAMAddress == nullptr || SDRAMSize > 0, "SDRAMSize cannot be zero");
@@ -382,56 +281,6 @@ public:
 		FindOrGetPWMPin(Pin)->TargetValue = Math::Cube(Value);
 	}
 
-	void InitializePersistentData(uint16 ID) override
-	{
-		ASSERT(ID <= PersistentSlotCount, "ID %i is out of bound of the PersistentSlotCount", ID);
-
-		PersistentSlot *slot = GetPersistentSlot(ID);
-		ASSERT(!slot->IsInitialized, "Slot has already initialized");
-
-		slot->IsInitialized = true;
-	}
-
-	bool ContainsPersistentData(uint16 ID) override
-	{
-		ASSERT(ID <= PersistentSlotCount, "ID %i is out of bound of the PersistentSlotCount", ID);
-
-		return GetPersistentSlot(ID)->IsInitialized;
-	}
-
-	void SetPersistentData(uint16 ID, const void *const Data, uint16 Size) override
-	{
-		ASSERT(ID <= PersistentSlotCount, "ID %i is out of bound of the PersistentSlotCount", ID);
-		ASSERT(Size <= PersistentSlotSize, "Size cannot be greater than PersistentSlotSize");
-
-		PersistentSlot *slot = GetPersistentSlot(ID);
-		ASSERT(slot->IsInitialized, "Slot hasn't initialized yet");
-
-		Memory::Copy(reinterpret_cast<const uint8 *const>(Data), slot->Data, Size);
-	}
-
-	void GetPersistentData(uint16 ID, void *Data, uint16 Size) override
-	{
-		ASSERT(ID <= PersistentSlotCount, "ID %i is out of bound of the PersistentSlotCount", ID);
-		ASSERT(Size <= PersistentSlotSize, "Size cannot be greater than PersistentSlotSize");
-
-		PersistentSlot *slot = GetPersistentSlot(ID);
-		ASSERT(slot->IsInitialized, "Slot hasn't initialized yet");
-
-		Memory::Copy(slot->Data, reinterpret_cast<uint8 *>(Data), Size);
-	}
-
-	void EreasPersistentData(void) override
-	{
-		m_PersistentStorage.RestoreDefaults();
-	}
-
-	void SavePersistentData(bool Force = false) override
-	{
-		m_PersistentStorageSaveRequested = true;
-		m_PersistentStorageSaveTime = GetTimeSinceStartup() + (Force ? 0 : 2);
-	}
-
 	uint32 GetTimeSinceStartupMs(void) const override
 	{
 		return daisy::System::GetNow();
@@ -470,9 +319,7 @@ public:
 		asm("bkpt 255");
 
 		while (1)
-		{
 			Delay(1000);
-		}
 	}
 
 	void Reset(void) const override
@@ -488,6 +335,92 @@ public:
 	IUSBInterface *GetUSBInterface(void) override
 	{
 		return &m_USBInterface;
+	}
+
+	void EraseQSPIData(void) override
+	{
+		const uint32 QSPI_FLASH_SIZE = 8 MB;
+
+		m_Hardware->qspi.Erase(0, QSPI_FLASH_SIZE);
+	}
+
+	daisy::QSPIHandle &GetQSPI(void)
+	{
+		return m_Hardware->qspi;
+	}
+
+public:
+	static daisy::Pin GetPin(uint8 Pin)
+	{
+		switch (Pin)
+		{
+		case 0:
+			return daisy::seed::D0;
+		case 1:
+			return daisy::seed::D1;
+		case 2:
+			return daisy::seed::D2;
+		case 3:
+			return daisy::seed::D3;
+		case 4:
+			return daisy::seed::D4;
+		case 5:
+			return daisy::seed::D5;
+		case 6:
+			return daisy::seed::D6;
+		case 7:
+			return daisy::seed::D7;
+		case 8:
+			return daisy::seed::D8;
+		case 9:
+			return daisy::seed::D9;
+		case 10:
+			return daisy::seed::D10;
+		case 11:
+			return daisy::seed::D11;
+		case 12:
+			return daisy::seed::D12;
+		case 13:
+			return daisy::seed::D13;
+		case 14:
+			return daisy::seed::D14;
+		case 15:
+			return daisy::seed::D15;
+		case 16:
+			return daisy::seed::D16;
+		case 17:
+			return daisy::seed::D17;
+		case 18:
+			return daisy::seed::D18;
+		case 19:
+			return daisy::seed::D19;
+		case 20:
+			return daisy::seed::D20;
+		case 21:
+			return daisy::seed::D21;
+		case 22:
+			return daisy::seed::D22;
+		case 23:
+			return daisy::seed::D23;
+		case 24:
+			return daisy::seed::D24;
+		case 25:
+			return daisy::seed::D25;
+		case 26:
+			return daisy::seed::D26;
+		case 27:
+			return daisy::seed::D27;
+		case 28:
+			return daisy::seed::D28;
+		case 29:
+			return daisy::seed::D29;
+		case 30:
+			return daisy::seed::D30;
+		case 31:
+			return daisy::seed::D31;
+		}
+
+		ASSERT(false, "Invalid Pin %i", Pin);
 	}
 
 protected:
@@ -514,7 +447,6 @@ protected:
 	{
 		m_USBInterface.Update();
 
-		const float Time = GetTimeSinceStartup();
 		const uint16 SAMPLE_RATE = 1000;
 		const float STEP = 120.0F / SAMPLE_RATE;
 
@@ -527,13 +459,6 @@ protected:
 				pwmPin.CurrentValue -= 1;
 
 			pwmPin.State->Object.Write(pwmPin.CurrentValue < pwmPin.TargetValue ? true : false);
-		}
-
-		if (m_PersistentStorageSaveRequested && m_PersistentStorageSaveTime <= Time)
-		{
-			m_PersistentStorage.Save();
-
-			m_PersistentStorageSaveRequested = false;
 		}
 	}
 
@@ -624,24 +549,6 @@ private:
 		return &m_PWMPins[m_LastFreePWMPinIndex++];
 	}
 
-	PersistentSlot *GetPersistentSlot(uint16 ID)
-	{
-		static bool isInitialized = false;
-		if (PersistentSlotCount != 0 && !isInitialized)
-		{
-			m_PersistentStorage.Init({});
-
-			if (m_PersistentStorage.GetState() == daisy::PersistentStorage<PersistentData>::State::FACTORY)
-				SavePersistentData(true);
-
-			isInitialized = true;
-		}
-
-		ASSERT(ID <= PersistentSlotCount, "ID %i is out of bound of the PersistentSlotCount", ID);
-
-		return &m_PersistentStorage.GetSettings().Data[ID];
-	}
-
 private:
 	daisy::DaisySeed *m_Hardware;
 	CrashHandler m_CrashHandler;
@@ -662,10 +569,6 @@ private:
 
 	uint8 m_PWMResolution;
 	uint32 m_PWMMaxDutyCycle;
-
-	daisy::PersistentStorage<PersistentData> m_PersistentStorage;
-	bool m_PersistentStorageSaveRequested;
-	float m_PersistentStorageSaveTime;
 };
 
 #endif
