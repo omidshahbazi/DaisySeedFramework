@@ -338,8 +338,8 @@ private:
 		// SET BACKGROUND TO BLACK
 		SetAddressWindow(0, 0, m_Dimension.X - 1, m_Dimension.Y - 1);
 		m_DC.Write(1);
-		uint8_t black[2] = {0, 0};
-		for (uint32_t i = 0; i < (uint32_t)Width * Height; i++)
+		uint8 black[2] = {0, 0};
+		for (uint32 i = 0; i < (uint32)Width * Height; i++)
 			m_SPI.BlockingTransmit(black, 2);
 
 		// TURN ON DISPLAY

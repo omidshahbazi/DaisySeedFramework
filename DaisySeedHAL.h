@@ -322,6 +322,7 @@ public:
 			Delay(1000);
 	}
 
+	//Bootloader version has to be in sync with the libDaisy, so if you see mal-function here, update either of them
 	void Reset(void) const override
 	{
 		daisy::System::ResetToBootloader(daisy::System::BootloaderMode::DAISY_INFINITE_TIMEOUT);

@@ -6,7 +6,8 @@
       "cppStandard": "c++17",
       "defines": [
         "UNICODE", 
-        "_UNICODE"
+        "_UNICODE",
+		"ARM_MATH_LOOPUNROLL"
       ],
       "includePath": [
         "${workspaceFolder}/include/**",
