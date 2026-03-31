@@ -67,8 +67,12 @@ SYSTEM_FILES_DIR = $(LIBDAISY_DIR)/core
 # Add ARM-CMSIS
 C_DEFS += -DARM_MATH_LOOPUNROLL
 
+C_SOURCES += ${LIBDAISY_DIR}/Drivers/CMSIS-DSP/Source/StatisticsFunctions/arm_max_f32.c
+C_SOURCES += ${LIBDAISY_DIR}/Drivers/CMSIS-DSP/Source/ComplexMathFunctions/arm_cmplx_mag_f32.c
 C_SOURCES += ${LIBDAISY_DIR}/Drivers/CMSIS-DSP/Source/FilteringFunctions/arm_biquad_cascade_df1_init_f32.c
 C_SOURCES += ${LIBDAISY_DIR}/Drivers/CMSIS-DSP/Source/FilteringFunctions/arm_biquad_cascade_df1_f32.c
+C_SOURCES += ${LIBDAISY_DIR}/Drivers/CMSIS-DSP/Source/TransformFunctions/arm_cfft_init_f32.c
+C_SOURCES += ${LIBDAISY_DIR}/Drivers/CMSIS-DSP/Source/TransformFunctions/arm_cfft_f32.c
 
 include $(SYSTEM_FILES_DIR)/Makefile
 
