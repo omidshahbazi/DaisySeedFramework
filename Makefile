@@ -1,3 +1,8 @@
+ifndef TARGET
+TARGET = UnknownName
+endif
+
+ifndef OPT
 ifdef DEBUGGER_PRESENT
 ifdef OPTIMIZATION_OFF
 OPT = -O0
@@ -9,6 +14,7 @@ ifdef DEBUG
 OPT = -Os
 else
 OPT = -O3
+endif
 endif
 endif
 
@@ -76,4 +82,6 @@ C_SOURCES += ${LIBDAISY_DIR}/Drivers/CMSIS-DSP/Source/TransformFunctions/arm_cff
 
 include $(SYSTEM_FILES_DIR)/Makefile
 
+ifndef SINGLE_THREADED_COMPILE
 MAKEFLAGS += -j4
+endif
