@@ -439,7 +439,7 @@ public:
 
 			if (ch == '\n' || ch == '\r')
 			{
-				Y += (Font.Height * Font.Scale) + m_LineSpacing;
+				Y += Font.GetScaledSize().Y + m_LineSpacing;
 				x = X;
 				continue;
 			}
@@ -675,24 +675,23 @@ private:
 		if (!HasGlyph(Character, Font))
 			return {};
 
-		uint8 width = Font.MaxWidth * Font.Scale;
-		uint8 height = Font.Height * Font.Scale;
+		Point fontSize = Font.GetScaledSize();
 
 		if (Font.HasGlyphData)
 		{
 			DEFINE_GLYPH_VALUES()
 
-			width = (AdvanceInsteadOfWidth ? GlyphAdvance : GlyphWidth);
-			height = GlyphHeight;
+			fontSize.X = (AdvanceInsteadOfWidth ? GlyphAdvance : GlyphWidth);
+			fontSize.Y = GlyphHeight;
 
 			if (IncludeOffset)
 			{
-				width += GlyphXOffset;
-				height += GlyphYOffset;
+				fontSize.X += GlyphXOffset;
+				fontSize.Y += GlyphYOffset;
 			}
 		}
 
-		return {width, height};
+		return fontSize;
 	}
 
 	Point GetCharacterOffset(char Character, const Font &Font)

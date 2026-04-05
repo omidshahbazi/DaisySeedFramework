@@ -236,6 +236,12 @@ public:
 	cstr Glyphs;
 
 public:
+	Point GetScaledSize(void) const
+	{
+		return Point(MaxWidth, Height) * Scale;
+	}
+
+public:
 	static constexpr Font CreateScaled(const Font &ReferenceFont, uint8 TargetHeight)
 	{
 		Font font = ReferenceFont;
