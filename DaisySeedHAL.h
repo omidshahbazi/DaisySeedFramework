@@ -281,6 +281,16 @@ public:
 		FindOrGetPWMPin(Pin)->TargetValue = Math::Cube(Value);
 	}
 
+	uint32 GetTimeFrequency(void) const override
+	{
+		return daisy::System::GetTickFreq();
+	}
+
+	uint32 GetTimeSinceStartupTicks(void) const override
+	{
+		return daisy::System::GetTick();
+	}
+
 	uint32 GetTimeSinceStartupMs(void) const override
 	{
 		return daisy::System::GetNow();
