@@ -3,16 +3,22 @@
 #define DAISY_USB_INTERFACE_H
 
 #include "DSP/IUSBInterface.h"
-#include "StaticStack.h"
+#include "StaticVector.h"
 #include <daisy_seed.h>
 
+enum DaisyUSBInterfacePeripherals : uint8
+{
+	Internal = 0,
+	External
+};
+
+template <DaisyUSBInterfacePeripherals Peripheral = DaisyUSBInterfacePeripherals::External, uint16 BufferSize = 1024>
 class DaisyUSBInterface : public IUSBInterface
 {
 	friend class DaisySeedHAL;
 
 private:
-	typedef daisy::FixedCapStr<1024> BufferType;
-	typedef StaticStack<BufferType, 4> StackType;
+	typedef StaticVector<uint8, BufferSize> BufferType;
 
 private:
 	DaisyUSBInterface(daisy::DaisySeed *Hardware)
@@ -21,29 +27,33 @@ private:
 	}
 
 private:
-	void Start()
+	void Start(void)
 	{
-		m_Hardware->usb_handle.Init(daisy::UsbHandle::UsbPeriph::FS_EXTERNAL);
-		
-		m_Hardware->usb_handle.SetReceiveCallback(Callback, daisy::UsbHandle::UsbPeriph::FS_EXTERNAL);
+		new (GetBuffer()) BufferType();
+
+		daisy::UsbHandle::UsbPeriph periph = daisy::UsbHandle::UsbPeriph::FS_INTERNAL;
+		if constexpr (Peripheral == DaisyUSBInterfacePeripherals::External)
+			periph = daisy::UsbHandle::UsbPeriph::FS_EXTERNAL;
+
+		m_Hardware->usb_handle.Init(periph);
+		m_Hardware->usb_handle.SetReceiveCallback(Callback, periph);
 	}
 
 	void Update(void)
 	{
-		while(!GetStack()->IsEmpty())
-        {
-           const BufferType &buffer = GetStack()->Front();
-		   
-		   m_Callback((const uint8*)buffer.Cstr(), buffer.Size());
-		   
-		   GetStack()->Pop();
-        }
+		static BufferType &buffer = *GetBuffer();
+		if (buffer.IsEmpty())
+			return;
+
+		m_Callback(buffer.GetData(), buffer.GetSize());
+
+		buffer.Clear();
 	}
 
 public:
-	void Transmit(const uint8* Buffer, uint32 Length) override
+	void Transmit(const uint8 *Buffer, uint16 Length) const override
 	{
-		m_Hardware->usb_handle.TransmitInternal(const_cast<uint8*>(Buffer), Length);
+		WriteOnPort(Buffer, Length);
 	}
 
 	void SetCallback(EventHandler Callback) override
@@ -52,22 +62,47 @@ public:
 	}
 
 private:
-	static void Callback(uint8 *Buffer, uint32_t *Length)
+	void WriteOnPort(const uint8 *Buffer, uint16 Length, uint16 Delay = 100) const
 	{
-		if(Buffer == nullptr)
-			return;
-			
-		if (Length == 0)
-			return;
+		uint16 index = 0;
+		while (index < Length)
+		{
+			const uint16 CountPerStep = 64;
 
-		GetStack()->Push(BufferType((const char *)Buffer, *Length));
+			uint16 countPerStep = (uint16)Math::Min(CountPerStep, Length - index);
+
+			Buffer += index;
+
+			if constexpr (Peripheral == DaisyUSBInterfacePeripherals::Internal)
+				m_Hardware->usb_handle.TransmitInternal(const_cast<uint8 *>(Buffer), countPerStep);
+			else
+				m_Hardware->usb_handle.TransmitExternal(const_cast<uint8 *>(Buffer), countPerStep);
+
+			index += CountPerStep;
+
+			m_Hardware->DelayMs(Delay);
+		}
 	}
 
-	static StackType *GetStack(void)
+	static void Callback(uint8 *Buffer, uint32_t *Length)
 	{
-		static StackType stack;
+		if (Buffer == nullptr)
+			return;
 
-		return &stack;
+		if (*Length == 0)
+			return;
+
+		static BufferType &buffer = *GetBuffer();
+		buffer.Clear();
+
+		buffer.PushBack(Buffer, *Length);
+	}
+
+	static BufferType *GetBuffer(void)
+	{
+		static BufferType *buffer = Memory::Allocate<BufferType>(true);
+
+		return buffer;
 	}
 
 private:

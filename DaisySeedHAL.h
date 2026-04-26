@@ -304,11 +304,6 @@ public:
 	void Print(cstr Value) override
 	{
 		m_Hardware->PrintLine(Value);
-
-		const uint16 Code = 1;
-
-		m_USBInterface.Transmit((const uint8 *)&Code, sizeof(Code));
-		m_USBInterface.Transmit((const uint8 *)Value, GetStringLength(Value));
 	}
 
 	void Crash(void) const override
@@ -565,7 +560,7 @@ private:
 	daisy::DaisySeed *m_Hardware;
 	CrashHandler m_CrashHandler;
 
-	DaisyUSBInterface m_USBInterface;
+	DaisyUSBInterface<DaisyUSBInterfacePeripherals::External> m_USBInterface;
 
 	uint8 *m_SDRAMAddress;
 	uint32 m_SDRAMSize;

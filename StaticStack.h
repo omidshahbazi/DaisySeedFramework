@@ -4,7 +4,7 @@
 
 #include "DSP/Debug.h"
 
-template <typename T, uint8 MaxSize>
+template <typename T, uint16 MaxSize>
 struct StaticStack
 {
 public:
@@ -70,7 +70,7 @@ public:
 
 	void Clear(void)
 	{
-		for (uint8 i = 0; i < m_Count; ++i)
+		for (uint16 i = 0; i < m_Count; ++i)
 		{
 			m_Buffer[i].~T();
 			m_Buffer[i] = {};
@@ -79,7 +79,7 @@ public:
 		m_Count = 0;
 	}
 
-	uint8 GetSize(void) const
+	uint16 GetSize(void) const
 	{
 		return m_Count;
 	}
@@ -110,7 +110,7 @@ public:
 
 private:
 	T m_Buffer[MaxSize];
-	uint8 m_Count;
+	uint16 m_Count;
 };
 
 #endif

@@ -83,10 +83,13 @@ C_SOURCES += ${LIBDAISY_DIR}/Drivers/CMSIS-DSP/Source/ComplexMathFunctions/arm_c
 C_SOURCES += ${LIBDAISY_DIR}/Drivers/CMSIS-DSP/Source/FilteringFunctions/arm_biquad_cascade_df1_init_f32.c
 C_SOURCES += ${LIBDAISY_DIR}/Drivers/CMSIS-DSP/Source/FilteringFunctions/arm_biquad_cascade_df1_f32.c
 
+C_SOURCES += ${LIBDAISY_DIR}/Drivers/CMSIS-DSP/Source/FilteringFunctions/arm_fir_init_f32.c
+C_SOURCES += ${LIBDAISY_DIR}/Drivers/CMSIS-DSP/Source/FilteringFunctions/arm_fir_f32.c
+
 C_SOURCES += ${LIBDAISY_DIR}/Drivers/CMSIS-DSP/Source/TransformFunctions/arm_cfft_init_f32.c
 C_SOURCES += ${LIBDAISY_DIR}/Drivers/CMSIS-DSP/Source/TransformFunctions/arm_cfft_f32.c
-C_SOURCES += ${LIBDAISY_DIR}/Drivers/CMSIS-DSP/Source/TransformFunctions/arm_bitreversal2.c
 C_SOURCES += ${LIBDAISY_DIR}/Drivers/CMSIS-DSP/Source/TransformFunctions/arm_cfft_radix8_f32.c
+C_SOURCES += ${LIBDAISY_DIR}/Drivers/CMSIS-DSP/Source/TransformFunctions/arm_bitreversal2.c
 
 include $(SYSTEM_FILES_DIR)/Makefile
 

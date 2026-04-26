@@ -267,3 +267,15 @@ public:
 #define DEFINE_LARGE_MEMORY_BUFFER(Name, Size)  \
 	static constexpr uint32 Name##_Size = Size; \
 	uint8 DSY_SDRAM_BSS g_##Name[Name##_Size];
+
+#ifndef QSPI_STARTING_ADDRESS
+#define QSPI_STARTING_ADDRESS 1 MB
+#endif
+// Even in SRAM mode, we it uses QSPI to store program and loads it into the SRAM in runtime to run faster
+// But in QSPI mode, it runs the code directly from QSPI which is slower
+// https://daisy.audio/tutorials/_a7_Getting-Started-Daisy-Bootloader/#custom-linkers
+// QSPI Start Address=0x90000000
+// 64KB Reserved (Still can be used, better not to)
+// Program Start Address = 0x90040000
+// So we would still have at least 1MB of space for code
+static_assert(QSPI_STARTING_ADDRESS >= 1 MB, "Invalid QSPI_STARTING_ADDRESS defined");

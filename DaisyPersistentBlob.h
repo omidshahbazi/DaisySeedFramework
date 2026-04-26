@@ -14,7 +14,7 @@ private:
 	{
 		const uint32 SECTOR_SIZE = 4 KB;
 
-		static uint32 offset = 0;
+		static uint32 offset = QSPI_STARTING_ADDRESS;
 
 		uint32 current = offset;
 
