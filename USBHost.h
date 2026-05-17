@@ -23,7 +23,7 @@ public:
 
 	virtual void Initialize(void)
 	{
-		m_Buffer = Memory::Allocate<BufferType>(true);
+		m_Buffer = Memory::Allocate<BufferType>(1, true);
 		new (m_Buffer) BufferType();
 
 		m_USBInterface->SetCallback({this, [](void *Context, const uint8 *Buffer, uint16 Length)

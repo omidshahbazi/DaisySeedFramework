@@ -13,7 +13,7 @@
 class DaisySeedHAL : public IHAL
 {
 public:
-	typedef void (*CrashHandler)(const IHAL *HAL);
+	typedef void (*CrashHandler)(const IHAL* HAL);
 
 public:
 	static constexpr uint8 CHANNEL_LEFT = 0;
@@ -33,26 +33,25 @@ private:
 	struct PWMPinState
 	{
 	public:
-		PinState<daisy::GPIO> *State;
+		PinState<daisy::GPIO>* State;
 		float TargetValue;
 		float CurrentValue;
 	};
 
 public:
-	DaisySeedHAL(daisy::DaisySeed *Hardware, void *SDRAMAddress = nullptr, uint32 SDRAMSize = 0, CrashHandler CrashHandler = nullptr)
-		: m_Hardware(Hardware),
-		  m_CrashHandler(CrashHandler),
-		  m_USBInterface(Hardware),
-		  m_SDRAMAddress(reinterpret_cast<uint8 *>(SDRAMAddress)),
-		  m_SDRAMSize(SDRAMSize),
-		  m_LastFreeSDRAMIndex(0),
-		  m_AnalogPins{},
-		  m_LastFreeAnalogPinIndex(0),
-		  m_DigitalPins{},
-		  m_PWMPins{},
-		  m_LastFreePWMPinIndex(0),
-		  m_PWMResolution(0),
-		  m_PWMMaxDutyCycle(0)
+	DaisySeedHAL(void* SDRAMAddress = nullptr, uint32 SDRAMSize = 0, CrashHandler CrashHandler = nullptr)
+		: m_CrashHandler(CrashHandler),
+		m_USBInterface(&m_Hardware),
+		m_SDRAMAddress(reinterpret_cast<uint8*>(SDRAMAddress)),
+		m_SDRAMSize(SDRAMSize),
+		m_LastFreeSDRAMIndex(0),
+		m_AnalogPins{},
+		m_LastFreeAnalogPinIndex(0),
+		m_DigitalPins{},
+		m_PWMPins{},
+		m_LastFreePWMPinIndex(0),
+		m_PWMResolution(0),
+		m_PWMMaxDutyCycle(0)
 	{
 		ASSERT(SDRAMSize == 0 || SDRAMAddress != nullptr, "SDRAMAddress cannot be null");
 		ASSERT(SDRAMAddress == nullptr || SDRAMSize > 0, "SDRAMSize cannot be zero");
@@ -64,10 +63,10 @@ public:
 	{
 		ASSERT(FrameLength != 0, "Invalid FrameLength %i", FrameLength);
 
-		m_Hardware->Init(Boost);
-		m_Hardware->SetAudioBlockSize(FrameLength);
+		m_Hardware.Init(Boost);
+		m_Hardware.SetAudioBlockSize(FrameLength);
 
-		m_Hardware->StartLog(WaitForDebugger);
+		m_Hardware.StartLog(WaitForDebugger);
 
 		if (USBTransmissionMode)
 			m_USBInterface.Start();
@@ -99,15 +98,15 @@ public:
 			ASSERT(false, "No sutaible sample rate for %i found in the daisy", SampleRate);
 		}
 
-		m_Hardware->SetAudioSampleRate(daisySampleRate);
+		m_Hardware.SetAudioSampleRate(daisySampleRate);
 	}
 
 	void StartAudio(AudioPassthrough Callback) override
 	{
-		m_Hardware->StartAudio(Callback);
+		m_Hardware.StartAudio(Callback);
 	}
 
-	void *Allocate(uint32 Size, bool OnSDRAM = false) override
+	void* Allocate(uint32 Size, bool OnSDRAM = false) override
 	{
 		if (OnSDRAM)
 		{
@@ -116,9 +115,9 @@ public:
 			ASSERT(m_SDRAMAddress != nullptr, "SDRAM is not initialized");
 			ASSERT(m_LastFreeSDRAMIndex + Size <= m_SDRAMSize, "Running out of SDRAM");
 
-			uint8 *ptr = m_SDRAMAddress + m_LastFreeSDRAMIndex;
+			uint8* ptr = m_SDRAMAddress + m_LastFreeSDRAMIndex;
 
-			uint8 *alignedPtr = reinterpret_cast<uint8 *>(((reinterpret_cast<uint32>(ptr) + (ALIGNMENT - 1)) / ALIGNMENT) * ALIGNMENT);
+			uint8* alignedPtr = reinterpret_cast<uint8*>(((reinterpret_cast<uint32>(ptr) + (ALIGNMENT - 1)) / ALIGNMENT) * ALIGNMENT);
 
 			m_LastFreeSDRAMIndex += (alignedPtr - ptr) + Size;
 
@@ -128,7 +127,7 @@ public:
 		return malloc(Size);
 	}
 
-	void Deallocate(void *Memory) override
+	void Deallocate(void* Memory) override
 	{
 		if (m_SDRAMAddress != nullptr && m_SDRAMAddress <= Memory)
 			return;
@@ -181,11 +180,11 @@ public:
 
 	bool IsInOutputMode(uint8 Pin) const override
 	{
-		const PinState<daisy::AdcChannelConfig> *analogPinState = FindAnalogPin(Pin);
+		const PinState<daisy::AdcChannelConfig>* analogPinState = FindAnalogPin(Pin);
 		if (analogPinState != nullptr)
 			return false;
 
-		const PinState<daisy::GPIO> &digitalPinState = GetDigitalPinState(Pin);
+		const PinState<daisy::GPIO>& digitalPinState = GetDigitalPinState(Pin);
 
 		return (digitalPinState.Mode == PinModes::DigitalOutput || digitalPinState.Mode == PinModes::PWM);
 	}
@@ -218,7 +217,7 @@ public:
 
 		if (Mode == PinModes::AnalogInput && IsAnAnaloglPin(Pin))
 		{
-			PinState<daisy::AdcChannelConfig> *state = FindOrGetNewAnalogPin(Pin);
+			PinState<daisy::AdcChannelConfig>* state = FindOrGetNewAnalogPin(Pin);
 			state->Object.InitSingle(pin);
 			state->Pin = Pin;
 			state->Used = true;
@@ -233,7 +232,7 @@ public:
 		config.speed = daisy::GPIO::Speed::LOW;
 		config.pull = daisy::GPIO::Pull::PULLUP;
 
-		PinState<daisy::GPIO> &state = GetDigitalPinState(Pin);
+		PinState<daisy::GPIO>& state = GetDigitalPinState(Pin);
 		state.Object.Init(config);
 		state.Pin = Pin;
 		state.Used = true;
@@ -241,7 +240,7 @@ public:
 
 		if (Mode == PinModes::PWM)
 		{
-			PWMPinState *pwmPinState = FindOrGetPWMPin(Pin);
+			PWMPinState* pwmPinState = FindOrGetPWMPin(Pin);
 			pwmPinState->State = &state;
 			pwmPinState->CurrentValue = 0;
 			pwmPinState->TargetValue = 0;
@@ -252,7 +251,7 @@ public:
 	{
 		ASSERT(IsAnAnaloglPin(Pin), "Pin %i is not an analog pin", Pin);
 
-		return m_Hardware->adc.GetFloat(GetAnalogPinIndex(Pin));
+		return m_Hardware.adc.GetFloat(GetAnalogPinIndex(Pin));
 	}
 
 	bool DigitalRead(uint8 Pin) const override
@@ -260,7 +259,7 @@ public:
 		ASSERT(IsADigitalPin(Pin), "Pin %i is not an digital pin", Pin);
 		ASSERT(IsInInputMode(Pin), "Pin %i is not in input mode", Pin);
 
-		PinState<daisy::GPIO> &state = const_cast<PinState<daisy::GPIO> &>(GetDigitalPinState(Pin));
+		PinState<daisy::GPIO>& state = const_cast<PinState<daisy::GPIO> &>(GetDigitalPinState(Pin));
 		return !state.Object.Read();
 	}
 
@@ -269,7 +268,7 @@ public:
 		ASSERT(IsADigitalPin(Pin), "Pin %i is not an digital pin", Pin);
 		ASSERT(IsInOutputMode(Pin), "Pin %i is not in output mode", Pin);
 
-		PinState<daisy::GPIO> &state = const_cast<PinState<daisy::GPIO> &>(GetDigitalPinState(Pin));
+		PinState<daisy::GPIO>& state = const_cast<PinState<daisy::GPIO> &>(GetDigitalPinState(Pin));
 		state.Object.Write(Value);
 	}
 
@@ -303,7 +302,7 @@ public:
 
 	void Print(cstr Value) override
 	{
-		m_Hardware->PrintLine(Value);
+		m_Hardware.PrintLine(Value);
 	}
 
 	void Crash(void) const override
@@ -339,21 +338,19 @@ public:
 		daisy::System::Delay(Ms);
 	}
 
-	IUSBInterface *GetUSBInterface(void) override
+	IUSBInterface* GetUSBInterface(void) override
 	{
 		return &m_USBInterface;
 	}
 
 	void EraseQSPIData(void) override
 	{
-		const uint32 QSPI_FLASH_SIZE = 8 MB;
-
-		m_Hardware->qspi.Erase(0, QSPI_FLASH_SIZE);
+		m_Hardware.qspi.Erase(QSPI_START_ADDRESS, QSPI_END_ADDRESS);
 	}
 
-	daisy::QSPIHandle &GetQSPI(void)
+	daisy::QSPIHandle& GetQSPI(void)
 	{
-		return m_Hardware->qspi;
+		return m_Hardware.qspi;
 	}
 
 public:
@@ -435,7 +432,7 @@ protected:
 	{
 		daisy::AdcChannelConfig adcConfigs[ANALOG_PIN_COUNT];
 		uint8 index = 0;
-		for (const auto &state : m_AnalogPins)
+		for (const auto& state : m_AnalogPins)
 		{
 			if (!state.Used)
 				continue;
@@ -445,8 +442,8 @@ protected:
 
 		if (index != 0)
 		{
-			m_Hardware->adc.Init(adcConfigs, index);
-			m_Hardware->adc.Start();
+			m_Hardware.adc.Init(adcConfigs, index);
+			m_Hardware.adc.Start();
 		}
 	}
 
@@ -459,7 +456,7 @@ protected:
 
 		for (uint8 i = 0; i < m_LastFreePWMPinIndex; ++i)
 		{
-			PWMPinState &pwmPin = m_PWMPins[i];
+			PWMPinState& pwmPin = m_PWMPins[i];
 
 			pwmPin.CurrentValue += STEP;
 			if (pwmPin.CurrentValue > 1)
@@ -473,7 +470,7 @@ private:
 	uint8 GetAnalogPinIndex(uint8 Pin) const
 	{
 		uint8 index = 0;
-		for (auto &state : m_AnalogPins)
+		for (auto& state : m_AnalogPins)
 		{
 			if (state.Pin != Pin)
 			{
@@ -487,9 +484,9 @@ private:
 		ASSERT(false, "Couldn't find the state for pin %i", Pin);
 	}
 
-	PinState<daisy::AdcChannelConfig> *FindAnalogPin(uint8 Pin)
+	PinState<daisy::AdcChannelConfig>* FindAnalogPin(uint8 Pin)
 	{
-		for (auto &state : m_AnalogPins)
+		for (auto& state : m_AnalogPins)
 		{
 			if (state.Pin != Pin)
 				continue;
@@ -500,9 +497,9 @@ private:
 		return nullptr;
 	}
 
-	const PinState<daisy::AdcChannelConfig> *FindAnalogPin(uint8 Pin) const
+	const PinState<daisy::AdcChannelConfig>* FindAnalogPin(uint8 Pin) const
 	{
-		for (auto &state : m_AnalogPins)
+		for (auto& state : m_AnalogPins)
 		{
 			if (state.Pin != Pin)
 				continue;
@@ -513,9 +510,9 @@ private:
 		return nullptr;
 	}
 
-	PinState<daisy::AdcChannelConfig> *FindOrGetNewAnalogPin(uint8 Pin)
+	PinState<daisy::AdcChannelConfig>* FindOrGetNewAnalogPin(uint8 Pin)
 	{
-		PinState<daisy::AdcChannelConfig> *state = FindAnalogPin(Pin);
+		PinState<daisy::AdcChannelConfig>* state = FindAnalogPin(Pin);
 		if (state != nullptr)
 			return state;
 
@@ -524,12 +521,12 @@ private:
 		return &m_AnalogPins[m_LastFreeAnalogPinIndex++];
 	}
 
-	PinState<daisy::GPIO> &GetDigitalPinState(uint8 Pin)
+	PinState<daisy::GPIO>& GetDigitalPinState(uint8 Pin)
 	{
 		return m_DigitalPins[GetDigitalPinIndex(Pin)];
 	}
 
-	const PinState<daisy::GPIO> &GetDigitalPinState(uint8 Pin) const
+	const PinState<daisy::GPIO>& GetDigitalPinState(uint8 Pin) const
 	{
 		return m_DigitalPins[GetDigitalPinIndex(Pin)];
 	}
@@ -541,9 +538,9 @@ private:
 		return (uint8)Pin - (uint8)GPIOPins::Pin0;
 	}
 
-	PWMPinState *FindOrGetPWMPin(uint8 Pin)
+	PWMPinState* FindOrGetPWMPin(uint8 Pin)
 	{
-		for (auto &state : m_PWMPins)
+		for (auto& state : m_PWMPins)
 		{
 			if (state.State == nullptr || state.State->Pin != Pin)
 				continue;
@@ -557,12 +554,12 @@ private:
 	}
 
 private:
-	daisy::DaisySeed *m_Hardware;
+	daisy::DaisySeed m_Hardware;
 	CrashHandler m_CrashHandler;
 
 	DaisyUSBInterface<DaisyUSBInterfacePeripherals::External> m_USBInterface;
 
-	uint8 *m_SDRAMAddress;
+	uint8* m_SDRAMAddress;
 	uint32 m_SDRAMSize;
 	uint32 m_LastFreeSDRAMIndex;
 

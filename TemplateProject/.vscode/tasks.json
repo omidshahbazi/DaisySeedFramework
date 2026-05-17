@@ -203,8 +203,41 @@
       "type": "shell"
     },
     {
-      "command": "make program-boot",
-      "label": "Program Bootloader",
+      "command": "make INTERNAL_BOOTLOADER=1 FAST_BOOTLOADER=0 program-boot",
+      "label": "Program Internal Bootloader (Slow)",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "type": "shell"
+    },
+    {
+      "command": "make INTERNAL_BOOTLOADER=1 FAST_BOOTLOADER=1 program-boot",
+      "label": "Program Internal Bootloader (Fast)",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "type": "shell"
+    },
+    {
+      "command": "make INTERNAL_BOOTLOADER=0 FAST_BOOTLOADER=0 program-boot",
+      "label": "Program External Bootloader (Slow)",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "type": "shell"
+    },
+    {
+      "command": "make INTERNAL_BOOTLOADER=0 FAST_BOOTLOADER=1 program-boot",
+      "label": "Program External Bootloader (Fast)",
       "options": {
         "cwd": "${workspaceFolder}"
       },
@@ -452,7 +485,7 @@
         "Program (DFU)"
       ],
       "dependsOrder": "sequence",
-    }
+    },
     {
       "label": "Clean Build, Program and Debug (DFU) (QSPI)",
       "dependsOn": [
