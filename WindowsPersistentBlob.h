@@ -3,6 +3,8 @@
 #define DAISY_PERSISTENT_BLOB_H
 
 #include "PersistentBlobCommon.h"
+#include <fstream>
+#include <filesystem>
 
 template <typename T>
 class WindowsPersistentBlob
@@ -16,62 +18,84 @@ public:
 	{
 		ASSERT(!m_IsInitialized, "WindowsPersistentBlob is already initialized");
 
-		//Blob defaultBlob;
-		//defaultBlob.Data = DefaultData;
-
-		//m_Storage.Init(HAL->GetQSPI(), defaultBlob, DaisyPersistentBlobBase::GetAndIncreamentOffset(sizeof(T)));
-
+		m_FilePath = std::filesystem::current_path() / (std::to_string(PersistentBlobBase::GetAndIncreamentOffset(sizeof(T))) + ".bin");
 		m_IsInitialized = true;
 
-		//if (!m_Storage.GetSettings().IsMatched())
-		//{
-		//	Erase();
+		std::ifstream file(m_FilePath, std::ios::binary | std::ios::ate);
+		if (file.is_open())
+		{
+			file.read(reinterpret_cast<char*>(&m_Data), sizeof(PersistentBlobData<T>));
+			file.close();
+		}
+		else
+		{
+			m_Data.Data = DefaultData;
 
-		return false;
-		//}
+			FlushToFile();
+			
+			return false;
+		}
 
-		//return true;
+		if (!m_Data.IsMatched())
+		{
+			Erase();
+
+			return false;
+		}
+
+		return true;
 	}
 
 	void Flush(void)
 	{
 		ASSERT(m_IsInitialized, "WindowsPersistentBlob is not initialized");
 
-		//m_Storage.Save();
+		FlushToFile();
 	}
 
 	void Erase(void)
 	{
 		ASSERT(m_IsInitialized, "WindowsPersistentBlob is not initialized");
 
-		//m_Storage.RestoreDefaults(false);
+		std::filesystem::remove(m_FilePath);
 	}
 
 	void Set(const T& Object)
 	{
 		ASSERT(m_IsInitialized, "WindowsPersistentBlob is not initialized");
 
-		//m_Storage.GetSettings().Data = Object;
+		m_Data.Data = Object;
 	}
 
 	T& Get(void)
 	{
 		ASSERT(m_IsInitialized, "WindowsPersistentBlob is not initialized");
 
-		return m_Data;
+		return m_Data.Data;
 	}
 
 	const T& Get(void) const
 	{
 		ASSERT(m_IsInitialized, "WindowsPersistentBlob is not initialized");
 
-		return m_Data;
+		return m_Data.Data;
 	}
 
 private:
+	void FlushToFile(void)
+	{
+		std::ofstream file(m_FilePath, std::ios::binary);
+		if (file.is_open())
+		{
+			file.write(reinterpret_cast<const char*>(&m_Data), sizeof(PersistentBlobData<T>));
+			file.close();
+		}
+	}
+
+private:
+	std::filesystem::path m_FilePath;
 	bool m_IsInitialized;
-	T m_Data;
-	//daisy::PersistentStorage<PersistentBlobData<T>> m_Storage;
+	PersistentBlobData<T> m_Data;
 };
 
 #endif

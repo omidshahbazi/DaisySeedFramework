@@ -6,7 +6,6 @@
 #include "DaisySeedHAL.h"
 #include "DSP/Math.h"
 #include "DSP/ContextCallback.h"
-#include <daisy_seed.h>
 
 template <uint32 Width, uint32 Height>
 class ILI9341_HAL : public I_LCD_HAL
@@ -517,7 +516,5 @@ private:
 	bool m_IsDMABusy;
 	uint8 m_LastFrameBufferDirtyIndex;
 };
-
-typedef ILI9341_HAL<320, 240> ILI9341_HAL_320_240;
 
 #endif

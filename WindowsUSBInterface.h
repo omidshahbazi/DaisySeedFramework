@@ -3,46 +3,47 @@
 #define WINDOWS_USB_INTERFACE_H
 
 #include "DSP/IUSBInterface.h"
-#include "StaticVector.h"
+
+#undef ns
+#undef ms
+#include <Windows.h>
+#undef ns
+#undef ms
+#define ns *0.000'001
+#define ms *0.001
 
 class WindowsUSBInterface : public IUSBInterface
 {
 	friend class WindowsHAL;
 
 private:
-	typedef StaticVector<uint8, 1024> BufferType;
-
-private:
 	WindowsUSBInterface(void)
-	{
-	}
+	{}
 
 private:
 	void Start(void)
 	{
-		//new (GetBuffer()) BufferType();
-
-		//daisy::UsbHandle::UsbPeriph periph = daisy::UsbHandle::UsbPeriph::FS_INTERNAL;
-		//if constexpr (Peripheral == DaisyUSBInterfacePeripherals::External)
-		//	periph = daisy::UsbHandle::UsbPeriph::FS_EXTERNAL;
-
-		//m_Hardware->usb_handle.Init(periph);
-		//m_Hardware->usb_handle.SetReceiveCallback(Callback, periph);
+		m_Pipe = CreateFile(L"\\\\.\\pipe\\COM8", GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, nullptr);
 	}
 
 	void Update(void)
 	{
-		//static BufferType &buffer = *GetBuffer();
-		//if (buffer.IsEmpty())
-		//	return;
+		DWORD bytesAvailable = 0;
 
-		//m_Callback(buffer.GetData(), buffer.GetSize());
+		if (PeekNamedPipe(m_Pipe, nullptr, 0, nullptr, &bytesAvailable, nullptr) && bytesAvailable > 0) {
 
-		//buffer.Clear();
+			uint8 buffer[1024];
+			DWORD bytesRead;
+
+			if (ReadFile(m_Pipe, buffer, sizeof(buffer) - 1, &bytesRead, nullptr)) 
+			{
+				m_Callback(buffer, bytesRead);
+			}
+		}
 	}
 
 public:
-	void Transmit(const uint8 *Buffer, uint16 Length) const override
+	void Transmit(const uint8* Buffer, uint16 Length) const override
 	{
 		WriteOnPort(Buffer, Length);
 	}
@@ -53,51 +54,26 @@ public:
 	}
 
 private:
-	void WriteOnPort(const uint8 *Buffer, uint16 Length, uint16 Delay = 100) const
+	void WriteOnPort(const uint8* Buffer, uint16 Length, uint16 Delay = 100) const
 	{
-		//uint16 index = 0;
-		//while (index < Length)
-		//{
-		//	const uint16 CountPerStep = 64;
+		uint16 index = 0;
+		while (index < Length)
+		{
+			const uint16 CountPerStep = 64;
 
-		//	uint16 countPerStep = (uint16)Math::Min(CountPerStep, Length - index);
+			uint16 countPerStep = (uint16)Math::Min(CountPerStep, Length - index);
 
-		//	Buffer += index;
+			Buffer += index;
 
-		//	if constexpr (Peripheral == DaisyUSBInterfacePeripherals::Internal)
-		//		m_Hardware->usb_handle.TransmitInternal(const_cast<uint8 *>(Buffer), countPerStep);
-		//	else
-		//		m_Hardware->usb_handle.TransmitExternal(const_cast<uint8 *>(Buffer), countPerStep);
+			DWORD bytesWritten;
+			WriteFile(m_Pipe, Buffer, Length, &bytesWritten, NULL);
 
-		//	index += CountPerStep;
-
-		//	m_Hardware->DelayMs(Delay);
-		//}
-	}
-
-	static void Callback(uint8 *Buffer, uint32_t *Length)
-	{
-		if (Buffer == nullptr)
-			return;
-
-		if (*Length == 0)
-			return;
-
-		static BufferType &buffer = *GetBuffer();
-		buffer.Clear();
-
-		buffer.PushBack(Buffer, *Length);
-	}
-
-	static BufferType *GetBuffer(void)
-	{
-		static BufferType *buffer = Memory::Allocate<BufferType>(true);
-
-		return buffer;
+			index += CountPerStep;
+		}
 	}
 
 private:
-	//daisy::DaisySeed *m_Hardware;
+	HANDLE m_Pipe;
 	EventHandler m_Callback;
 };
 
