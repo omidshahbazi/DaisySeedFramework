@@ -32,6 +32,8 @@ public:
 	{
 		ASSERT(SDRAMSize == 0 || SDRAMAddress != nullptr, "SDRAMAddress cannot be null");
 		ASSERT(SDRAMAddress == nullptr || SDRAMSize > 0, "SDRAMSize cannot be zero");
+
+		m_StartupTime = std::chrono::steady_clock::now();
 	}
 
 	void Setup(uint8 FrameLength, uint32 SampleRate, bool Boost, bool USBTransmissionMode, bool WaitForDebugger) override
@@ -152,12 +154,12 @@ public:
 
 	uint32 GetTimeSinceStartupTicks(void) const override
 	{
-		return std::chrono::steady_clock::now().time_since_epoch().count();
+		return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - m_StartupTime).count();
 	}
 
 	uint32 GetTimeSinceStartupMs(void) const override
 	{
-		return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+		return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - m_StartupTime).count();
 	}
 
 	float GetTimeSinceStartup(void) const override
@@ -260,6 +262,8 @@ private:
 	}
 
 private:
+	std::chrono::steady_clock::time_point m_StartupTime;
+
 	CrashHandler m_CrashHandler;
 
 	WindowsUSBInterface m_USBInterface;

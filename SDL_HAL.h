@@ -120,6 +120,13 @@ public:
 		return m_Dimension;
 	}
 
+	bool GetKeyState(uint16 Key) const
+	{
+		const bool* keysState = SDL_GetKeyboardState(nullptr);
+
+		return keysState[Key];
+	}
+
 private:
 	void PaintPixel(int16 X, int16 Y, uint16 R5G6B5, uint8 Alpha)
 	{
