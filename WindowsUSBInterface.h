@@ -23,7 +23,7 @@ private:
 private:
 	void Start(void)
 	{
-		m_Pipe = CreateFile(L"\\\\.\\pipe\\COM8", GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, nullptr);
+		m_Pipe = CreateFile(L"\\\\.\\pipe\\COM20", GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, nullptr);
 	}
 
 	void Update(void)
@@ -63,10 +63,8 @@ private:
 
 			uint16 countPerStep = (uint16)Math::Min(CountPerStep, Length - index);
 
-			Buffer += index;
-
 			DWORD bytesWritten;
-			WriteFile(m_Pipe, Buffer, Length, &bytesWritten, NULL);
+			WriteFile(m_Pipe, Buffer + index, countPerStep, &bytesWritten, NULL);
 
 			index += CountPerStep;
 		}

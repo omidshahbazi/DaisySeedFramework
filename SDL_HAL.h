@@ -49,7 +49,7 @@ public:
 	void Initialize(void)
 	{
 		ASSERT(SDL_Init(SDL_INIT_VIDEO), "Failed to initialize SDL");
-		m_Window = SDL_CreateWindow("Screen", m_Dimension.X, m_Dimension.Y, SDL_WINDOW_OPENGL);
+		m_Window = SDL_CreateWindow("Screen", m_Dimension.X, m_Dimension.Y, SDL_WINDOW_OPENGL | SDL_WINDOW_ALWAYS_ON_TOP);
 		m_Renderer = SDL_CreateRenderer(m_Window, nullptr);
 		m_Texture = SDL_CreateTexture(m_Renderer, SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, m_Dimension.X, m_Dimension.Y);
 

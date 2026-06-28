@@ -71,12 +71,10 @@ private:
 
 			uint16 countPerStep = (uint16)Math::Min(CountPerStep, Length - index);
 
-			Buffer += index;
-
 			if constexpr (Peripheral == DaisyUSBInterfacePeripherals::Internal)
-				m_Hardware->usb_handle.TransmitInternal(const_cast<uint8 *>(Buffer), countPerStep);
+				m_Hardware->usb_handle.TransmitInternal(const_cast<uint8 *>(Buffer + index), countPerStep);
 			else
-				m_Hardware->usb_handle.TransmitExternal(const_cast<uint8 *>(Buffer), countPerStep);
+				m_Hardware->usb_handle.TransmitExternal(const_cast<uint8 *>(Buffer + index), countPerStep);
 
 			index += CountPerStep;
 
