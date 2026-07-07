@@ -18,32 +18,40 @@ class WindowsUSBInterface : public IUSBInterface
 
 private:
 	WindowsUSBInterface(void)
-	{}
+	{
+	}
 
 private:
-	void Start(void)
+	void Start(void) override
 	{
 		m_Pipe = CreateFile(L"\\\\.\\pipe\\COM20", GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, nullptr);
+	}
+
+	void Stop(void) override
+	{
+		CloseHandle(m_Pipe);
 	}
 
 	void Update(void)
 	{
 		DWORD bytesAvailable = 0;
 
-		if (PeekNamedPipe(m_Pipe, nullptr, 0, nullptr, &bytesAvailable, nullptr) && bytesAvailable > 0) {
+		if (PeekNamedPipe(m_Pipe, nullptr, 0, nullptr, &bytesAvailable, nullptr) && bytesAvailable > 0)
+		{
 
 			uint8 buffer[1024];
 			DWORD bytesRead;
 
-			if (ReadFile(m_Pipe, buffer, sizeof(buffer) - 1, &bytesRead, nullptr)) 
+			if (ReadFile(m_Pipe, buffer, sizeof(buffer) - 1, &bytesRead, nullptr))
 			{
-				m_Callback(buffer, bytesRead);
+				if (m_Callback != nullptr)
+					m_Callback(buffer, bytesRead);
 			}
 		}
 	}
 
 public:
-	void Transmit(const uint8* Buffer, uint16 Length) const override
+	void Transmit(const uint8 *Buffer, uint16 Length) const override
 	{
 		WriteOnPort(Buffer, Length);
 	}
@@ -54,7 +62,7 @@ public:
 	}
 
 private:
-	void WriteOnPort(const uint8* Buffer, uint16 Length, uint16 Delay = 100) const
+	void WriteOnPort(const uint8 *Buffer, uint16 Length, uint16 Delay = 100) const
 	{
 		uint16 index = 0;
 		while (index < Length)

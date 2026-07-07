@@ -36,7 +36,7 @@ public:
 		m_StartupTime = std::chrono::steady_clock::now();
 	}
 
-	void Setup(uint8 FrameLength, uint32 SampleRate, bool Boost, bool USBTransmissionMode, bool WaitForDebugger) override
+	void Setup(uint8 FrameLength, uint32 SampleRate, bool Boost, bool WaitForDebugger) override
 	{
 		ASSERT(FrameLength != 0, "Invalid FrameLength %i", FrameLength);
 
@@ -46,9 +46,6 @@ public:
 		Pa_OpenDefaultStream(&stream, 2, 2, paFloat32, SampleRate, FrameLength, AudioCallback, this);
 
 		Pa_StartStream(stream);
-
-		if (USBTransmissionMode)
-			m_USBInterface.Start();
 	}
 
 	void StartAudio(AudioPassthrough Callback) override

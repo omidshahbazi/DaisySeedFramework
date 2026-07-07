@@ -23,6 +23,8 @@ public:
 
 	virtual void Initialize(void)
 	{
+		m_USBInterface->Start();
+
 		m_Buffer = Memory::Allocate<BufferType>(1, true);
 		new (m_Buffer) BufferType();
 
@@ -30,6 +32,13 @@ public:
 									 {
 										 static_cast<USBHost *>(Context)->OnDataReceived(Buffer, Length);
 									 }});
+	}
+
+	virtual void Deinitialize(void)
+	{
+		m_USBInterface->SetCallback(nullptr);
+
+		m_USBInterface->Stop();
 	}
 
 protected:

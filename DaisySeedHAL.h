@@ -8,6 +8,7 @@
 #include "DSP/Debug.h"
 #include "DSP/Memory.h"
 #include "DaisyUSBInterface.h"
+#include "DaisyUSBAudioInterface.h"
 #include <daisy_seed.h>
 
 class DaisySeedHAL : public IHAL
@@ -59,7 +60,7 @@ public:
 		SetPWMResolution(16);
 	}
 
-	void Setup(uint8 FrameLength, uint32 SampleRate, bool Boost, bool USBTransmissionMode, bool WaitForDebugger) override
+	void Setup(uint8 FrameLength, uint32 SampleRate, bool Boost, bool WaitForDebugger) override
 	{
 		ASSERT(FrameLength != 0, "Invalid FrameLength %i", FrameLength);
 
@@ -67,9 +68,6 @@ public:
 		m_Hardware.SetAudioBlockSize(FrameLength);
 
 		m_Hardware.StartLog(WaitForDebugger);
-
-		if (USBTransmissionMode)
-			m_USBInterface.Start();
 
 		daisy::SaiHandle::Config::SampleRate daisySampleRate;
 		switch (SampleRate)
@@ -557,7 +555,7 @@ private:
 	daisy::DaisySeed m_Hardware;
 	CrashHandler m_CrashHandler;
 
-	DaisyUSBInterface<DaisyUSBInterfacePeripherals::External> m_USBInterface;
+	DaisyUSBInterface<true> m_USBInterface;
 
 	uint8* m_SDRAMAddress;
 	uint32 m_SDRAMSize;

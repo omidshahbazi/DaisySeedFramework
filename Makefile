@@ -134,6 +134,30 @@ endif
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////
 # Source Files
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+ifeq ($(USE_CUSTOM_USB_NFO), 0)
+C_DEFS += -DUSB_VID=0x484
+C_DEFS += -DUSB_PID=0x5741
+C_DEFS += -DUSB_MANUFACTURER_STRING="\"DSP Library\""
+C_DEFS += -DUSB_PRODUCT_STRING="\"Data Stream\""
+else
+C_DEFS += -DUSB_VID=$(USB_VID)
+C_DEFS += -DUSB_PID=$(USB_PID)
+C_DEFS += -DUSB_MANUFACTURER_STRING="$(USB_MANUFACTURER_STRING)"
+C_DEFS += -DUSB_PRODUCT_STRING="$(USB_PRODUCT_STRING)"
+endif
+
+ifeq ($(USE_CUSTOM_USB_ADUIO_INFO), 0)
+C_DEFS += -DUSB_ADUIO_VID=0x484
+C_DEFS += -DUSB_ADUIO_PID=0x5741
+C_DEFS += -DUSB_ADUIO_MANUFACTURER_STRING="\"DSP Library\""
+C_DEFS += -DUSB_ADUIO_PRODUCT_STRING="\"Audio Stream\""
+else
+C_DEFS += -DUSB_ADUIO_VID=$(USB_ADUIO_VID)
+C_DEFS += -DUSB_ADUIO_PID=$(USB_ADUIO_PID)
+C_DEFS += -DUSB_ADUIO_MANUFACTURER_STRING="$(USB_ADUIO_MANUFACTURER_STRING)"
+C_DEFS += -DUSB_ADUIO_PRODUCT_STRING="$(USB_ADUIO_PRODUCT_STRING)"
+endif
+
 C_INCLUDES += -isystem include/
 CPP_SOURCES += $(shell find src -name '*.cpp')
 
@@ -159,6 +183,12 @@ C_SOURCES += ${LIBDAISY_DIR}/Drivers/CMSIS-DSP/Source/TransformFunctions/arm_cff
 C_SOURCES += ${LIBDAISY_DIR}/Drivers/CMSIS-DSP/Source/TransformFunctions/arm_cfft_f32.c
 C_SOURCES += ${LIBDAISY_DIR}/Drivers/CMSIS-DSP/Source/TransformFunctions/arm_cfft_radix8_f32.c
 C_SOURCES += ${LIBDAISY_DIR}/Drivers/CMSIS-DSP/Source/TransformFunctions/arm_bitreversal2.c
+
+# Add USBD
+C_SOURCES += ${MODULE_DIR}/Libraries/USBD/source/usbd_audio.c
+C_SOURCES += ${MODULE_DIR}/Libraries/USBD/source/usbd_audio_if.c
+C_SOURCES += ${MODULE_DIR}/Libraries/USBD/source/usbd_conf.c
+C_SOURCES += ${MODULE_DIR}/Libraries/USBD/source/usbd_desc.c
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 include $(SYSTEM_FILES_DIR)/Makefile

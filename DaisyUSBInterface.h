@@ -6,13 +6,7 @@
 #include "StaticVector.h"
 #include <daisy_seed.h>
 
-enum DaisyUSBInterfacePeripherals : uint8
-{
-	Internal = 0,
-	External
-};
-
-template <DaisyUSBInterfacePeripherals Peripheral = DaisyUSBInterfacePeripherals::External, uint16 BufferSize = 1024>
+template <bool External = true, uint16 BufferSize = 1024>
 class DaisyUSBInterface : public IUSBInterface
 {
 	friend class DaisySeedHAL;
@@ -22,32 +16,49 @@ private:
 
 private:
 	DaisyUSBInterface(daisy::DaisySeed *Hardware)
-		: m_Hardware(Hardware)
+		: m_Hardware(Hardware),
+		  m_IsStarted(false)
 	{
 	}
 
-private:
-	void Start(void)
+	void Start(void) override
 	{
+		ASSERT(m_IsStarted, "It's already started");
+
 		new (GetBuffer()) BufferType();
 
 		daisy::UsbHandle::UsbPeriph periph = daisy::UsbHandle::UsbPeriph::FS_INTERNAL;
-		if constexpr (Peripheral == DaisyUSBInterfacePeripherals::External)
+		if constexpr (External)
 			periph = daisy::UsbHandle::UsbPeriph::FS_EXTERNAL;
 
 		m_Hardware->usb_handle.Init(periph);
 		m_Hardware->usb_handle.SetReceiveCallback(Callback, periph);
+
+		m_IsStarted = true;
+	}
+
+	void Stop(void) override
+	{
+		ASSERT(m_IsStarted, "It's not started");
+
+		daisy::UsbHandle::UsbPeriph periph = daisy::UsbHandle::UsbPeriph::FS_INTERNAL;
+		if constexpr (External)
+			periph = daisy::UsbHandle::UsbPeriph::FS_EXTERNAL;
+
+		m_Hardware->usb_handle.SetReceiveCallback(nullptr, periph);
+		m_Hardware->usb_handle.DeInit(periph);
+
+		HandleIncomings();
+
+		m_IsStarted = false;
 	}
 
 	void Update(void)
 	{
-		static BufferType &buffer = *GetBuffer();
-		if (buffer.IsEmpty())
+		if (!m_IsStarted)
 			return;
 
-		m_Callback(buffer.GetData(), buffer.GetSize());
-
-		buffer.Clear();
+		HandleIncomings();
 	}
 
 public:
@@ -62,6 +73,18 @@ public:
 	}
 
 private:
+	void HandleIncomings(void)
+	{
+		static BufferType &buffer = *GetBuffer();
+		if (buffer.IsEmpty())
+			return;
+
+		if (m_Callback != nullptr)
+			m_Callback(buffer.GetData(), buffer.GetSize());
+
+		buffer.Clear();
+	}
+
 	void WriteOnPort(const uint8 *Buffer, uint16 Length, uint16 Delay = 100) const
 	{
 		uint16 index = 0;
@@ -71,10 +94,10 @@ private:
 
 			uint16 countPerStep = (uint16)Math::Min(CountPerStep, Length - index);
 
-			if constexpr (Peripheral == DaisyUSBInterfacePeripherals::Internal)
-				m_Hardware->usb_handle.TransmitInternal(const_cast<uint8 *>(Buffer + index), countPerStep);
-			else
+			if constexpr (External)
 				m_Hardware->usb_handle.TransmitExternal(const_cast<uint8 *>(Buffer + index), countPerStep);
+			else
+				m_Hardware->usb_handle.TransmitInternal(const_cast<uint8 *>(Buffer + index), countPerStep);
 
 			index += CountPerStep;
 
@@ -105,6 +128,7 @@ private:
 
 private:
 	daisy::DaisySeed *m_Hardware;
+	bool m_IsStarted;
 	EventHandler m_Callback;
 };
 
