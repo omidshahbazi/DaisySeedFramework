@@ -1,37 +1,4 @@
-#//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-# Target Name
-#//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-ifndef TARGET
-TARGET = UnknownName
-endif
-#//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-#//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-# Paths
-#//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-MODULE_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
-LIBDAISY_DIR ?= $(MODULE_DIR)libDaisy
-SYSTEM_FILES_DIR = $(LIBDAISY_DIR)/core
-
-#//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-# Optimization Level
-#//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-ifndef OPT
-ifdef DEBUGGER_PRESENT
-ifdef OPTIMIZATION_OFF
-OPT = -O0
-else
-OPT = -Og
-endif
-else
-ifdef DEBUG
-OPT = -Os
-else
-OPT = -O3
-endif
-endif
-endif
-#//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+include Makefile.Common
 
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////
 # Config File
@@ -67,25 +34,9 @@ endif
 #////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-# Target Storage Type
-#//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-ifdef USE_FLASH
-APP_TYPE = BOOT_NONE
-else
-ifdef USE_SRAM
-APP_TYPE = BOOT_SRAM
-else
-APP_TYPE = BOOT_QSPI
-endif
-endif
-#//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-#//////////////////////////////////////////////////////////////////////////////////////////////////////////////
 # Linker File
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-ifndef SKIP_INTERNAL_LINKER_SCRIPT
-SKIP_INTERNAL_LINKER_SCRIPT = 0
-endif
+SKIP_INTERNAL_LINKER_SCRIPT ?= 0
 
 LINKER_SCRIPT_FILE = $(abspath Linker.lds)
 all: $(LINKER_SCRIPT_FILE)
@@ -114,85 +65,20 @@ LDSCRIPT = $(LINKER_SCRIPT_FILE)
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-# Bootloader
-#//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-ifdef INTERNAL_BOOTLOADER
-ifdef FAST_BOOTLOADER
-BOOT_BIN = $(SYSTEM_FILES_DIR)/dsy_bootloader_v6_4-intdfu-10ms.bin
-else
-BOOT_BIN = $(SYSTEM_FILES_DIR)/dsy_bootloader_v6_4-intdfu-2000ms.bin
-endif
-else
-ifdef FAST_BOOTLOADER
-BOOT_BIN = $(SYSTEM_FILES_DIR)/dsy_bootloader_v6_4-extdfu-10ms.bin
-else
-BOOT_BIN = $(SYSTEM_FILES_DIR)/dsy_bootloader_v6_4-extdfu-2000ms.bin
-endif
-endif
-#//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-#//////////////////////////////////////////////////////////////////////////////////////////////////////////////
 # Source Files
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-ifeq ($(USE_CUSTOM_USB_NFO), 0)
-C_DEFS += -DUSB_VID=0x484
-C_DEFS += -DUSB_PID=0x5741
-C_DEFS += -DUSB_MANUFACTURER_STRING="\"DSP Library\""
-C_DEFS += -DUSB_PRODUCT_STRING="\"Data Stream\""
-else
-C_DEFS += -DUSB_VID=$(USB_VID)
-C_DEFS += -DUSB_PID=$(USB_PID)
-C_DEFS += -DUSB_MANUFACTURER_STRING="$(USB_MANUFACTURER_STRING)"
-C_DEFS += -DUSB_PRODUCT_STRING="$(USB_PRODUCT_STRING)"
-endif
-
-ifeq ($(USE_CUSTOM_USB_ADUIO_INFO), 0)
-C_DEFS += -DUSB_ADUIO_VID=0x484
-C_DEFS += -DUSB_ADUIO_PID=0x5741
-C_DEFS += -DUSB_ADUIO_MANUFACTURER_STRING="\"DSP Library\""
-C_DEFS += -DUSB_ADUIO_PRODUCT_STRING="\"Audio Stream\""
-else
-C_DEFS += -DUSB_ADUIO_VID=$(USB_ADUIO_VID)
-C_DEFS += -DUSB_ADUIO_PID=$(USB_ADUIO_PID)
-C_DEFS += -DUSB_ADUIO_MANUFACTURER_STRING="$(USB_ADUIO_MANUFACTURER_STRING)"
-C_DEFS += -DUSB_ADUIO_PRODUCT_STRING="$(USB_ADUIO_PRODUCT_STRING)"
-endif
-
-C_INCLUDES += -isystem include/
-CPP_SOURCES += $(shell find src -name '*.cpp')
-
-LDFLAGS += -u _printf_float
-
-# Add ARM-CMSIS
-C_DEFS += -DARM_MATH_LOOPUNROLL
-
-C_SOURCES += ${LIBDAISY_DIR}/Drivers/CMSIS-DSP/Source/CommonTables/arm_const_structs.c
-C_SOURCES += ${LIBDAISY_DIR}/Drivers/CMSIS-DSP/Source/CommonTables/arm_common_tables.c
-
-C_SOURCES += ${LIBDAISY_DIR}/Drivers/CMSIS-DSP/Source/StatisticsFunctions/arm_max_f32.c
-
-C_SOURCES += ${LIBDAISY_DIR}/Drivers/CMSIS-DSP/Source/ComplexMathFunctions/arm_cmplx_mag_f32.c
-
-C_SOURCES += ${LIBDAISY_DIR}/Drivers/CMSIS-DSP/Source/FilteringFunctions/arm_biquad_cascade_df1_init_f32.c
-C_SOURCES += ${LIBDAISY_DIR}/Drivers/CMSIS-DSP/Source/FilteringFunctions/arm_biquad_cascade_df1_f32.c
-
-C_SOURCES += ${LIBDAISY_DIR}/Drivers/CMSIS-DSP/Source/FilteringFunctions/arm_fir_init_f32.c
-C_SOURCES += ${LIBDAISY_DIR}/Drivers/CMSIS-DSP/Source/FilteringFunctions/arm_fir_f32.c
-
-C_SOURCES += ${LIBDAISY_DIR}/Drivers/CMSIS-DSP/Source/TransformFunctions/arm_cfft_init_f32.c
-C_SOURCES += ${LIBDAISY_DIR}/Drivers/CMSIS-DSP/Source/TransformFunctions/arm_cfft_f32.c
-C_SOURCES += ${LIBDAISY_DIR}/Drivers/CMSIS-DSP/Source/TransformFunctions/arm_cfft_radix8_f32.c
-C_SOURCES += ${LIBDAISY_DIR}/Drivers/CMSIS-DSP/Source/TransformFunctions/arm_bitreversal2.c
+INCLUDE_FILES += -isystem ../../include/
+CPP_SOURCE_FILES += $(shell find ../../src -name '*.cpp')
 
 # Add USBD
-C_SOURCES += ${MODULE_DIR}/Libraries/USBD/source/usbd_audio.c
-C_SOURCES += ${MODULE_DIR}/Libraries/USBD/source/usbd_audio_if.c
-C_SOURCES += ${MODULE_DIR}/Libraries/USBD/source/usbd_conf.c
-C_SOURCES += ${MODULE_DIR}/Libraries/USBD/source/usbd_desc.c
+C_SOURCE_FILES += Libraries/USBD/source/usbd_audio.c
+C_SOURCE_FILES += Libraries/USBD/source/usbd_audio_if.c
+C_SOURCE_FILES += Libraries/USBD/source/usbd_conf.c
+C_SOURCE_FILES += Libraries/USBD/source/usbd_desc.c
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-include $(SYSTEM_FILES_DIR)/Makefile
+BUILD_DIRECTORY = ../../build
 
-ifeq ($(SINGLE_THREADED_COMPILE), 0)
-MAKEFLAGS += -j4
-endif
+C_DEFS += $(DEFINES)
+
+include $(SYSTEM_FILES_DIR)/Makefile

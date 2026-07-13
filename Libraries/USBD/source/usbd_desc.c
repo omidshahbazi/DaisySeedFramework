@@ -19,16 +19,16 @@
 /* -------------------------------------------------------------------------- */
 
 #ifndef USB_ADUIO_VID
-static_assert(false, "USB_ADUIO_VID is not defined in Makefile");
+#error "USB_ADUIO_VID is not defined in Makefile"
 #endif
 #ifndef USB_ADUIO_PID
-static_assert(false, "USB_ADUIO_PID is not defined in Makefile");
+#error "USB_ADUIO_PID is not defined in Makefile"
 #endif
 #ifndef USB_ADUIO_MANUFACTURER_STRING
-static_assert(false, "USB_ADUIO_MANUFACTURER_STRING is not defined in Makefile");
+#error "USB_ADUIO_MANUFACTURER_STRING is not defined in Makefile"
 #endif
 #ifndef USB_ADUIO_PRODUCT_STRING
-static_assert(false, "USB_ADUIO_PRODUCT_STRING is not defined in Makefile");
+#error "USB_ADUIO_PRODUCT_STRING is not defined in Makefile"
 #endif
 
 #define USBD_VID                    USB_ADUIO_VID //1155       /* 0x0483 — ST's VID, ok for dev */

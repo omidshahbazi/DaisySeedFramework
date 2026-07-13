@@ -48,10 +48,10 @@ public:
 		for (uint8 i = 0; i < Count; ++i)
 		{
 			buffer[i * 2 + 0] = (int16)(Math::ClampSignal(BufferL[i]) * 32767);
-			buffer[i * 2 + 1] = (int16)(Math::ClampSignal(BufferL[i]) * 32767);
+			buffer[i * 2 + 1] = (int16)(Math::ClampSignal(BufferR[i]) * 32767);
 		}
 
-		AudioIF_PushSamples(buffer, (uint32)Count);
+		AudioIF_PushSamples(buffer, Count);
 	}
 
 private:
