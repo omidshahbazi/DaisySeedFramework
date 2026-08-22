@@ -1,0 +1,91 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="VisualGDB settings">
+      <UniqueIdentifier>{b399a7be-fdda-40b1-9788-faea24c0f9a2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{58720d8b-240a-4043-8cd5-ab7594a3a7f0}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Source\Device-specific files">
+      <UniqueIdentifier>{396f839c-cdb4-41bd-a535-7bd710f2a06d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include">
+      <UniqueIdentifier>{2cc183c1-b494-4ddc-bd28-00273e054f9a}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Include\DaisySeedFramework">
+      <UniqueIdentifier>{78cf64dd-5f8a-4a1f-b75f-be1ca6926aac}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="stm32.props">
+      <Filter>Source\Device-specific files</Filter>
+    </None>
+    <None Include="DaisySeedFramework-Debug.vgdbsettings">
+      <Filter>VisualGDB settings</Filter>
+    </None>
+    <None Include="DaisySeedFramework-Release.vgdbsettings">
+      <Filter>VisualGDB settings</Filter>
+    </None>
+    <None Include="stm32.xml">
+      <Filter>VisualGDB settings</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="source\CompileHelper.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Include\DaisySeedFramework\Common.h">
+      <Filter>Include\DaisySeedFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\DaisyPersistentBlob.h">
+      <Filter>Include\DaisySeedFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\DaisySeedHAL.h">
+      <Filter>Include\DaisySeedFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\DaisyUSBAudioInterface.h">
+      <Filter>Include\DaisySeedFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\DaisyUSBInterface.h">
+      <Filter>Include\DaisySeedFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\ILI9341_HAL.h">
+      <Filter>Include\DaisySeedFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\I_LCD_HAL.h">
+      <Filter>Include\DaisySeedFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\LCDCanvas.h">
+      <Filter>Include\DaisySeedFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\PersistentBlobCommon.h">
+      <Filter>Include\DaisySeedFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\SDL_HAL.h">
+      <Filter>Include\DaisySeedFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\StaticStack.h">
+      <Filter>Include\DaisySeedFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\StaticVector.h">
+      <Filter>Include\DaisySeedFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\USBHost.h">
+      <Filter>Include\DaisySeedFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\WindowsHAL.h">
+      <Filter>Include\DaisySeedFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\WindowsPersistentBlob.h">
+      <Filter>Include\DaisySeedFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\WindowsUSBInterface.h">
+      <Filter>Include\DaisySeedFramework</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

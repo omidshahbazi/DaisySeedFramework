@@ -3,8 +3,8 @@
 #define SDL_HAL_H
 
 #include "I_LCD_HAL.h"
-#include "DSP/Math.h"
-#include "DSP/ContextCallback.h"
+#include <DigitalSignalProcessing/Math.h>
+#include <DigitalSignalProcessing/ContextCallback.h>
 
 #undef ns
 #undef ms

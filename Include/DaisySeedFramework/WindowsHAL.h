@@ -3,10 +3,10 @@
 #define WINDOWS_HAL_H
 
 #include "Common.h"
-#include "DSP/IHAL.h"
-#include "DSP/Math.h"
-#include "DSP/Debug.h"
-#include "DSP/Memory.h"
+#include <DigitalSignalProcessing/IHAL.h>
+#include <DigitalSignalProcessing/Math.h>
+#include <DigitalSignalProcessing/Debug.h>
+#include <DigitalSignalProcessing/Memory.h>
 #include "WindowsUSBInterface.h"
 #include <chrono>
 #include <portaudio.h>
@@ -36,7 +36,7 @@ public:
 		m_StartupTime = std::chrono::steady_clock::now();
 	}
 
-	void Setup(uint8 FrameLength, uint32 SampleRate, bool Boost, bool WaitForDebugger) override
+	void Setup(uint8 FrameLength, uint32 SampleRate, bool Boost) override
 	{
 		ASSERT(FrameLength != 0, "Invalid FrameLength %i", FrameLength);
 
@@ -82,7 +82,7 @@ public:
 		free(Memory);
 	}
 
-	bool IsAnAnaloglPin(uint8 Pin) const override
+	bool IsAnAnalogPin(uint8 Pin) const override
 	{
 		return true;
 	}
@@ -169,6 +169,11 @@ public:
 		printf(Value);
 	}
 
+	bool IsDebuggerPresent(void) const override
+	{
+		return ::IsDebuggerPresent();
+	}
+
 	void Crash(void) const override
 	{
 		Delay(1000);
@@ -187,7 +192,7 @@ public:
 		__debugbreak();
 	}
 
-	void Reset(void) const override
+	void Reset(bool InfiniteTime = true) const override
 	{
 		exit(0);
 	}

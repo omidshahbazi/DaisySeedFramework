@@ -2,7 +2,7 @@
 #ifndef STATIC_VECTOR_H
 #define STATIC_VECTOR_H
 
-#include "DSP/Debug.h"
+#include <DigitalSignalProcessing/Debug.h>
 
 template <typename T, uint16 MaxSize>
 struct StaticVector

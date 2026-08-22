@@ -3,8 +3,8 @@
 #define LCD_CANVAS_H
 
 #include "I_LCD_HAL.h"
-#include "DSP/Math.h"
-#include "DSP/Debug.h"
+#include <DigitalSignalProcessing/Math.h>
+#include <DigitalSignalProcessing/Debug.h>
 
 class LCDCanvas
 {
@@ -34,12 +34,11 @@ class LCDCanvas
 public:
 	LCDCanvas(void)
 		: m_HAL(nullptr),
-		  m_CharacterSpacing(0),
-		  m_LineSpacing(0)
-	{
-	}
+		m_CharacterSpacing(0),
+		m_LineSpacing(0)
+	{}
 
-	void Initialize(I_LCD_HAL *HAL)
+	void Initialize(I_LCD_HAL* HAL)
 	{
 		ASSERT(HAL != nullptr, "HAL cannot be null");
 
@@ -57,7 +56,7 @@ public:
 	{
 		ASSERT(m_HAL != nullptr, "m_HAL cannot be null");
 
-		m_HAL->DrawPixel({X, Y}, Color);
+		m_HAL->DrawPixel({ X, Y }, Color);
 	}
 
 	void DrawLine(int16 X0, int16 Y0, int16 X1, int16 Y1, Color Color, uint8 Thickness = 1)
@@ -232,7 +231,7 @@ public:
 		}
 
 		int16 dx01 = X1 - X0, dy01 = Y1 - Y0, dx02 = X2 - X0, dy02 = Y2 - Y0,
-			  dx12 = X2 - X1, dy12 = Y2 - Y1;
+			dx12 = X2 - X1, dy12 = Y2 - Y1;
 		int32 sa = 0, sb = 0;
 
 		// For upper part of triangle, find scanline crossings for segments
@@ -378,21 +377,21 @@ public:
 		}
 	}
 
-	uint8 DrawCharacter(int16 X, int16 Y, char Character, const Font &Font, Color Color, bool IgnoreOffset = false)
+	uint8 DrawCharacter(int16 X, int16 Y, char Character, const Font& Font, Color Color, bool IgnoreOffset = false)
 	{
 		if (!HasGlyph(Character, Font))
 			return 0;
 
-		const uint8 PIXEL_ALPHA_VALUES[] = {0, 255, 85, 170};
+		const uint8 PIXEL_ALPHA_VALUES[] = { 0, 255, 85, 170 };
 
 		DEFINE_GLYPH_VALUES()
 
-		const uint8 Mask = (1 << Font.BitsPerPixel) - 1;
+			const uint8 Mask = (1 << Font.BitsPerPixel) - 1;
 		const uint16 TargetWidth = GlyphWidth;
 		const uint16 TargetHeight = GlyphHeight;
 		CharData += GlyphDataElementOffset;
 
-		::Color color = {Color.R, Color.G, Color.B};
+		::Color color = { Color.R, Color.G, Color.B };
 
 		int16 originX = X + (IgnoreOffset ? 0 : GlyphXOffset);
 		int16 originY = Y + (IgnoreOffset ? 0 : GlyphYOffset);
@@ -419,12 +418,12 @@ public:
 		return GlyphAdvance;
 	}
 
-	void DrawString(int16 X, int16 Y, cstr const String, const Font &Font, Color Color)
+	void DrawString(int16 X, int16 Y, cstr const String, const Font& Font, Color Color)
 	{
 		DrawString(X, Y, String, GetStringLength(String), Font, Color);
 	}
 
-	void DrawString(int16 X, int16 Y, cstr String, uint16 Length, const Font &Font, Color Color)
+	void DrawString(int16 X, int16 Y, cstr String, uint16 Length, const Font& Font, Color Color)
 	{
 		ASSERT(String != nullptr, "String cannot be null");
 
@@ -450,17 +449,17 @@ public:
 		}
 	}
 
-	Point MeasureCharacterDimension(char Character, const Font &Font)
+	Point MeasureCharacterDimension(char Character, const Font& Font)
 	{
 		if (Character == '\n' || Character == '\r')
 			return {};
 
 		Point dimensions = GetCharacterDimesion(Character, Font, true, true);
 
-		return {dimensions.X + (m_CharacterSpacing * Font.Scale), (dimensions.Y * Font.Scale) + m_LineSpacing};
+		return { dimensions.X + (m_CharacterSpacing * Font.Scale), (dimensions.Y * Font.Scale) + m_LineSpacing };
 	}
 
-	Point MeasureCharacterOffset(char Character, const Font &Font)
+	Point MeasureCharacterOffset(char Character, const Font& Font)
 	{
 		if (Character == '\n' || Character == '\r')
 			return {};
@@ -468,12 +467,12 @@ public:
 		return GetCharacterOffset(Character, Font);
 	}
 
-	Point MeasureStringDimension(cstr String, const Font &Font)
+	Point MeasureStringDimension(cstr String, const Font& Font)
 	{
 		return MeasureStringDimension(String, GetStringLength(String), Font);
 	}
 
-	Point MeasureStringDimension(cstr String, uint16 Length, const Font &Font)
+	Point MeasureStringDimension(cstr String, uint16 Length, const Font& Font)
 	{
 		ASSERT(String != nullptr, "String cannot be null");
 
@@ -511,9 +510,9 @@ public:
 		return totalDimensions;
 	}
 
-	void DrawBitmap(int16 X, int16 Y, const Bitmap &Bitmap, Color Color, float Scale = 1)
+	void DrawBitmap(int16 X, int16 Y, const Bitmap& Bitmap, Color Color, float Scale = 1)
 	{
-		const uint8 CHANNEL_VALUES[] = {0, 255, 85, 170};
+		const uint8 CHANNEL_VALUES[] = { 0, 255, 85, 170 };
 
 		const uint8 BitsInDataType = sizeof(Bitmap::DataType) * 8;
 		const uint8 Pitch = Math::Max(1, Math::Ceil(((float)Bitmap.Width * Bitmap.BitsPerPixel) / BitsInDataType));
@@ -553,12 +552,12 @@ public:
 			}
 	}
 
-	void DrawFontBitmap(int16 X, int16 Y, uint8 ID, const Font &Font, Color Color, bool IgnoreOffsets = true)
+	void DrawFontBitmap(int16 X, int16 Y, uint8 ID, const Font& Font, Color Color, bool IgnoreOffsets = true)
 	{
 		DrawCharacter(X, Y, ID, Font, Color, IgnoreOffsets);
 	}
 
-	Point MeasureFontBitmapDimension(uint8 ID, const Font &Font)
+	Point MeasureFontBitmapDimension(uint8 ID, const Font& Font)
 	{
 		return GetCharacterDimesion(ID, Font, false);
 	}
@@ -613,27 +612,27 @@ public:
 		DrawFilledCircle(Position.X, Position.Y, Radius, Color);
 	}
 
-	void DrawCharacter(Point Position, char Char, const Font &Font, Color Color)
+	void DrawCharacter(Point Position, char Char, const Font& Font, Color Color)
 	{
 		DrawCharacter(Position.X, Position.Y, Char, Font, Color);
 	}
 
-	void DrawString(Point Position, cstr String, const Font &Font, Color Color)
+	void DrawString(Point Position, cstr String, const Font& Font, Color Color)
 	{
 		DrawString(Position.X, Position.Y, String, Font, Color);
 	}
 
-	void DrawString(Point Position, cstr String, uint16 Length, const Font &Font, Color Color)
+	void DrawString(Point Position, cstr String, uint16 Length, const Font& Font, Color Color)
 	{
 		DrawString(Position.X, Position.Y, String, Length, Font, Color);
 	}
 
-	void DrawBitmap(Point Position, const Bitmap &Bitmap, Color Color, float Scale = 1)
+	void DrawBitmap(Point Position, const Bitmap& Bitmap, Color Color, float Scale = 1)
 	{
 		DrawBitmap(Position.X, Position.Y, Bitmap, Color, Scale);
 	}
 
-	void DrawFontBitmap(Point Position, uint8 ID, const Font &Font, Color Color, bool IgnoreOffsets = true)
+	void DrawFontBitmap(Point Position, uint8 ID, const Font& Font, Color Color, bool IgnoreOffsets = true)
 	{
 		DrawFontBitmap(Position.X, Position.Y, ID, Font, Color, IgnoreOffsets);
 	}
@@ -644,18 +643,18 @@ public:
 		m_LineSpacing = Line;
 	}
 
-	const Point &GetDimension(void) const
+	const Point& GetDimension(void) const
 	{
 		return m_HAL->GetDimension();
 	}
 
 private:
-	bool HasGlyph(char Character, const Font &Font)
+	bool HasGlyph(char Character, const Font& Font)
 	{
 		return (GetGlyphIndex(Character, Font) != -1);
 	}
 
-	int8 GetGlyphIndex(char Character, const Font &Font)
+	int8 GetGlyphIndex(char Character, const Font& Font)
 	{
 		for (int8 i = 0;; ++i)
 		{
@@ -670,7 +669,7 @@ private:
 		return -1;
 	}
 
-	Point GetCharacterDimesion(char Character, const Font &Font, bool IncludeOffset, bool AdvanceInsteadOfWidth = false)
+	Point GetCharacterDimesion(char Character, const Font& Font, bool IncludeOffset, bool AdvanceInsteadOfWidth = false)
 	{
 		if (!HasGlyph(Character, Font))
 			return {};
@@ -681,7 +680,7 @@ private:
 		{
 			DEFINE_GLYPH_VALUES()
 
-			fontSize.X = (AdvanceInsteadOfWidth ? GlyphAdvance : GlyphWidth);
+				fontSize.X = (AdvanceInsteadOfWidth ? GlyphAdvance : GlyphWidth);
 			fontSize.Y = GlyphHeight;
 
 			if (IncludeOffset)
@@ -694,7 +693,7 @@ private:
 		return fontSize;
 	}
 
-	Point GetCharacterOffset(char Character, const Font &Font)
+	Point GetCharacterOffset(char Character, const Font& Font)
 	{
 		if (!HasGlyph(Character, Font))
 			return {};
@@ -703,7 +702,7 @@ private:
 		{
 			DEFINE_GLYPH_VALUES()
 
-			return {GlyphXOffset, GlyphYOffset};
+				return { GlyphXOffset, GlyphYOffset };
 		}
 
 		return {};
@@ -740,7 +739,7 @@ private:
 	}
 
 private:
-	I_LCD_HAL *m_HAL;
+	I_LCD_HAL* m_HAL;
 	int8 m_CharacterSpacing;
 	int8 m_LineSpacing;
 

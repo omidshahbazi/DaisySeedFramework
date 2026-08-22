@@ -4,7 +4,7 @@
 
 #include "Common.h"
 #include "StaticVector.h"
-#include "DSP/IHAL.h"
+#include <DigitalSignalProcessing/IHAL.h>
 
 template <uint16 BufferSize>
 class USBHost

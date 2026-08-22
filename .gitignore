@@ -1,0 +1,5 @@
+.visualgdb
+VisualGDB
+x64
+*.vcxproj.user
+~AutoRecover.*

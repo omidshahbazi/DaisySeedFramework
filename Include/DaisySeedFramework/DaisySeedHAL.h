@@ -2,13 +2,15 @@
 #ifndef DAISY_SEED_HAL_H
 #define DAISY_SEED_HAL_H
 
+#define STM32H750xx
+#define FILEIO_ENABLE_FATFS_READER
+
 #include "Common.h"
-#include "DSP/IHAL.h"
-#include "DSP/Math.h"
-#include "DSP/Debug.h"
-#include "DSP/Memory.h"
+#include <DigitalSignalProcessing/IHAL.h>
+#include <DigitalSignalProcessing/Math.h>
+#include <DigitalSignalProcessing/Debug.h>
+#include <DigitalSignalProcessing/Memory.h>
 #include "DaisyUSBInterface.h"
-#include "DaisyUSBAudioInterface.h"
 #include <daisy_seed.h>
 
 class DaisySeedHAL : public IHAL
@@ -60,14 +62,14 @@ public:
 		SetPWMResolution(16);
 	}
 
-	void Setup(uint8 FrameLength, uint32 SampleRate, bool Boost, bool WaitForDebugger) override
+	void Setup(uint8 FrameLength, uint32 SampleRate, bool Boost) override
 	{
 		ASSERT(FrameLength != 0, "Invalid FrameLength %i", FrameLength);
 
 		m_Hardware.Init(Boost);
 		m_Hardware.SetAudioBlockSize(FrameLength);
 
-		m_Hardware.StartLog(WaitForDebugger);
+		m_Hardware.StartLog();
 
 		daisy::SaiHandle::Config::SampleRate daisySampleRate;
 		switch (SampleRate)
@@ -101,7 +103,7 @@ public:
 
 	void StartAudio(AudioPassthrough Callback) override
 	{
-		m_Hardware.StartAudio(Callback);
+		m_Hardware.StartAudio((daisy::AudioHandle::AudioCallback)Callback);
 	}
 
 	void* Allocate(uint32 Size, bool OnSDRAM = false) override
@@ -133,7 +135,7 @@ public:
 		free(Memory);
 	}
 
-	bool IsAnAnaloglPin(uint8 Pin) const override
+	bool IsAnAnalogPin(uint8 Pin) const override
 	{
 		switch (Pin)
 		{
@@ -213,7 +215,7 @@ public:
 
 		daisy::Pin pin = GetPin(Pin);
 
-		if (Mode == PinModes::AnalogInput && IsAnAnaloglPin(Pin))
+		if (Mode == PinModes::AnalogInput && IsAnAnalogPin(Pin))
 		{
 			PinState<daisy::AdcChannelConfig>* state = FindOrGetNewAnalogPin(Pin);
 			state->Object.InitSingle(pin);
@@ -247,7 +249,7 @@ public:
 
 	float AnalogRead(uint8 Pin) const override
 	{
-		ASSERT(IsAnAnaloglPin(Pin), "Pin %i is not an analog pin", Pin);
+		ASSERT(IsAnAnalogPin(Pin), "Pin %i is not an analog pin", Pin);
 
 		return m_Hardware.adc.GetFloat(GetAnalogPinIndex(Pin));
 	}
@@ -303,6 +305,11 @@ public:
 		m_Hardware.PrintLine(Value);
 	}
 
+	bool IsDebuggerPresent(void) const override
+	{
+		return (CoreDebug->DHCSR & CoreDebug_DHCSR_C_DEBUGEN_Msk) != 0;
+	}
+
 	void Crash(void) const override
 	{
 		Delay(1000);
@@ -326,9 +333,9 @@ public:
 
 	// Bootloader version has to be in sync with the libDaisy, so if you see mal-function here, update either of them
 	// https://flash.daisy.audio/
-	void Reset(void) const override
+	void Reset(bool InfiniteTime = true) const override
 	{
-		daisy::System::ResetToBootloader(daisy::System::BootloaderMode::DAISY_INFINITE_TIMEOUT);
+		daisy::System::ResetToBootloader(InfiniteTime ? daisy::System::BootloaderMode::DAISY_INFINITE_TIMEOUT : daisy::System::BootloaderMode::DAISY_SKIP_TIMEOUT);
 	}
 
 	void Delay(uint16 Ms) const override

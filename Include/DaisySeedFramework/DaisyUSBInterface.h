@@ -2,7 +2,7 @@
 #ifndef DAISY_USB_INTERFACE_H
 #define DAISY_USB_INTERFACE_H
 
-#include "DSP/IUSBInterface.h"
+#include <DigitalSignalProcessing/IUSBInterface.h>
 #include "StaticVector.h"
 #include <daisy_seed.h>
 
@@ -23,7 +23,7 @@ private:
 
 	void Start(void) override
 	{
-		ASSERT(m_IsStarted, "It's already started");
+		ASSERT(!m_IsStarted, "It's already started");
 
 		new (GetBuffer()) BufferType();
 

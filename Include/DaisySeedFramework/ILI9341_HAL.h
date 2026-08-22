@@ -4,8 +4,8 @@
 
 #include "I_LCD_HAL.h"
 #include "DaisySeedHAL.h"
-#include "DSP/Math.h"
-#include "DSP/ContextCallback.h"
+#include <DigitalSignalProcessing/Math.h>
+#include <DigitalSignalProcessing/ContextCallback.h>
 
 template <uint32 Width, uint32 Height>
 class ILI9341_HAL : public I_LCD_HAL

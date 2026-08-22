@@ -1,0 +1,124 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|VisualGDB">
+      <Configuration>Debug</Configuration>
+      <Platform>VisualGDB</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|VisualGDB">
+      <Configuration>Release</Configuration>
+      <Platform>VisualGDB</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>18.0</VCProjectVersion>
+    <ProjectGuid>{360E6A9A-5A4E-C32C-C731-F75CD614B7C6}</ProjectGuid>
+    <BSP_ID>com.sysprogs.arm.stm32h7</BSP_ID>
+    <BSP_VERSION>1.12.0</BSP_VERSION>
+    <InPlaceBSPSubdir />
+    <RelativeBSPPath />
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug|VisualGDB'">
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Release|VisualGDB'">
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <PlatformToolset>v145</PlatformToolset>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <PlatformToolset>v145</PlatformToolset>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|VisualGDB'">
+    <GNUConfigurationType>Debug</GNUConfigurationType>
+    <ToolchainID>com.visualgdb.arm-eabi</ToolchainID>
+    <ToolchainVersion>15.2.1/17.2/r2</ToolchainVersion>
+    <GNUTargetType>StaticLibrary</GNUTargetType>
+    <MCUPropertyListFile>$(ProjectDir)stm32.props</MCUPropertyListFile>
+    <TargetName>lib$(ProjectName)</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|VisualGDB'">
+    <ToolchainID>com.visualgdb.arm-eabi</ToolchainID>
+    <ToolchainVersion>15.2.1/17.2/r2</ToolchainVersion>
+    <GNUTargetType>StaticLibrary</GNUTargetType>
+    <MCUPropertyListFile>$(ProjectDir)stm32.props</MCUPropertyListFile>
+    <TargetName>lib$(ProjectName)</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|VisualGDB'">
+    <ClCompile>
+      <CPPLanguageStandard>CPP17</CPPLanguageStandard>
+      <AdditionalIncludeDirectories>Include/DaisySeedFramework;DSP/Include;libDaisy/src;libDaisy/src/sys;libDaisy/src/usbh;libDaisy/Drivers/STM32H7xx_HAL_Driver/Inc;libDaisy/Drivers/CMSIS-Device/ST/STM32H7xx/Include;libDaisy/Drivers/CMSIS/Core/Include;libDaisy/Drivers/CMSIS_5/CMSIS/Core/Include;libDaisy/Drivers/CMSIS-DSP/Include;libDaisy/Middlewares/ST/STM32_USB_Host_Library/Core/Inc;libDaisy/Middlewares/Third_Party/FatFs/src;</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <ProduceRelocationRecords>true</ProduceRelocationRecords>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|VisualGDB'">
+    <ClCompile>
+      <CPPLanguageStandard>CPP17</CPPLanguageStandard>
+      <AdditionalIncludeDirectories>Include/DaisySeedFramework;DSP/Include;libDaisy/src;libDaisy/src/sys;libDaisy/src/usbh;libDaisy/Drivers/STM32H7xx_HAL_Driver/Inc;libDaisy/Drivers/CMSIS-Device/ST/STM32H7xx/Include;libDaisy/Drivers/CMSIS/Core/Include;libDaisy/Drivers/CMSIS_5/CMSIS/Core/Include;libDaisy/Drivers/CMSIS-DSP/Include;libDaisy/Middlewares/ST/STM32_USB_Host_Library/Core/Inc;libDaisy/Middlewares/Third_Party/FatFs/src;</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <ProduceRelocationRecords>true</ProduceRelocationRecords>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>Include;DSP/Include;Libraries/portaudio/include;Libraries/SDL/include</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>Include;DSP/Include;Libraries/portaudio/include;Libraries/SDL/include</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+  <ItemGroup>
+    <None Include="stm32.props" />
+    <None Include="DaisySeedFramework-Debug.vgdbsettings" />
+    <None Include="DaisySeedFramework-Release.vgdbsettings" />
+    <None Include="stm32.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="source\CompileHelper.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Include\DaisySeedFramework\Common.h" />
+    <ClInclude Include="Include\DaisySeedFramework\DaisyPersistentBlob.h" />
+    <ClInclude Include="Include\DaisySeedFramework\DaisySeedHAL.h" />
+    <ClInclude Include="Include\DaisySeedFramework\DaisyUSBAudioInterface.h" />
+    <ClInclude Include="Include\DaisySeedFramework\DaisyUSBInterface.h" />
+    <ClInclude Include="Include\DaisySeedFramework\ILI9341_HAL.h" />
+    <ClInclude Include="Include\DaisySeedFramework\I_LCD_HAL.h" />
+    <ClInclude Include="Include\DaisySeedFramework\LCDCanvas.h" />
+    <ClInclude Include="Include\DaisySeedFramework\PersistentBlobCommon.h" />
+    <ClInclude Include="Include\DaisySeedFramework\SDL_HAL.h" />
+    <ClInclude Include="Include\DaisySeedFramework\StaticStack.h" />
+    <ClInclude Include="Include\DaisySeedFramework\StaticVector.h" />
+    <ClInclude Include="Include\DaisySeedFramework\USBHost.h" />
+    <ClInclude Include="Include\DaisySeedFramework\WindowsHAL.h" />
+    <ClInclude Include="Include\DaisySeedFramework\WindowsPersistentBlob.h" />
+    <ClInclude Include="Include\DaisySeedFramework\WindowsUSBInterface.h" />
+  </ItemGroup>
+</Project>

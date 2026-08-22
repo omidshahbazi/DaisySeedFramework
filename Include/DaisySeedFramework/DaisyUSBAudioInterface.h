@@ -2,7 +2,7 @@
 #ifndef DAISY_USB_AUDIO_INTERFACE_H
 #define DAISY_USB_AUDIO_INTERFACE_H
 
-#include "DSP/IUSBAudioInterface.h"
+#include <DigitalSignalProcessing/IUSBAudioInterface.h>
 #include "Libraries/USBD/include/usbd_audio_if.h"
 
 extern "C"

@@ -2,7 +2,7 @@
 #ifndef WINDOWS_USB_INTERFACE_H
 #define WINDOWS_USB_INTERFACE_H
 
-#include "DSP/IUSBInterface.h"
+#include <DigitalSignalProcessing/IUSBInterface.h>
 #include <thread>
 #include <atomic>
 #include <string>
@@ -33,7 +33,7 @@ private:
 		const std::string name = m_Name;
 		const std::wstring path = L"\\\\.\\pipe\\USB-PIPE-" + std::wstring(name.begin(), name.end());
 
-		m_Pipe = CreateNamedPipe(path.c_str(), PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, 1, 1024, 1024, 0, nullptr);
+		m_Pipe = CreateNamedPipeW(path.c_str(), PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, 1, 1024, 1024, 0, nullptr);
 
 		ListenForClient();
 	}
