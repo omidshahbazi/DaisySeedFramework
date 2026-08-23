@@ -3,7 +3,7 @@
 	url = git@github.com:omidshahbazi/DigitalSignalProcessing.git
 	branch = master
 [submodule "libDaisy"]
-	path = libDaisy
+	path = Libraries/libDaisy
 	url = git@github.com:omidshahbazi/libDaisy.git
 	branch = master
 
