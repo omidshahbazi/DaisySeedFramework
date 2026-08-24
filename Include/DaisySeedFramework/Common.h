@@ -264,7 +264,7 @@ public:
 	static constexpr uint32 Name##_Size = Size; \
 	uint8 g_##Name[Name##_Size] = {0};
 #else
-#include "../libDaisy/src/dev/sdram.h"
+#include <libDaisy/src/dev/sdram.h>
 
 #define DEFINE_LARGE_MEMORY_BUFFER(Name, Size)  \
 	static constexpr uint32 Name##_Size = Size; \

@@ -2,9 +2,9 @@
 #ifndef DAISY_USB_INTERFACE_H
 #define DAISY_USB_INTERFACE_H
 
-#include <DigitalSignalProcessing/IUSBInterface.h>
 #include "StaticVector.h"
-#include <daisy_seed.h>
+#include <DigitalSignalProcessing/IUSBInterface.h>
+#include <libDaisy/src/daisy_seed.h>
 
 template <bool External = true, uint16 BufferSize = 1024>
 class DaisyUSBInterface : public IUSBInterface

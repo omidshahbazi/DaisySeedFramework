@@ -7,9 +7,9 @@
 
 extern "C"
 {
-#include "usbd_core.h"
-#include "Libraries/USBD/include/usbd_desc.h"
-#include "Libraries/USBD/include/usbd_audio.h"
+//#include "usbd_core.h"
+//#include "Libraries/USBD/include/usbd_desc.h"
+//#include "Libraries/USBD/include/usbd_audio.h"
 }
 
 template <bool External, typename T, uint8 FrameLength>

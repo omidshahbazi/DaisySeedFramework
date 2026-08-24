@@ -64,7 +64,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|VisualGDB'">
     <ClCompile>
       <CPPLanguageStandard>CPP17</CPPLanguageStandard>
-      <AdditionalIncludeDirectories>Include/DaisySeedFramework;DSP/Include;libDaisy/src;libDaisy/src/sys;libDaisy/src/usbh;libDaisy/Drivers/STM32H7xx_HAL_Driver/Inc;libDaisy/Drivers/CMSIS-Device/ST/STM32H7xx/Include;libDaisy/Drivers/CMSIS/Core/Include;libDaisy/Drivers/CMSIS_5/CMSIS/Core/Include;libDaisy/Drivers/CMSIS-DSP/Include;libDaisy/Middlewares/ST/STM32_USB_Host_Library/Core/Inc;libDaisy/Middlewares/Third_Party/FatFs/src;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Include/DaisySeedFramework;DSP/Include;Libraries/;LibrarieslibDaisy/src;Libraries/libDaisy/src/sys;Libraries/libDaisy/src/usbh;Libraries/libDaisy/Drivers/STM32H7xx_HAL_Driver/Inc;Libraries/libDaisy/Drivers/CMSIS-Device/ST/STM32H7xx/Include;Libraries/libDaisy/Drivers/CMSIS/Core/Include;Libraries/libDaisy/Drivers/CMSIS_5/CMSIS/Core/Include;Libraries/libDaisy/Middlewares/ST/STM32_USB_Host_Library/Core/Inc;Libraries/libDaisy/Middlewares/Third_Party/FatFs/src</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <ProduceRelocationRecords>true</ProduceRelocationRecords>
@@ -73,7 +73,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|VisualGDB'">
     <ClCompile>
       <CPPLanguageStandard>CPP17</CPPLanguageStandard>
-      <AdditionalIncludeDirectories>Include/DaisySeedFramework;DSP/Include;libDaisy/src;libDaisy/src/sys;libDaisy/src/usbh;libDaisy/Drivers/STM32H7xx_HAL_Driver/Inc;libDaisy/Drivers/CMSIS-Device/ST/STM32H7xx/Include;libDaisy/Drivers/CMSIS/Core/Include;libDaisy/Drivers/CMSIS_5/CMSIS/Core/Include;libDaisy/Drivers/CMSIS-DSP/Include;libDaisy/Middlewares/ST/STM32_USB_Host_Library/Core/Inc;libDaisy/Middlewares/Third_Party/FatFs/src;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Include/DaisySeedFramework;DSP/Include;Libraries/;LibrarieslibDaisy/src;Libraries/libDaisy/src/sys;Libraries/libDaisy/src/usbh;Libraries/libDaisy/Drivers/STM32H7xx_HAL_Driver/Inc;Libraries/libDaisy/Drivers/CMSIS-Device/ST/STM32H7xx/Include;Libraries/libDaisy/Drivers/CMSIS/Core/Include;Libraries/libDaisy/Drivers/CMSIS_5/CMSIS/Core/Include;Libraries/libDaisy/Middlewares/ST/STM32_USB_Host_Library/Core/Inc;Libraries/libDaisy/Middlewares/Third_Party/FatFs/src</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <ProduceRelocationRecords>true</ProduceRelocationRecords>

@@ -6,12 +6,12 @@
 #define FILEIO_ENABLE_FATFS_READER
 
 #include "Common.h"
+#include "DaisyUSBInterface.h"
 #include <DigitalSignalProcessing/IHAL.h>
 #include <DigitalSignalProcessing/Math.h>
 #include <DigitalSignalProcessing/Debug.h>
 #include <DigitalSignalProcessing/Memory.h>
-#include "DaisyUSBInterface.h"
-#include <daisy_seed.h>
+#include <libDaisy/src/daisy_seed.h>
 
 class DaisySeedHAL : public IHAL
 {
