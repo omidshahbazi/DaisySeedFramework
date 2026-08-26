@@ -4,67 +4,28 @@
 
 #include "StaticVector.h"
 #include <DigitalSignalProcessing/IUSBInterface.h>
-#include <libDaisy/src/daisy_seed.h>
+#include "DaisyInclude.h"
 
-template <bool External = true, uint16 BufferSize = 1024>
 class DaisyUSBInterface : public IUSBInterface
 {
 	friend class DaisySeedHAL;
 
 private:
-	typedef StaticVector<uint8, BufferSize> BufferType;
+	typedef StaticVector<uint8, 1024> BufferType;
 
 private:
-	DaisyUSBInterface(daisy::DaisySeed *Hardware)
-		: m_Hardware(Hardware),
-		  m_IsStarted(false)
-	{
-	}
+	DaisyUSBInterface(daisy::DaisySeed* Hardware);
 
-	void Start(void) override
-	{
-		ASSERT(!m_IsStarted, "It's already started");
+	void Start(USBInterfaces Interface) override;
 
-		new (GetBuffer()) BufferType();
+	void Stop(void) override;
 
-		daisy::UsbHandle::UsbPeriph periph = daisy::UsbHandle::UsbPeriph::FS_INTERNAL;
-		if constexpr (External)
-			periph = daisy::UsbHandle::UsbPeriph::FS_EXTERNAL;
-
-		m_Hardware->usb_handle.Init(periph);
-		m_Hardware->usb_handle.SetReceiveCallback(Callback, periph);
-
-		m_IsStarted = true;
-	}
-
-	void Stop(void) override
-	{
-		ASSERT(m_IsStarted, "It's not started");
-
-		daisy::UsbHandle::UsbPeriph periph = daisy::UsbHandle::UsbPeriph::FS_INTERNAL;
-		if constexpr (External)
-			periph = daisy::UsbHandle::UsbPeriph::FS_EXTERNAL;
-
-		m_Hardware->usb_handle.SetReceiveCallback(nullptr, periph);
-		m_Hardware->usb_handle.DeInit(periph);
-
-		HandleIncomings();
-
-		m_IsStarted = false;
-	}
-
-	void Update(void)
-	{
-		if (!m_IsStarted)
-			return;
-
-		HandleIncomings();
-	}
+	void Update(void);
 
 public:
-	void Transmit(const uint8 *Buffer, uint16 Length) const override
+	void Transmit(const uint8* Buffer, uint16 Length) const override
 	{
-		WriteOnPort(Buffer, Length);
+		TransmitFragmented(Buffer, Length);
 	}
 
 	void SetCallback(EventHandler Callback) override
@@ -73,63 +34,17 @@ public:
 	}
 
 private:
-	void HandleIncomings(void)
-	{
-		static BufferType &buffer = *GetBuffer();
-		if (buffer.IsEmpty())
-			return;
+	void HandleIncomings(void);
 
-		if (m_Callback != nullptr)
-			m_Callback(buffer.GetData(), buffer.GetSize());
+	void TransmitFragmented(const uint8* Buffer, uint16 Length, uint16 Delay = 100) const;
 
-		buffer.Clear();
-	}
-
-	void WriteOnPort(const uint8 *Buffer, uint16 Length, uint16 Delay = 100) const
-	{
-		uint16 index = 0;
-		while (index < Length)
-		{
-			const uint16 CountPerStep = 64;
-
-			uint16 countPerStep = (uint16)Math::Min(CountPerStep, Length - index);
-
-			if constexpr (External)
-				m_Hardware->usb_handle.TransmitExternal(const_cast<uint8 *>(Buffer + index), countPerStep);
-			else
-				m_Hardware->usb_handle.TransmitInternal(const_cast<uint8 *>(Buffer + index), countPerStep);
-
-			index += CountPerStep;
-
-			m_Hardware->DelayMs(Delay);
-		}
-	}
-
-	static void Callback(uint8 *Buffer, uint32_t *Length)
-	{
-		if (Buffer == nullptr)
-			return;
-
-		if (*Length == 0)
-			return;
-
-		static BufferType &buffer = *GetBuffer();
-		buffer.Clear();
-
-		buffer.PushBack(Buffer, *Length);
-	}
-
-	static BufferType *GetBuffer(void)
-	{
-		static BufferType *buffer = Memory::Allocate<BufferType>(true);
-
-		return buffer;
-	}
+	static void Callback(uint8* Buffer, uint32_t* Length);
 
 private:
-	daisy::DaisySeed *m_Hardware;
+	daisy::DaisySeed* m_Hardware;
 	bool m_IsStarted;
 	EventHandler m_Callback;
+	BufferType* m_Buffer;
 };
 
 #endif

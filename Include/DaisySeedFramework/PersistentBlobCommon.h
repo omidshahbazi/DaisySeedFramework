@@ -11,7 +11,7 @@ class PersistentBlobBase
 	friend class WindowsPersistentBlob;
 
 private:
-	static uint32 GetAndIncreamentOffset(uint16 Size)
+	static uint32 GetAndIncrementOffset(uint16 Size)
 	{
 		const uint32 SECTOR_SIZE = QSPI_PAGE_SIZE;
 

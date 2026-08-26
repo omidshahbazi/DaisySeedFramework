@@ -2,6 +2,10 @@
 
 #include <DigitalSignalProcessing/Common.h>
 
+#if !defined(ON_WINDOWS) && !defined(ON_HARDWARE)
+#error "Neither of ON_WINDOWS or ON_HARDWARE are defined"
+#endif
+
 enum class GPIOPins
 {
 	Pin0 = 0, // Digital
@@ -51,220 +55,21 @@ enum class AnalogPins
 	Pin8 = (uint8)GPIOPins::Pin23,
 	Pin9 = (uint8)GPIOPins::Pin24,
 	Pin10 = (uint8)GPIOPins::Pin25,
-	Pin11 = (uint8)GPIOPins::Pin28
-};
-
-#define ANALOG_PIN_COUNT 12
-
-struct Point
-{
-public:
-	Point(void)
-		: X(0),
-		Y(0)
-	{}
-
-	template <typename T, typename U>
-	Point(T X, U Y)
-		: X(static_cast<int16>(X)),
-		Y(static_cast<int16>(Y))
-	{}
-
-	Point operator+(Point Other) const
-	{
-		Point point = *this;
-		point += Other;
-		return point;
-	}
-
-	template <typename T>
-	Point operator+(T Value) const
-	{
-		Point point = *this;
-		point += Value;
-		return point;
-	}
-
-	Point operator-(Point Other) const
-	{
-		Point point = *this;
-		point -= Other;
-		return point;
-	}
-
-	template <typename T>
-	Point operator-(T Value) const
-	{
-		Point point = *this;
-		point -= Value;
-		return point;
-	}
-
-	Point operator*(Point Other) const
-	{
-		Point point = *this;
-		point *= Other;
-		return point;
-	}
-
-	template <typename T>
-	Point operator*(T Value) const
-	{
-		Point point = *this;
-		point *= Value;
-		return point;
-	}
-
-	Point operator/(Point Other) const
-	{
-		Point point = *this;
-		point /= Other;
-		return point;
-	}
-
-	template <typename T>
-	Point operator/(T Value) const
-	{
-		Point point = *this;
-		point /= Value;
-		return point;
-	}
-
-	Point& operator+=(Point Other)
-	{
-		X += Other.X;
-		Y += Other.Y;
-		return *this;
-	}
-
-	template <typename T>
-	Point& operator+=(T Value)
-	{
-		X += Value;
-		Y += Value;
-		return *this;
-	}
-
-	Point& operator-=(Point Other)
-	{
-		X -= Other.X;
-		Y -= Other.Y;
-		return *this;
-	}
-
-	template <typename T>
-	Point& operator-=(T Value)
-	{
-		X -= Value;
-		Y -= Value;
-		return *this;
-	}
-
-	Point& operator*=(Point Other)
-	{
-		X *= Other.X;
-		Y *= Other.Y;
-		return *this;
-	}
-
-	template <typename T>
-	Point& operator*=(T Value)
-	{
-		X *= Value;
-		Y *= Value;
-		return *this;
-	}
-
-	Point& operator/=(Point Other)
-	{
-		X /= Other.X;
-		Y /= Other.Y;
-		return *this;
-	}
-
-	template <typename T>
-	Point& operator/=(T Value)
-	{
-		X /= Value;
-		Y /= Value;
-		return *this;
-	}
-
-public:
-	int16 X;
-	int16 Y;
-};
-
-struct Rect
-{
-public:
-	Rect(void)
-	{}
-
-	Rect(Point Position, Point Dimension)
-		: Position(Position),
-		Dimension(Dimension)
-	{}
-
-	Rect(int16 X, int16 Y, int16 Width, int16 Height)
-		: Position(X, Y),
-		Dimension(Width, Height)
-	{}
-
-public:
-	Point Position;
-	Point Dimension;
-};
-
-struct Font
-{
-public:
-	typedef uint64 DataType;
-
-public:
-	uint8 MaxWidth;
-	uint8 Height;
-	const DataType* const Data;
-	float Scale;
-	uint8 BitsPerPixel;
-	bool HasGlyphData;
-	cstr Glyphs;
-
-public:
-	Point GetScaledSize(void) const
-	{
-		return Point(MaxWidth, Height) * Scale;
-	}
-
-public:
-	static constexpr Font CreateScaled(const Font& ReferenceFont, uint8 TargetHeight)
-	{
-		Font font = ReferenceFont;
-		font.Scale = (float)TargetHeight / ReferenceFont.Height;
-		return font;
-	}
-};
-
-struct Bitmap
-{
-public:
-	typedef uint64 DataType;
-
-public:
-	uint8 Width;
-	uint8 Height;
-	const DataType* const Data;
-	uint8 BitsPerPixel;
+	Pin11 = (uint8)GPIOPins::Pin28,
+	COUNT = 12
 };
 
 #define SDRAM_TOTAL_SIZE 64 MB
 
-#ifdef ON_WINDOWS
+#if defined(ON_WINDOWS)
+
 #define DEFINE_LARGE_MEMORY_BUFFER(Name, Size)  \
 	static constexpr uint32 Name##_Size = Size; \
 	uint8 g_##Name[Name##_Size] = {0};
-#else
+
+#elif defined(ON_HARDWARE)
 #include <libDaisy/src/dev/sdram.h>
+
 
 #define DEFINE_LARGE_MEMORY_BUFFER(Name, Size)  \
 	static constexpr uint32 Name##_Size = Size; \

@@ -2,14 +2,16 @@
 #ifndef I_LCD_HAL_H
 #define I_LCD_HAL_H
 
-#include "Common.h"
+#include "Point.h"
+#include <DigitalSignalProcessing/DataTypes.h>
+#include <DigitalSignalProcessing/Color.h>
 
 class I_LCD_HAL
 {
 public:
 	enum class Orientations
 	{
-		Upright = 0,
+		UpRight = 0,
 		UpsideDown,
 		ToRight,
 		ToLeft

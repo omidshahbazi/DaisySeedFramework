@@ -21,7 +21,7 @@ public:
 		PersistentBlobData<T> defaultBlob;
 		defaultBlob.Data = DefaultData;
 
-		m_Storage.Init(HAL->GetQSPI(), defaultBlob, PersistentBlobBase::GetAndIncreamentOffset(sizeof(T)));
+		m_Storage.Init(HAL->GetQSPI(), defaultBlob, PersistentBlobBase::GetAndIncrementOffset(sizeof(T)));
 
 		m_IsInitialized = true;
 

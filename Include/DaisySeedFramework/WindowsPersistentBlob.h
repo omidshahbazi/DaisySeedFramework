@@ -5,6 +5,7 @@
 #include "PersistentBlobCommon.h"
 #include <fstream>
 #include <filesystem>
+#include <string>
 
 template <typename T>
 class WindowsPersistentBlob
@@ -18,7 +19,7 @@ public:
 	{
 		ASSERT(!m_IsInitialized, "WindowsPersistentBlob is already initialized");
 
-		m_FilePath = std::filesystem::current_path() / (std::to_string(PersistentBlobBase::GetAndIncreamentOffset(sizeof(T))) + ".bin");
+		m_FilePath = std::filesystem::current_path() / (std::to_string(PersistentBlobBase::GetAndIncrementOffset(sizeof(T))) + ".bin");
 		m_IsInitialized = true;
 
 		std::ifstream file(m_FilePath, std::ios::binary | std::ios::ate);

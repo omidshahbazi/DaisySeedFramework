@@ -64,7 +64,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|VisualGDB'">
     <ClCompile>
       <CPPLanguageStandard>CPP17</CPPLanguageStandard>
-      <AdditionalIncludeDirectories>Include/DaisySeedFramework;DSP/Include;Libraries/;LibrarieslibDaisy/src;Libraries/libDaisy/src/sys;Libraries/libDaisy/src/usbh;Libraries/libDaisy/Drivers/STM32H7xx_HAL_Driver/Inc;Libraries/libDaisy/Drivers/CMSIS-Device/ST/STM32H7xx/Include;Libraries/libDaisy/Drivers/CMSIS/Core/Include;Libraries/libDaisy/Drivers/CMSIS_5/CMSIS/Core/Include;Libraries/libDaisy/Middlewares/ST/STM32_USB_Host_Library/Core/Inc;Libraries/libDaisy/Middlewares/Third_Party/FatFs/src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Include;DSP/Include;Libraries/;Libraries/libDaisy/src;Libraries/libDaisy/src/sys;Libraries/libDaisy/src/usbh;Libraries/libDaisy/Drivers/STM32H7xx_HAL_Driver/Inc;Libraries/libDaisy/Drivers/CMSIS-Device/ST/STM32H7xx/Include;Libraries/libDaisy/Drivers/CMSIS/Core/Include;Libraries/libDaisy/Drivers/CMSIS_5/CMSIS/Core/Include;Libraries/libDaisy/Middlewares/ST/STM32_USB_Host_Library/Core/Inc;Libraries/libDaisy/Middlewares/Third_Party/FatFs/src</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ON_HARDWARE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <ProduceRelocationRecords>true</ProduceRelocationRecords>
@@ -73,7 +74,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|VisualGDB'">
     <ClCompile>
       <CPPLanguageStandard>CPP17</CPPLanguageStandard>
-      <AdditionalIncludeDirectories>Include/DaisySeedFramework;DSP/Include;Libraries/;LibrarieslibDaisy/src;Libraries/libDaisy/src/sys;Libraries/libDaisy/src/usbh;Libraries/libDaisy/Drivers/STM32H7xx_HAL_Driver/Inc;Libraries/libDaisy/Drivers/CMSIS-Device/ST/STM32H7xx/Include;Libraries/libDaisy/Drivers/CMSIS/Core/Include;Libraries/libDaisy/Drivers/CMSIS_5/CMSIS/Core/Include;Libraries/libDaisy/Middlewares/ST/STM32_USB_Host_Library/Core/Inc;Libraries/libDaisy/Middlewares/Third_Party/FatFs/src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Include;DSP/Include;Libraries/;Libraries/libDaisy/src;Libraries/libDaisy/src/sys;Libraries/libDaisy/src/usbh;Libraries/libDaisy/Drivers/STM32H7xx_HAL_Driver/Inc;Libraries/libDaisy/Drivers/CMSIS-Device/ST/STM32H7xx/Include;Libraries/libDaisy/Drivers/CMSIS/Core/Include;Libraries/libDaisy/Drivers/CMSIS_5/CMSIS/Core/Include;Libraries/libDaisy/Middlewares/ST/STM32_USB_Host_Library/Core/Inc;Libraries/libDaisy/Middlewares/Third_Party/FatFs/src</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ON_HARDWARE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <ProduceRelocationRecords>true</ProduceRelocationRecords>
@@ -83,12 +85,14 @@
     <ClCompile>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>Include;DSP/Include;Libraries/portaudio/include;Libraries/SDL/include</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ON_WINDOWS;RELEASE</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>Include;DSP/Include;Libraries/portaudio/include;Libraries/SDL/include</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ON_WINDOWS;DEBUG</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
@@ -101,18 +105,30 @@
     <None Include="stm32.xml" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="source\CompileHelper.cpp" />
+    <ClCompile Include="Source\DaisySeedHAL.cpp" />
+    <ClCompile Include="Source\DaisyUSBAudioInterface.cpp" />
+    <ClCompile Include="Source\DaisyUSBInterface.cpp" />
+    <ClCompile Include="Source\ILI9341_HAL.cpp" />
+    <ClCompile Include="Source\LCDCanvas.cpp" />
+    <ClCompile Include="Source\SDL_HAL.cpp" />
+    <ClCompile Include="Source\WindowsHAL.cpp" />
+    <ClCompile Include="Source\WindowsUSBInterface.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Include\DaisySeedFramework\Bitmap.h" />
     <ClInclude Include="Include\DaisySeedFramework\Common.h" />
+    <ClInclude Include="Include\DaisySeedFramework\DaisyInclude.h" />
     <ClInclude Include="Include\DaisySeedFramework\DaisyPersistentBlob.h" />
     <ClInclude Include="Include\DaisySeedFramework\DaisySeedHAL.h" />
     <ClInclude Include="Include\DaisySeedFramework\DaisyUSBAudioInterface.h" />
     <ClInclude Include="Include\DaisySeedFramework\DaisyUSBInterface.h" />
+    <ClInclude Include="Include\DaisySeedFramework\Font.h" />
     <ClInclude Include="Include\DaisySeedFramework\ILI9341_HAL.h" />
     <ClInclude Include="Include\DaisySeedFramework\I_LCD_HAL.h" />
     <ClInclude Include="Include\DaisySeedFramework\LCDCanvas.h" />
     <ClInclude Include="Include\DaisySeedFramework\PersistentBlobCommon.h" />
+    <ClInclude Include="Include\DaisySeedFramework\Point.h" />
+    <ClInclude Include="Include\DaisySeedFramework\Rect.h" />
     <ClInclude Include="Include\DaisySeedFramework\SDL_HAL.h" />
     <ClInclude Include="Include\DaisySeedFramework\StaticStack.h" />
     <ClInclude Include="Include\DaisySeedFramework\StaticVector.h" />

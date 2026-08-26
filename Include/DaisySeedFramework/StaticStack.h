@@ -4,22 +4,22 @@
 
 #include <DigitalSignalProcessing/Debug.h>
 
-template <typename T, uint16 MaxSize>
-struct StaticStack
+template <typename T>
+struct Stack
 {
 public:
 	typedef T ItemType;
 
 public:
-	StaticStack(void)
-		: m_Buffer{},
-		  m_Count(0)
-	{
-	}
+	Stack(T* Buffer = nullptr, uint16 Capacity = 0)
+		: m_Buffer(Buffer),
+		m_Capacity(Capacity),
+		m_Count(0)
+	{}
 
-	void Push(const T &Value)
+	void Push(const T& Value)
 	{
-		ASSERT(m_Count < MaxSize, "Out of Size");
+		ASSERT(m_Count < m_Capacity, "Out of Size");
 
 		m_Buffer[m_Count++] = Value;
 	}
@@ -30,7 +30,7 @@ public:
 		Pop(temp);
 	}
 
-	void Pop(T &Value)
+	void Pop(T& Value)
 	{
 		ASSERT(0 < m_Count, "Out of Size");
 
@@ -40,28 +40,28 @@ public:
 		m_Buffer[m_Count] = {};
 	}
 
-	T &Back(void)
+	T& Back(void)
 	{
 		ASSERT(0 < m_Count, "Out of Size");
 
 		return m_Buffer[0];
 	}
 
-	const T &Back(void) const
+	const T& Back(void) const
 	{
 		ASSERT(0 < m_Count, "Out of Size");
 
 		return m_Buffer[0];
 	}
 
-	T &Front(void)
+	T& Front(void)
 	{
 		ASSERT(0 < m_Count, "Out of Size");
 
 		return m_Buffer[m_Count - 1];
 	}
 
-	const T &Front(void) const
+	const T& Front(void) const
 	{
 		ASSERT(0 < m_Count, "Out of Size");
 
@@ -86,7 +86,7 @@ public:
 
 	bool HasFree(void) const
 	{
-		return m_Count < MaxSize;
+		return m_Count < m_Capacity;
 	}
 
 	bool IsEmpty(void) const
@@ -94,23 +94,35 @@ public:
 		return m_Count == 0;
 	}
 
-	T &operator[](uint8 Index)
+	T& operator[](uint8 Index)
 	{
-		ASSERT(Index < MaxSize, "Out of Size");
+		ASSERT(Index < m_Capacity, "Out of Size");
 
 		return m_Buffer[Index];
 	}
 
-	const T &operator[](uint8 Index) const
+	const T& operator[](uint8 Index) const
 	{
-		ASSERT(Index < MaxSize, "Out of Size");
+		ASSERT(Index < m_Capacity, "Out of Size");
 
 		return m_Buffer[Index];
 	}
 
 private:
-	T m_Buffer[MaxSize];
+	T* m_Buffer;
+	uint16 m_Capacity;
 	uint16 m_Count;
+};
+
+template <typename T, uint16 MaxSize>
+struct StaticStack : public Stack<T>
+{
+public:
+	StaticStack(void) : Stack<T>(m_Buffer, MaxSize)
+	{}
+
+private:
+	T m_Buffer[MaxSize];
 };
 
 #endif

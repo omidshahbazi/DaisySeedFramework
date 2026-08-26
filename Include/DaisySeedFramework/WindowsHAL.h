@@ -4,14 +4,10 @@
 
 #include "Common.h"
 #include <DigitalSignalProcessing/IHAL.h>
-#include <DigitalSignalProcessing/Math.h>
-#include <DigitalSignalProcessing/Debug.h>
-#include <DigitalSignalProcessing/Memory.h>
 #include "WindowsUSBInterface.h"
 #include <chrono>
-#include <portaudio.h>
 
-#pragma comment(lib, "portaudio.lib")
+struct PaStreamCallbackTimeInfo;
 
 class WindowsHAL : public IHAL
 {
@@ -23,64 +19,18 @@ public:
 	static constexpr uint8 CHANNEL_RIGHT = 1;
 
 public:
-	WindowsHAL(void* SDRAMAddress = nullptr, uint32 SDRAMSize = 0, CrashHandler CrashHandler = nullptr)
-		: m_CrashHandler(CrashHandler),
-		m_SDRAMAddress(reinterpret_cast<uint8*>(SDRAMAddress)),
-		m_SDRAMSize(SDRAMSize),
-		m_LastFreeSDRAMIndex(0),
-		m_AudioCallback(nullptr)
-	{
-		ASSERT(SDRAMSize == 0 || SDRAMAddress != nullptr, "SDRAMAddress cannot be null");
-		ASSERT(SDRAMAddress == nullptr || SDRAMSize > 0, "SDRAMSize cannot be zero");
+	WindowsHAL(void* SDRAMAddress = nullptr, uint32 SDRAMSize = 0, CrashHandler CrashHandler = nullptr);
 
-		m_StartupTime = std::chrono::steady_clock::now();
-	}
-
-	void Setup(uint8 FrameLength, uint32 SampleRate, bool Boost) override
-	{
-		ASSERT(FrameLength != 0, "Invalid FrameLength %i", FrameLength);
-
-		Pa_Initialize();
-
-		PaStream* stream;
-		Pa_OpenDefaultStream(&stream, 2, 2, paFloat32, SampleRate, FrameLength, AudioCallback, this);
-
-		Pa_StartStream(stream);
-	}
+	void Setup(uint8 FrameLength, uint32 SampleRate, bool Boost) override;
 
 	void StartAudio(AudioPassthrough Callback) override
 	{
 		m_AudioCallback = Callback;
 	}
 
-	void* Allocate(uint32 Size, bool OnSDRAM = false) override
-	{
-		if (OnSDRAM)
-		{
-			const uint8 ALIGNMENT = 16;
+	void* Allocate(uint32 Size, bool OnSDRAM = false) override;
 
-			ASSERT(m_SDRAMAddress != nullptr, "SDRAM is not initialized");
-			ASSERT(m_LastFreeSDRAMIndex + Size <= m_SDRAMSize, "Running out of SDRAM");
-
-			uint8* ptr = m_SDRAMAddress + m_LastFreeSDRAMIndex;
-
-			uint8* alignedPtr = reinterpret_cast<uint8*>(((reinterpret_cast<uint64>(ptr) + (ALIGNMENT - 1)) / ALIGNMENT) * ALIGNMENT);
-
-			m_LastFreeSDRAMIndex += (alignedPtr - ptr) + Size;
-
-			return alignedPtr;
-		}
-
-		return malloc(Size);
-	}
-
-	void Deallocate(void* Memory) override
-	{
-		if (m_SDRAMAddress != nullptr && m_SDRAMAddress <= Memory)
-			return;
-
-		free(Memory);
-	}
+	void Deallocate(void* Memory) override;
 
 	bool IsAnAnalogPin(uint8 Pin) const override
 	{
@@ -149,58 +99,26 @@ public:
 		return 0;
 	}
 
-	uint32 GetTimeSinceStartupTicks(void) const override
-	{
-		return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - m_StartupTime).count();
-	}
+	uint32 GetTimeSinceStartupTicks(void) const override;
 
-	uint32 GetTimeSinceStartupMs(void) const override
-	{
-		return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - m_StartupTime).count();
-	}
+	uint32 GetTimeSinceStartupMs(void) const override;
 
 	float GetTimeSinceStartup(void) const override
 	{
 		return GetTimeSinceStartupMs() / 1000.0;
 	}
 
-	void Print(cstr Value) override
-	{
-		printf(Value);
-	}
+	void Print(cstr Value) override;
 
-	bool IsDebuggerPresent(void) const override
-	{
-		return ::IsDebuggerPresent();
-	}
+	bool IsDebuggerPresent(void) const override;
 
-	void Crash(void) const override
-	{
-		Delay(1000);
+	void Crash(void) const override;
 
-		if (m_CrashHandler != nullptr)
-		{
-			m_CrashHandler(this);
-			return;
-		}
+	void Break(void) const override;
 
-		Break();
-	}
+	void Reset(bool InfiniteTime = true) const override;
 
-	void Break(void) const override
-	{
-		__debugbreak();
-	}
-
-	void Reset(bool InfiniteTime = true) const override
-	{
-		exit(0);
-	}
-
-	void Delay(uint16 Ms) const override
-	{
-		_Thrd_sleep_for(Ms);
-	}
+	void Delay(uint16 Ms) const override;
 
 	IUSBInterface* GetUSBInterface(void) override
 	{
@@ -214,54 +132,10 @@ protected:
 	void InitializeADC(void)
 	{}
 
-	virtual void Update(void)
-	{
-		m_USBInterface.Update();
-	}
+	virtual void Update(void);
 
 private:
-	static int AudioCallback(const void* InputBuffer, void* OutputBuffer, unsigned long FramesPerBuffer, const PaStreamCallbackTimeInfo* TimeInfo, PaStreamCallbackFlags StatusFlags, void* UserData)
-	{
-		float* in = (float*)InputBuffer;
-		float* out = (float*)OutputBuffer;
-
-		if (InputBuffer == nullptr)
-		{
-			for (unsigned int i = 0; i < FramesPerBuffer; i++)
-				*out++ = 0;
-
-			return paContinue;
-		}
-
-		static float inputBuffer[2][256];
-		static float outputBuffer[2][256];
-
-		for (unsigned int i = 0; i < FramesPerBuffer; i++)
-		{
-			inputBuffer[0][i] = *in++;
-			inputBuffer[1][i] = *in++;
-
-			outputBuffer[0][i] = 0;
-			outputBuffer[1][i] = 0;
-		}
-
-		static WindowsHAL* hal = reinterpret_cast<WindowsHAL*>(UserData);
-		if (hal->m_AudioCallback != nullptr)
-		{
-			static float* inputBuffers[2] = { inputBuffer[0], inputBuffer[1] };
-			static float* outputBuffers[2] = { outputBuffer[0], outputBuffer[1] };
-
-			hal->m_AudioCallback(inputBuffers, outputBuffers, FramesPerBuffer);
-		}
-
-		for (unsigned int i = 0; i < FramesPerBuffer; i++)
-		{
-			*out++ = outputBuffer[0][i];
-			*out++ = outputBuffer[1][i];
-		}
-
-		return paContinue;
-	}
+	static int AudioCallback(const void* InputBuffer, void* OutputBuffer, uint32 FramesPerBuffer, const PaStreamCallbackTimeInfo* TimeInfo, uint32 StatusFlags, void* UserData);
 
 private:
 	std::chrono::steady_clock::time_point m_StartupTime;

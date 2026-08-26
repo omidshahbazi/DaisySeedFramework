@@ -3,36 +3,37 @@
 #define STATIC_VECTOR_H
 
 #include <DigitalSignalProcessing/Debug.h>
+#include <DigitalSignalProcessing/Memory.h>
 
-template <typename T, uint16 MaxSize>
-struct StaticVector
+template <typename T>
+struct Vector
 {
 public:
 	typedef T ItemType;
 
 public:
-	StaticVector(void)
-		: m_Buffer{},
-		  m_Count(0)
-	{
-	}
+	Vector(T* Buffer = nullptr, uint16 Capacity = 0)
+		: m_Buffer(Buffer),
+		m_Capacity(Capacity),
+		m_Count(0)
+	{}
 
-	void PushBack(const T &Value)
+	void PushBack(const T& Value)
 	{
-		ASSERT(m_Count < MaxSize, "Out of Size");
+		ASSERT(m_Count < m_Capacity, "Out of Size");
 
 		m_Buffer[m_Count++] = Value;
 	}
 
-	void PushBack(const T *const Value, uint16 Count)
+	void PushBack(const T* const Value, uint16 Count)
 	{
 		for (uint16 i = 0; i < Count; ++i)
 			PushBack(Value[i]);
 	}
 
-	void Insert(uint16 Index, const T &Value)
+	void Insert(uint16 Index, const T& Value)
 	{
-		ASSERT(m_Count < MaxSize, "Out of Size");
+		ASSERT(m_Count < m_Capacity, "Out of Size");
 		ASSERT(Index <= m_Count, "Index Out of Range");
 
 		for (uint16 i = m_Count; i > Index; --i)
@@ -50,25 +51,25 @@ public:
 		m_Buffer[m_Count] = {};
 	}
 
-	T &Front(void)
+	T& Front(void)
 	{
 		ASSERT(0 < m_Count, "Out of Size");
 		return m_Buffer[0];
 	}
 
-	const T &Front(void) const
+	const T& Front(void) const
 	{
 		ASSERT(0 < m_Count, "Out of Size");
 		return m_Buffer[0];
 	}
 
-	T &Back(void)
+	T& Back(void)
 	{
 		ASSERT(0 < m_Count, "Out of Size");
 		return m_Buffer[m_Count - 1];
 	}
 
-	const T &Back(void) const
+	const T& Back(void) const
 	{
 		ASSERT(0 < m_Count, "Out of Size");
 		return m_Buffer[m_Count - 1];
@@ -112,12 +113,12 @@ public:
 		m_Count = 0;
 	}
 
-	T *GetData(void)
+	T* GetData(void)
 	{
 		return m_Buffer;
 	}
 
-	const T *GetData(void) const
+	const T* GetData(void) const
 	{
 		return m_Buffer;
 	}
@@ -129,12 +130,12 @@ public:
 
 	uint16 GetCapacity(void) const
 	{
-		return MaxSize;
+		return m_Capacity;
 	}
 
 	bool HasFree(void) const
 	{
-		return m_Count < MaxSize;
+		return m_Count < m_Capacity;
 	}
 
 	bool IsEmpty(void) const
@@ -142,21 +143,33 @@ public:
 		return m_Count == 0;
 	}
 
-	T &operator[](uint16 Index)
+	T& operator[](uint16 Index)
 	{
 		ASSERT(Index < m_Count, "Index Out of Range");
 		return m_Buffer[Index];
 	}
 
-	const T &operator[](uint16 Index) const
+	const T& operator[](uint16 Index) const
 	{
 		ASSERT(Index < m_Count, "Index Out of Range");
 		return m_Buffer[Index];
 	}
 
 private:
-	T m_Buffer[MaxSize];
+	T* m_Buffer;
+	uint16 m_Capacity;
 	uint16 m_Count;
+};
+
+template <typename T, uint16 MaxSize>
+struct StaticVector : public Vector<T>
+{
+public:
+	StaticVector(void) : Vector<T>(m_Buffer, MaxSize)
+	{}
+
+private:
+	T m_Buffer[MaxSize];
 };
 
 #endif

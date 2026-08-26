@@ -34,7 +34,28 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="source\CompileHelper.cpp">
+    <ClCompile Include="Source\DaisySeedHAL.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\ILI9341_HAL.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\DaisyUSBAudioInterface.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\DaisyUSBInterface.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\SDL_HAL.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\WindowsHAL.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\WindowsUSBInterface.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\LCDCanvas.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
@@ -85,6 +106,21 @@
       <Filter>Include\DaisySeedFramework</Filter>
     </ClInclude>
     <ClInclude Include="Include\DaisySeedFramework\WindowsUSBInterface.h">
+      <Filter>Include\DaisySeedFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\Point.h">
+      <Filter>Include\DaisySeedFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\Rect.h">
+      <Filter>Include\DaisySeedFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\Font.h">
+      <Filter>Include\DaisySeedFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\Bitmap.h">
+      <Filter>Include\DaisySeedFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\DaisyInclude.h">
       <Filter>Include\DaisySeedFramework</Filter>
     </ClInclude>
   </ItemGroup>
