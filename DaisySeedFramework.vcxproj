@@ -111,6 +111,8 @@
     <ClCompile Include="Source\ILI9341_HAL.cpp" />
     <ClCompile Include="Source\LCDCanvas.cpp" />
     <ClCompile Include="Source\SDL_HAL.cpp" />
+    <ClCompile Include="Source\USB\DaisyCDCUSB.cpp" />
+    <ClCompile Include="Source\USB\DaisyUSBInterface.cpp" />
     <ClCompile Include="Source\WindowsHAL.cpp" />
     <ClCompile Include="Source\WindowsUSBInterface.cpp" />
   </ItemGroup>
@@ -133,6 +135,9 @@
     <ClInclude Include="Include\DaisySeedFramework\StaticStack.h" />
     <ClInclude Include="Include\DaisySeedFramework\StaticVector.h" />
     <ClInclude Include="Include\DaisySeedFramework\USBHost.h" />
+    <ClInclude Include="Include\DaisySeedFramework\USB\DaisyCDCUSB.h" />
+    <ClInclude Include="Include\DaisySeedFramework\USB\DaisyUSBInterface.h" />
+    <ClInclude Include="Include\DaisySeedFramework\USB\USBDefinitions.h" />
     <ClInclude Include="Include\DaisySeedFramework\WindowsHAL.h" />
     <ClInclude Include="Include\DaisySeedFramework\WindowsPersistentBlob.h" />
     <ClInclude Include="Include\DaisySeedFramework\WindowsUSBInterface.h" />

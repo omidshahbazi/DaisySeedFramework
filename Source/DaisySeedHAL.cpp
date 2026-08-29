@@ -2,10 +2,12 @@
 
 #include "DaisySeedFramework/DaisySeedHAL.h"
 #include <DigitalSignalProcessing/Math.h>
+#include <DigitalSignalProcessing/Debug.h>
 
 DaisySeedHAL::DaisySeedHAL(void* SDRAMAddress, uint32 SDRAMSize, CrashHandler CrashHandler)
 	: m_CrashHandler(CrashHandler),
-	m_USBInterface(&m_Hardware),
+	m_FullSpeedUSB(DaisyUSBInterface::Peripherals::FullSpeed),
+	m_HighSpeedUSB(DaisyUSBInterface::Peripherals::HighSpeed),
 	m_SDRAMAddress(reinterpret_cast<uint8*>(SDRAMAddress)),
 	m_SDRAMSize(SDRAMSize),
 	m_LastFreeSDRAMIndex(0),
@@ -373,7 +375,7 @@ void DaisySeedHAL::InitializeADC(void)
 
 void DaisySeedHAL::Update(void)
 {
-	m_USBInterface.Update();
+	//m_USBInterface.Update();
 
 	const uint16 SAMPLE_RATE = 1000;
 	const float STEP = 120.0F / SAMPLE_RATE;

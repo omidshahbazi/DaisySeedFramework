@@ -1,6 +1,7 @@
 #ifdef ON_HARDWARE
 
 #include "DaisySeedFramework/DaisyUSBInterface.h"
+//#include "DaisyUSBInterface.h"
 
 DaisyUSBInterface::DaisyUSBInterface(daisy::DaisySeed* Hardware)
 	: m_Hardware(Hardware),

@@ -18,6 +18,12 @@
     <Filter Include="Include\DaisySeedFramework">
       <UniqueIdentifier>{78cf64dd-5f8a-4a1f-b75f-be1ca6926aac}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Include\DaisySeedFramework\USB">
+      <UniqueIdentifier>{c65750fc-06e0-4376-9940-4ff711c63b5a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\USB">
+      <UniqueIdentifier>{8d1f8555-966c-4486-bfde-5483d347f955}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="stm32.props">
@@ -57,6 +63,12 @@
     </ClCompile>
     <ClCompile Include="Source\LCDCanvas.cpp">
       <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\USB\DaisyUSBInterface.cpp">
+      <Filter>Source\USB</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\USB\DaisyCDCUSB.cpp">
+      <Filter>Source\USB</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -122,6 +134,15 @@
     </ClInclude>
     <ClInclude Include="Include\DaisySeedFramework\DaisyInclude.h">
       <Filter>Include\DaisySeedFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\USB\DaisyUSBInterface.h">
+      <Filter>Include\DaisySeedFramework\USB</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\USB\USBDefinitions.h">
+      <Filter>Include\DaisySeedFramework\USB</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\USB\DaisyCDCUSB.h">
+      <Filter>Include\DaisySeedFramework\USB</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

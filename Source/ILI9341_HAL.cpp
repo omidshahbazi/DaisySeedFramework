@@ -3,6 +3,8 @@
 #include "DaisySeedFramework/ILI9341_HAL.h"
 #include "DaisySeedFramework/DaisySeedHAL.h"
 #include <DigitalSignalProcessing/Math.h>
+#include <DigitalSignalProcessing/Debug.h>
+#include <DigitalSignalProcessing/Memory.h>
 
 ILI9341_HAL::ILI9341_HAL(IHAL* HAL, GPIOPins SCLK, GPIOPins MOSI, GPIOPins NSS, GPIOPins DC, GPIOPins RST, Orientations Orientation, Point PixelSize)
 	: m_HAL(HAL),
