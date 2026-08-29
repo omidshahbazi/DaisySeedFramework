@@ -4,9 +4,6 @@
 #include "DaisySeedFramework/USB/USBDefinitions.h"
 #include <DigitalSignalProcessing/Debug.h>
 
-// LINE1_TODO: Handle return values
-// LINE1_TODO: Assert on number of classes
-
 static DaisyUSBInterface* s_Instance[(uint8)DaisyUSBInterface::Peripherals::COUNT] = {};
 
 extern "C"
@@ -68,137 +65,9 @@ extern "C"
 			break;
 		}
 	}
-
-	void HAL_PCD_MspInit(PCD_HandleTypeDef* pcdHandle)
-	{
-		GPIO_InitTypeDef GPIO_InitStruct = { 0 };
-		if (pcdHandle->Instance == USB_OTG_FS)
-		{
-			/* USER CODE BEGIN USB_OTG_FS_MspInit 0 */
-
-			/* USER CODE END USB_OTG_FS_MspInit 0 */
-
-			__HAL_RCC_GPIOA_CLK_ENABLE();
-			/**USB_OTG_FS GPIO Configuration
-			PA12     ------> USB_OTG_FS_DP
-			PA11     ------> USB_OTG_FS_DM
-			PA9     ------> USB_OTG_FS_VBUS
-			*/
-			GPIO_InitStruct.Pin = GPIO_PIN_12 | GPIO_PIN_11;
-			GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-			GPIO_InitStruct.Pull = GPIO_NOPULL;
-			GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-			GPIO_InitStruct.Alternate = GPIO_AF10_OTG1_FS;
-			HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-			GPIO_InitStruct.Pin = GPIO_PIN_9;
-			GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-			GPIO_InitStruct.Pull = GPIO_NOPULL;
-			HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-			/* Peripheral clock enable */
-			__HAL_RCC_USB_OTG_FS_CLK_ENABLE();
-
-			/* Peripheral interrupt init */
-			HAL_NVIC_SetPriority(OTG_FS_EP1_OUT_IRQn, 0, 0);
-			HAL_NVIC_EnableIRQ(OTG_FS_EP1_OUT_IRQn);
-			HAL_NVIC_SetPriority(OTG_FS_EP1_IN_IRQn, 0, 0);
-			HAL_NVIC_EnableIRQ(OTG_FS_EP1_IN_IRQn);
-			HAL_NVIC_SetPriority(OTG_FS_IRQn, 0, 0);
-			HAL_NVIC_EnableIRQ(OTG_FS_IRQn);
-			/* USER CODE BEGIN USB_OTG_FS_MspInit 1 */
-
-			/* USER CODE END USB_OTG_FS_MspInit 1 */
-		}
-		else if (pcdHandle->Instance == USB_OTG_HS)
-		{
-			/* USER CODE BEGIN USB_OTG_HS_MspInit 0 */
-
-			/* USER CODE END USB_OTG_HS_MspInit 0 */
-
-			__HAL_RCC_GPIOB_CLK_ENABLE();
-			/**USB_OTG_HS GPIO Configuration
-			PB14     ------> USB_OTG_HS_DM
-			PB15     ------> USB_OTG_HS_DP
-			*/
-			GPIO_InitStruct.Pin = GPIO_PIN_14 | GPIO_PIN_15;
-			GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-			GPIO_InitStruct.Pull = GPIO_NOPULL;
-			GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-			GPIO_InitStruct.Alternate = GPIO_AF12_OTG2_FS;
-			HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-			/* Peripheral clock enable */
-			__HAL_RCC_USB_OTG_HS_CLK_ENABLE();
-
-			/* Peripheral interrupt init */
-			HAL_NVIC_SetPriority(OTG_HS_EP1_OUT_IRQn, 0, 0);
-			HAL_NVIC_EnableIRQ(OTG_HS_EP1_OUT_IRQn);
-			HAL_NVIC_SetPriority(OTG_HS_EP1_IN_IRQn, 0, 0);
-			HAL_NVIC_EnableIRQ(OTG_HS_EP1_IN_IRQn);
-			HAL_NVIC_SetPriority(OTG_HS_IRQn, 0, 0);
-			HAL_NVIC_EnableIRQ(OTG_HS_IRQn);
-			/* USER CODE BEGIN USB_OTG_HS_MspInit 1 */
-
-			/* USER CODE END USB_OTG_HS_MspInit 1 */
-		}
-	}
-
-	void HAL_PCD_MspDeInit(PCD_HandleTypeDef* pcdHandle)
-	{
-		if (pcdHandle->Instance == USB_OTG_FS)
-		{
-			/* USER CODE BEGIN USB_OTG_FS_MspDeInit 0 */
-
-			/* USER CODE END USB_OTG_FS_MspDeInit 0 */
-			/* Peripheral clock disable */
-			__HAL_RCC_USB_OTG_FS_CLK_DISABLE();
-
-			/**USB_OTG_FS GPIO Configuration
-			PA12     ------> USB_OTG_FS_DP
-			PA11     ------> USB_OTG_FS_DM
-			PA9     ------> USB_OTG_FS_VBUS
-			*/
-			HAL_GPIO_DeInit(GPIOA, GPIO_PIN_12 | GPIO_PIN_11 | GPIO_PIN_9);
-
-			/* Peripheral interrupt Deinit*/
-			HAL_NVIC_DisableIRQ(OTG_FS_EP1_OUT_IRQn);
-
-			HAL_NVIC_DisableIRQ(OTG_FS_EP1_IN_IRQn);
-
-			HAL_NVIC_DisableIRQ(OTG_FS_IRQn);
-
-			/* USER CODE BEGIN USB_OTG_FS_MspDeInit 1 */
-
-			/* USER CODE END USB_OTG_FS_MspDeInit 1 */
-		}
-		else if (pcdHandle->Instance == USB_OTG_HS)
-		{
-			/* USER CODE BEGIN USB_OTG_HS_MspDeInit 0 */
-
-			/* USER CODE END USB_OTG_HS_MspDeInit 0 */
-			/* Peripheral clock disable */
-			__HAL_RCC_USB_OTG_HS_CLK_DISABLE();
-
-			/**USB_OTG_HS GPIO Configuration
-			PB14     ------> USB_OTG_HS_DM
-			PB15     ------> USB_OTG_HS_DP
-			*/
-			HAL_GPIO_DeInit(GPIOB, GPIO_PIN_14 | GPIO_PIN_15);
-
-			/* Peripheral interrupt Deinit*/
-			HAL_NVIC_DisableIRQ(OTG_HS_EP1_OUT_IRQn);
-
-			HAL_NVIC_DisableIRQ(OTG_HS_EP1_IN_IRQn);
-
-			HAL_NVIC_DisableIRQ(OTG_HS_IRQn);
-
-			/* USER CODE BEGIN USB_OTG_HS_MspDeInit 1 */
-
-			/* USER CODE END USB_OTG_HS_MspDeInit 1 */
-		}
-	}
 }
+
+#define CHECK_CALL(Expr) ASSERT((Expr) == HAL_OK, #Expr);
 
 DaisyUSBInterface::DaisyUSBInterface(Peripherals Peripheral)
 	: m_Peripheral(Peripheral),
@@ -212,6 +81,8 @@ DaisyUSBInterface::DaisyUSBInterface(Peripherals Peripheral)
 void DaisyUSBInterface::Start(const USBProfile& Profile)
 {
 	ASSERT(!m_IsRunning, "Interface has already started.");
+	ASSERT(Profile.Mode != USBModes::Device || Profile.Device.ClassNodeCount <= MaxClassCount, "Invalid ClassNodeCount");
+	ASSERT(Profile.Mode != USBModes::Host || Profile.Host.SupportedClassCount <= MaxClassCount, "Invalid SupportedClassCount");
 
 	m_Profile = Profile;
 
@@ -237,12 +108,12 @@ void DaisyUSBInterface::Start(const USBProfile& Profile)
 		m_DeviceHandle.Init.lpm_enable = DISABLE;
 		m_DeviceHandle.Init.vbus_sensing_enable = DISABLE;
 
-		HAL_PCD_Init(&m_DeviceHandle);
+		CHECK_CALL(HAL_PCD_Init(&m_DeviceHandle));
 
-		HAL_PCD_EP_Open(&m_DeviceHandle, USB_EP0_OUT, 64, EP_TYPE_CTRL);
-		HAL_PCD_EP_Open(&m_DeviceHandle, USB_EP0_IN, 64, EP_TYPE_CTRL);
+		CHECK_CALL(HAL_PCD_EP_Open(&m_DeviceHandle, USB_EP0_OUT, MaxPacketSize, EP_TYPE_CTRL));
+		CHECK_CALL(HAL_PCD_EP_Open(&m_DeviceHandle, USB_EP0_IN, MaxPacketSize, EP_TYPE_CTRL));
 
-		HAL_PCD_Start(&m_DeviceHandle);
+		CHECK_CALL(HAL_PCD_Start(&m_DeviceHandle));
 	}
 	else
 	{
@@ -263,8 +134,8 @@ void DaisyUSBInterface::Start(const USBProfile& Profile)
 		m_HostHandle.Init.Sof_enable = DISABLE;
 		m_HostHandle.Init.vbus_sensing_enable = DISABLE;
 
-		HAL_HCD_Init(&m_HostHandle);
-		HAL_HCD_Start(&m_HostHandle);
+		CHECK_CALL(HAL_HCD_Init(&m_HostHandle));
+		CHECK_CALL(HAL_HCD_Start(&m_HostHandle));
 	}
 
 	m_IsRunning = true;
@@ -276,13 +147,13 @@ void DaisyUSBInterface::Stop(void)
 
 	if (m_Profile.Mode == USBModes::Device)
 	{
-		HAL_PCD_Stop(&m_DeviceHandle);
-		HAL_PCD_DeInit(&m_DeviceHandle);
+		CHECK_CALL(HAL_PCD_Stop(&m_DeviceHandle));
+		CHECK_CALL(HAL_PCD_DeInit(&m_DeviceHandle));
 	}
 	else
 	{
-		HAL_HCD_Stop(&m_HostHandle);
-		HAL_HCD_DeInit(&m_HostHandle);
+		CHECK_CALL(HAL_HCD_Stop(&m_HostHandle));
+		CHECK_CALL(HAL_HCD_DeInit(&m_HostHandle));
 	}
 
 	m_IsRunning = false;
@@ -313,7 +184,8 @@ void DaisyUSBInterface::OnSetupStage(void)
 		case USB_REQ_SET_ADDRESS:
 		{
 			uint8 devAddr = static_cast<uint8>(setup->wValue & 0x7F);
-			HAL_PCD_SetAddress(&m_DeviceHandle, devAddr);
+
+			CHECK_CALL(HAL_PCD_SetAddress(&m_DeviceHandle, devAddr));
 
 			DeviceTransmitAck();
 
@@ -328,9 +200,9 @@ void DaisyUSBInterface::OnSetupStage(void)
 
 				if (node.Class == USBDeviceClassses::CDC)
 				{
-					HAL_PCD_EP_Open(&m_DeviceHandle, node.CDC.CustomEndpointCommand, 8, EP_TYPE_INTR);
-					HAL_PCD_EP_Open(&m_DeviceHandle, node.CDC.CustomEndpointOut, 64, EP_TYPE_BULK);
-					HAL_PCD_EP_Open(&m_DeviceHandle, node.CDC.CustomEndpointIn, 64, EP_TYPE_BULK);
+					CHECK_CALL(HAL_PCD_EP_Open(&m_DeviceHandle, node.CDC.CustomEndpointCommand, 8, EP_TYPE_INTR));
+					CHECK_CALL(HAL_PCD_EP_Open(&m_DeviceHandle, node.CDC.CustomEndpointOut, MaxPacketSize, EP_TYPE_BULK));
+					CHECK_CALL(HAL_PCD_EP_Open(&m_DeviceHandle, node.CDC.CustomEndpointIn, MaxPacketSize, EP_TYPE_BULK));
 				}
 			}
 
@@ -339,7 +211,7 @@ void DaisyUSBInterface::OnSetupStage(void)
 		}
 
 		default:
-			HAL_PCD_EP_SetStall(&m_DeviceHandle, USB_EP0_OUT);
+			CHECK_CALL(HAL_PCD_EP_SetStall(&m_DeviceHandle, USB_EP0_OUT));
 			break;
 		}
 	}
@@ -360,7 +232,7 @@ void DaisyUSBInterface::OnSetupStage(void)
 		case USB_CDC_REQ_GET_LINE_CODING:
 		{
 			DeviceTransmit(&m_DeviceLineCoding);
-			DeviceWaitForReceive();
+			DeviceReceiveAck();
 
 			break;
 		}
@@ -395,10 +267,7 @@ void DaisyUSBInterface::OnDataInStage(uint8 EPNum)
 			DeviceTransmit(const_cast<uint8*>(ptr), chunkLen);
 		}
 		else
-		{
-			// اتمام انتقال داده، اکنون منتظر پکت تاییدیه (Status) از هاست روی OUT می‌شویم
-			DeviceWaitForReceive();
-		}
+			DeviceReceiveAck();
 	}
 }
 
@@ -455,12 +324,11 @@ void DaisyUSBInterface::HandleGetDescriptor(void)
 	{
 		uint16 actualLen = (sendLen < setup->wLength) ? sendLen : setup->wLength;
 
-		// تنظیم وضعیت برای ارسال‌های چندبخشی (Chunking)
 		if (actualLen > MaxPacketSize)
 		{
 			m_EP0TransmitBufferStart = reinterpret_cast<const uint8*>(&ep0Buffer) + MaxPacketSize;
 			m_EO0TransmitRemainingLength = actualLen - MaxPacketSize;
-			actualLen = MaxPacketSize; // ارسال بسته اول با حداکثر سایز ۶۴ بایت
+			actualLen = MaxPacketSize;
 		}
 		else
 		{
@@ -516,32 +384,28 @@ uint16 DaisyUSBInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, con
 	uint8* buffer = EP0Buffer.configDescs;
 	uint16 offset = 0;
 
-	// ۱. رزرو کردن جا برای Configuration Descriptor اصلی در ابتدای بافر
 	USBConfigurationDescriptor* config = reinterpret_cast<USBConfigurationDescriptor*>(buffer + offset);
 	offset += sizeof(USBConfigurationDescriptor);
 
 	uint8 interfaceCounter = 0;
 
-	// ۲. پیمایش روی نودهای کلاس تعریف‌شده در پروفایل کاربر
 	for (uint8 i = 0; i < Profile.ClassNodeCount; ++i)
 	{
 		const USBClassNode& node = Profile.ClassNodes[i];
 
 		if (node.Class == USBDeviceClassses::CDC)
 		{
-			// --- الف) اضافه کردن IAD برای این پورت CDC ---
 			USBInterfaceAssociationDescriptor* iad = reinterpret_cast<USBInterfaceAssociationDescriptor*>(buffer + offset);
 			iad->bLength = sizeof(USBInterfaceAssociationDescriptor);
-			iad->bDescriptorType = 0x0B; // IAD Type
-			iad->bFirstInterface = interfaceCounter; // شماره اولین اینترفیس این CDC
-			iad->bInterfaceCount = 2;                // Control + Data Interface
+			iad->bDescriptorType = 0x0B;
+			iad->bFirstInterface = interfaceCounter;
+			iad->bInterfaceCount = 2;
 			iad->bFunctionClass = USB_CLASS_CDC;
-			iad->bFunctionSubClass = 0x02;             // ACM
+			iad->bFunctionSubClass = 0x02;
 			iad->bFunctionProtocol = 0x01;
 			iad->iFunction = 0;
 			offset += sizeof(USBInterfaceAssociationDescriptor);
 
-			// --- ب) Control Interface ---
 			USBInterfaceDescriptor* ctrlIf = reinterpret_cast<USBInterfaceDescriptor*>(buffer + offset);
 			ctrlIf->bLength = sizeof(USBInterfaceDescriptor);
 			ctrlIf->bDescriptorType = 0x04;
@@ -554,55 +418,55 @@ uint16 DaisyUSBInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, con
 			ctrlIf->iInterface = 0;
 			offset += sizeof(USBInterfaceDescriptor);
 
-			// --- ج) CDC Functional Descriptors ---
 			USBCDCHeaderFunctionalDescriptor* header = reinterpret_cast<USBCDCHeaderFunctionalDescriptor*>(buffer + offset);
 			header->bFunctionLength = sizeof(USBCDCHeaderFunctionalDescriptor);
-			header->bDescriptorType = 0x24; header->bDescriptorSubtype = 0x00;
+			header->bDescriptorType = 0x24;
+			header->bDescriptorSubtype = 0x00;
 			header->bcdCDC = 0x0110;
 			offset += sizeof(USBCDCHeaderFunctionalDescriptor);
 
 			USBCDCACMFunctionalDescriptor* acm = reinterpret_cast<USBCDCACMFunctionalDescriptor*>(buffer + offset);
 			acm->bFunctionLength = sizeof(USBCDCACMFunctionalDescriptor);
-			acm->bDescriptorType = 0x24; acm->bDescriptorSubtype = 0x02; acm->bmCapabilities = 0x02;
+			acm->bDescriptorType = 0x24;
+			acm->bDescriptorSubtype = 0x02;
+			acm->bmCapabilities = 0x02;
 			offset += sizeof(USBCDCACMFunctionalDescriptor);
 
 			USBCDCUnionFunctionalDescriptor* cdcUnion = reinterpret_cast<USBCDCUnionFunctionalDescriptor*>(buffer + offset);
 			cdcUnion->bFunctionLength = sizeof(USBCDCUnionFunctionalDescriptor);
-			cdcUnion->bDescriptorType = 0x24; cdcUnion->bDescriptorSubtype = 0x06;
+			cdcUnion->bDescriptorType = 0x24;
+			cdcUnion->bDescriptorSubtype = 0x06;
 			cdcUnion->bMasterInterface = interfaceCounter;
 			cdcUnion->bSlaveInterface0 = interfaceCounter + 1;
 			offset += sizeof(USBCDCUnionFunctionalDescriptor);
 
-			// --- د) Control Endpoint ---
 			USBEndpointDescriptor* ctrlEp = reinterpret_cast<USBEndpointDescriptor*>(buffer + offset);
 			ctrlEp->bLength = sizeof(USBEndpointDescriptor);
 			ctrlEp->bDescriptorType = 0x05;
 			ctrlEp->bEndpointAddress = node.CDC.CustomEndpointCommand;
-			ctrlEp->bmAttributes = 0x03; // Interrupt
+			ctrlEp->bmAttributes = 0x03;
 			ctrlEp->wMaxPacketSize = 8;
 			ctrlEp->bInterval = (m_Peripheral == Peripherals::FullSpeed ? 10 : 6);
 			offset += sizeof(USBEndpointDescriptor);
 
-			// --- هـ) Data Interface ---
 			USBInterfaceDescriptor* dataIf = reinterpret_cast<USBInterfaceDescriptor*>(buffer + offset);
 			dataIf->bLength = sizeof(USBInterfaceDescriptor);
 			dataIf->bDescriptorType = 0x04;
 			dataIf->bInterfaceNumber = interfaceCounter + 1;
 			dataIf->bAlternateSetting = 0;
 			dataIf->bNumEndpoints = 2;
-			dataIf->bInterfaceClass = 0x0A; // Data Class
+			dataIf->bInterfaceClass = 0x0A;
 			dataIf->bInterfaceSubClass = 0x00;
 			dataIf->bInterfaceProtocol = 0x00;
 			dataIf->iInterface = 0;
 			offset += sizeof(USBInterfaceDescriptor);
 
-			// --- و) Data OUT & IN Endpoints ---
 			USBEndpointDescriptor* outEp = reinterpret_cast<USBEndpointDescriptor*>(buffer + offset);
 			outEp->bLength = sizeof(USBEndpointDescriptor);
 			outEp->bDescriptorType = 0x05;
 			outEp->bEndpointAddress = node.CDC.CustomEndpointOut;
-			outEp->bmAttributes = 0x02; // Bulk
-			outEp->wMaxPacketSize = 64;
+			outEp->bmAttributes = 0x02;
+			outEp->wMaxPacketSize = MaxPacketSize;
 			outEp->bInterval = 0;
 			offset += sizeof(USBEndpointDescriptor);
 
@@ -610,41 +474,38 @@ uint16 DaisyUSBInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, con
 			inEp->bLength = sizeof(USBEndpointDescriptor);
 			inEp->bDescriptorType = 0x05;
 			inEp->bEndpointAddress = node.CDC.CustomEndpointIn;
-			inEp->bmAttributes = 0x02; // Bulk
-			inEp->wMaxPacketSize = 64;
+			inEp->bmAttributes = 0x02;
+			inEp->wMaxPacketSize = MaxPacketSize;
 			inEp->bInterval = 0;
 			offset += sizeof(USBEndpointDescriptor);
 
-			interfaceCounter += 2; // مصرف شدن دو اینترفیس توسط این CDC
+			interfaceCounter += 2;
 		}
 		else if (node.Class == USBDeviceClassses::AMC)
 		{
-			// ساخت توصیف‌گرهای کارت صدا بر اساس node.AMC به همین روش اضافه می‌شود
-			// interfaceCounter به تعداد اینترفیس‌های Audio افزایش می‌یابد
 		}
 	}
 
-	// ۳. پر کردن هدر اصلی کانفیگ پس از مشخص شدن طول کل
 	config->bLength = sizeof(USBConfigurationDescriptor);
 	config->bDescriptorType = 0x02;
-	config->wTotalLength = offset; // طول پویای کل پکت
-	config->bNumInterfaces = interfaceCounter; // تعداد کل اینترفیس‌ها
+	config->wTotalLength = offset;
+	config->bNumInterfaces = interfaceCounter;
 	config->bConfigurationValue = 1;
 	config->iConfiguration = 0;
 	config->bmAttributes = Profile.IsSelfPowered ? 0xC0 : 0x80;
 	config->bMaxPower = Profile.MaxPowerCurrent / 2;
 
-	return offset; // ارسال طول کل برای HAL_PCD_EP_Transmit
+	return offset;
 }
 
 void DaisyUSBInterface::DeviceReceive(uint8* Buffer, uint16 Length)
 {
-	HAL_PCD_EP_Receive(&m_DeviceHandle, USB_EP0_OUT, Buffer, Length);
+	CHECK_CALL(HAL_PCD_EP_Receive(&m_DeviceHandle, USB_EP0_OUT, Buffer, Length));
 }
 
 void DaisyUSBInterface::DeviceTransmit(uint8* Buffer, uint16 Length)
 {
-	HAL_PCD_EP_Transmit(&m_DeviceHandle, USB_EP0_IN, Buffer, Length);
+	CHECK_CALL(HAL_PCD_EP_Transmit(&m_DeviceHandle, USB_EP0_IN, Buffer, Length));
 }
 
 #endif

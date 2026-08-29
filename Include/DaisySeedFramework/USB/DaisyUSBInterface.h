@@ -87,7 +87,7 @@ private:
 		DeviceReceive(reinterpret_cast<uint8*>(Buffer), sizeof(T));
 	}
 
-	void DeviceWaitForReceive(void)
+	void DeviceReceiveAck(void)
 	{
 		DeviceReceive(nullptr, 0);
 	}

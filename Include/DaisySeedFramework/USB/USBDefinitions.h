@@ -136,14 +136,14 @@ BEGIN_PACK(1);
 struct USBInterfaceAssociationDescriptor
 {
 public:
-	uint8  bLength;           // 8 bytes
-	uint8  bDescriptorType;   // 0x0B (USB_DESC_TYPE_IAD)
-	uint8  bFirstInterface;   // شماره اولین اینترفیس مجموعه
-	uint8  bInterfaceCount;   // تعداد اینترفیس‌های متعلق به این مجموعه
-	uint8  bFunctionClass;    // کلاس عملکردی (مثلاً 0x02 برای CDC)
-	uint8  bFunctionSubClass; // ساب‌کلاس
-	uint8  bFunctionProtocol; // پروتکل
-	uint8  iFunction;         // ایندکس رشته متنی
+	uint8  bLength;
+	uint8  bDescriptorType;
+	uint8  bFirstInterface;
+	uint8  bInterfaceCount;
+	uint8  bFunctionClass;
+	uint8  bFunctionSubClass;
+	uint8  bFunctionProtocol;
+	uint8  iFunction;
 };
 END_PACK();
 
@@ -180,10 +180,10 @@ BEGIN_PACK(1);
 struct USBCDCHeaderFunctionalDescriptor
 {
 public:
-	uint8 bFunctionLength;    // 5
-	uint8 bDescriptorType;    // 0x24 (CS_INTERFACE)
-	uint8 bDescriptorSubtype; // 0x00 (Header)
-	uint16 bcdCDC;            // 0x0110 (CDC Version 1.10)
+	uint8 bFunctionLength;
+	uint8 bDescriptorType;
+	uint8 bDescriptorSubtype;
+	uint16 bcdCDC;
 };
 END_PACK();
 
@@ -191,10 +191,10 @@ BEGIN_PACK(1);
 struct USBCDCACMFunctionalDescriptor
 {
 public:
-	uint8 bFunctionLength;    // 4
-	uint8 bDescriptorType;    // 0x24 (CS_INTERFACE)
-	uint8 bDescriptorSubtype; // 0x02 (Abstract Control Management)
-	uint8 bmCapabilities;     // 0x02
+	uint8 bFunctionLength;
+	uint8 bDescriptorType;
+	uint8 bDescriptorSubtype;
+	uint8 bmCapabilities;
 };
 END_PACK();
 
@@ -202,11 +202,11 @@ BEGIN_PACK(1);
 struct USBCDCUnionFunctionalDescriptor
 {
 public:
-	uint8 bFunctionLength;    // 5
-	uint8 bDescriptorType;    // 0x24 (CS_INTERFACE)
-	uint8 bDescriptorSubtype; // 0x06 (Union)
-	uint8 bMasterInterface;   // 0 (Control Interface)
-	uint8 bSlaveInterface0;   // 1 (Data Interface)
+	uint8 bFunctionLength;
+	uint8 bDescriptorType;
+	uint8 bDescriptorSubtype;
+	uint8 bMasterInterface;
+	uint8 bSlaveInterface0;
 };
 END_PACK();
 
@@ -215,16 +215,16 @@ END_PACK();
 //{
 //	USBConfigurationDescriptor config;
 //
-//	USBInterfaceDescriptor     controlInterface;   // اینترفیس استاندارد برای کنترل
-//	AudioHeaderDescriptor      audioHeader;        // اختصاصی صدا: ورژن کلاس صدا
-//	AudioInputTerminal         inputTerminal;      // اختصاصی صدا: پورت ورودی (ADC گیتار)
-//	AudioFeatureUnit           featureUnit;        // اختصاصی صدا: کنترل ولوم/میوت DSP شما
-//	AudioOutputTerminal        outputTerminal;     // اختصاصی صدا: ارسال به کامپیوتر
+//	USBInterfaceDescriptor     controlInterface;   
+//	AudioHeaderDescriptor      audioHeader;        
+//	AudioInputTerminal         inputTerminal;      
+//	AudioFeatureUnit           featureUnit;        
+//	AudioOutputTerminal        outputTerminal;     
 //
-//	USBInterfaceDescriptor     streamingInterface; // اینترفیس استاندارد برای دیتا
-//	AudioFormatDescriptor      audioFormat;        // اختصاصی صدا: مثلاً 24bit, 48000Hz
-//	USBEndpointDescriptor      streamingEndpoint;  // اندپوینت استاندارد (IN Isochronous)
-//	AudioEndpointDescriptor    audioDataEndpoint;  // اختصاصی صدا: فرکانس سمپل‌ریت
+//	USBInterfaceDescriptor     streamingInterface; 
+//	AudioFormatDescriptor      audioFormat;        
+//	USBEndpointDescriptor      streamingEndpoint;  
+//	AudioEndpointDescriptor    audioDataEndpoint;  
 //};
 //END_PACK();
 
