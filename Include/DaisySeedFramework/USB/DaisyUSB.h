@@ -27,6 +27,7 @@ class DaisyUSB : public IUSB
 	friend void HAL_PCD_DataInStageCallback(PCD_HandleTypeDef* hpcd, uint8_t epnum);
 	friend void HAL_PCD_DataOutStageCallback(PCD_HandleTypeDef* hpcd, uint8_t epnum);
 
+	friend class DaisyUSBInterfaceCommon;
 	friend class DaisyUSBCDCInterface;
 	friend class DaisyUSBAMCInterface;
 
@@ -47,9 +48,8 @@ private:
 	struct DeviceInstanceInfo
 	{
 	public:
-		uint8 InterfaceNumberMask;
 		USBDeviceClassses Class;
-		IUSBInterface* Interface;
+		DaisyUSBInterfaceCommon* Interface;
 	};
 	END_PACK();
 
@@ -63,7 +63,7 @@ public:
 	{
 		ASSERT(Index < m_DeviceCount, "Index out of range");
 
-		return m_Devices[Index].Interface;
+		return reinterpret_cast<IUSBInterface*>(m_Devices[Index].Interface);
 	}
 
 private:
@@ -74,7 +74,10 @@ private:
 
 	void HandleGetDescriptor(void);
 
-	void DeviceReceive(uint8* Buffer, uint16 Length);
+	void OpenEndpoint(uint8 Endpoint, uint16 Length, USBEpAttr Type);
+
+	uint16 DeviceReceiveCount(uint8 Endpoint = USB_EP0_OUT);
+	void DeviceReceive(uint8* Buffer, uint16 Length, uint8 Endpoint = USB_EP0_OUT);
 	template<typename T>
 	void DeviceReceive(T* Buffer)
 	{
@@ -86,7 +89,7 @@ private:
 		DeviceReceive(nullptr, 0);
 	}
 
-	void DeviceTransmit(uint8* Buffer, uint16 Length);
+	void DeviceTransmit(uint8* Buffer, uint16 Length, uint8 Endpoint = USB_EP0_IN);
 	template<typename T>
 	void DeviceTransmit(T* Buffer)
 	{
@@ -100,7 +103,8 @@ private:
 
 	void SetStall(void);
 
-	DeviceInstanceInfo& GetDevice(uint8 InterfaceNumber);
+	DeviceInstanceInfo& GetDeviceInstanceByIndex(uint8 InterfaceIndex);
+	DeviceInstanceInfo& GetDeviceInstanceByEndpoint(uint8 Endpoint);
 
 	static uint16 BuildDeviceDescriptor(EP0Buffer& EP0Buffer, const USBProfile& Profile);
 	static uint16 BuildStringDescriptor(EP0Buffer& EP0Buffer, cstr Value);

@@ -72,9 +72,10 @@ enum class USBDeviceProtocol : uint8
 // USB endpoint attributes/transfer types enumeration
 enum class USBEpAttr : uint8
 {
-	Control = 0x03,   // Control transfer type
-	Bulk = 0x02,      // Bulk transfer type
-	Interrupt = 0x03  // Interrupt transfer type
+	Control = 0x00,    // Control transfer type
+	Isochronous = 0x01,// Isochronous transfer type
+	Bulk = 0x02,       // Bulk transfer type
+	Interrupt = 0x03   // Interrupt transfer type
 };
 
 // USB configuration power attribute masks enumeration

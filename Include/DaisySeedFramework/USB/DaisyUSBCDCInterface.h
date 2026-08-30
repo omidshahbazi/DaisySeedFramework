@@ -2,26 +2,33 @@
 #ifndef DAISY_USB_CDC_INTERFACE_H
 #define DAISY_USB_CDC_INTERFACE_H
 
-#include "DaisySeedFramework/USB/USBCDCDefinitions.h"
+#include "DaisySeedFramework/USB/DaisyUSBInterfaceCommon.h"
 #include <DigitalSignalProcessing/USB/IUSBCDCInterface.h>
 #include <DigitalSignalProcessing/USB/USBProfile.h>
 
-class DaisyUSB;
-
-class DaisyUSBCDCInterface : public IUSBCDCInterface
+class DaisyUSBCDCInterface : public IUSBCDCInterface, public DaisyUSBInterfaceCommon
 {
 	friend class DaisyUSB;
 
 private:
-	DaisyUSBCDCInterface(DaisyUSB* USB);
-
-	bool OnSetupStage(const USBDeviceSetupPacket* Setup);
-
-	static void BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, uint16& Offset, uint8& InterfaceIndex, uint8 Interval, const CDCClassConfig& Config);
+	static constexpr uint8 RequiredInterfaceCount = 2;
 
 private:
-	DaisyUSB* m_USB;
+	DaisyUSBCDCInterface(DaisyUSB* USB, uint16 InterfaceIndexMask, uint8 EndpointCommand, uint8 EndpointIn, uint8 EndpointOut);
+
+	bool OnSetupStage(const USBDeviceSetupPacket* Setup) override;
+
+	void OnDataOutStage(void) override;
+
+	void OnReady(void) override;
+
+	static void BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, uint16& Offset, uint8 InterfaceIndex, uint8 Interval, const CDCClassConfig& Config);
+
+private:
 	USBCDCLineCoding m_CDCLineCoding;
+	uint8 m_LineState;
+	bool m_IsHostConnected;
+	uint8 m_ReceiveBuffer[MaxPacketSize];
 };
 
 #endif

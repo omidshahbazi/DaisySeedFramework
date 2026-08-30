@@ -70,6 +70,12 @@
     <ClCompile Include="Source\USB\DaisyUSBCDCInterface.cpp">
       <Filter>Source\USB</Filter>
     </ClCompile>
+    <ClCompile Include="Source\USB\DaisyUSBAMCInterface.cpp">
+      <Filter>Source\USB</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\USB\DaisyUSBInterfaceCommon.cpp">
+      <Filter>Source\USB</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\DaisySeedFramework\Common.h">
@@ -148,6 +154,9 @@
       <Filter>Include\DaisySeedFramework\USB</Filter>
     </ClInclude>
     <ClInclude Include="Include\DaisySeedFramework\USB\USBCDCDefinitions.h">
+      <Filter>Include\DaisySeedFramework\USB</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\USB\DaisyUSBInterfaceCommon.h">
       <Filter>Include\DaisySeedFramework\USB</Filter>
     </ClInclude>
   </ItemGroup>

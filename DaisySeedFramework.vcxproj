@@ -111,8 +111,10 @@
     <ClCompile Include="Source\ILI9341_HAL.cpp" />
     <ClCompile Include="Source\LCDCanvas.cpp" />
     <ClCompile Include="Source\SDL_HAL.cpp" />
+    <ClCompile Include="Source\USB\DaisyUSBAMCInterface.cpp" />
     <ClCompile Include="Source\USB\DaisyUSBCDCInterface.cpp" />
     <ClCompile Include="Source\USB\DaisyUSB.cpp" />
+    <ClCompile Include="Source\USB\DaisyUSBInterfaceCommon.cpp" />
     <ClCompile Include="Source\WindowsHAL.cpp" />
     <ClCompile Include="Source\WindowsUSBInterface.cpp" />
   </ItemGroup>
@@ -135,6 +137,7 @@
     <ClInclude Include="Include\DaisySeedFramework\StaticStack.h" />
     <ClInclude Include="Include\DaisySeedFramework\StaticVector.h" />
     <ClInclude Include="Include\DaisySeedFramework\USBHost.h" />
+    <ClInclude Include="Include\DaisySeedFramework\USB\DaisyUSBInterfaceCommon.h" />
     <ClInclude Include="Include\DaisySeedFramework\USB\USBCDCDefinitions.h" />
     <ClInclude Include="Include\DaisySeedFramework\USB\DaisyUSBAMCInterface.h" />
     <ClInclude Include="Include\DaisySeedFramework\USB\DaisyUSBCDCInterface.h" />

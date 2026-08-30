@@ -219,11 +219,45 @@ void DaisyUSB::Start(const USBProfile& Profile)
 
 	m_Profile = Profile;
 
-	DeviceInstanceInfo& dii = m_Devices[m_DeviceCount++];
-	dii.Class = USBDeviceClassses::CDC;
-	dii.InterfaceNumberMask = (1 << 0) | (1 << 1);
-	dii.Interface = Memory::Allocate<DaisyUSBCDCInterface>(1, true);
-	new (dii.Interface) DaisyUSBCDCInterface(this);
+	if (Profile.Mode == USBModes::Device)
+	{
+		uint8 interfaceCounter = 0;
+		for (uint8 i = 0; i < Profile.Device.ClassNodeCount; ++i)
+		{
+			const USBClassNode& node = Profile.Device.ClassNodes[i];
+
+			DeviceInstanceInfo& dii = m_Devices[m_DeviceCount++];
+			dii.Class = node.Class;
+
+			switch (dii.Class)
+			{
+			case USBDeviceClassses::CDC:
+			{
+				uint16 interfaceIndexMask = (1 << interfaceCounter) | (1 << (interfaceCounter + 1));
+
+				dii.Interface = Memory::Allocate<DaisyUSBCDCInterface>(1, true);
+				new (dii.Interface) DaisyUSBCDCInterface(this, interfaceIndexMask, node.CDC.CustomEndpointCommand, node.CDC.CustomEndpointIn, node.CDC.CustomEndpointOut);
+
+				interfaceCounter += DaisyUSBCDCInterface::RequiredInterfaceCount;
+
+				break;
+			}
+
+			case USBDeviceClassses::AMC:
+			{
+				dii.Interface = Memory::Allocate<DaisyUSBAMCInterface>(1, true);
+				//new (dii.Interface) DaisyUSBAMCInterface(this, interfaceIndexMask, node.CDC.CustomEndpointIn, node.CDC.CustomEndpointOut);
+
+				interfaceCounter += DaisyUSBAMCInterface::RequiredInterfaceCount;
+
+				break;
+			}
+			}
+		}
+	}
+	else
+	{
+	}
 
 	if (m_Profile.Mode == USBModes::Device)
 	{
@@ -249,8 +283,8 @@ void DaisyUSB::Start(const USBProfile& Profile)
 
 		CHECK_CALL(HAL_PCD_Init(&m_DeviceHandle));
 
-		CHECK_CALL(HAL_PCD_EP_Open(&m_DeviceHandle, USB_EP0_OUT, MaxPacketSize, EP_TYPE_CTRL));
-		CHECK_CALL(HAL_PCD_EP_Open(&m_DeviceHandle, USB_EP0_IN, MaxPacketSize, EP_TYPE_CTRL));
+		OpenEndpoint(USB_EP0_OUT, MaxPacketSize, USBEpAttr::Control);
+		OpenEndpoint(USB_EP0_IN, MaxPacketSize, USBEpAttr::Control);
 
 		CHECK_CALL(HAL_PCD_Start(&m_DeviceHandle));
 	}
@@ -333,17 +367,8 @@ void DaisyUSB::OnSetupStage(void)
 
 		case USB_REQ_SET_CONFIGURATION:
 		{
-			for (uint8 i = 0; i < m_Profile.Device.ClassNodeCount; ++i)
-			{
-				const USBClassNode& node = m_Profile.Device.ClassNodes[i];
-
-				if (node.Class == USBDeviceClassses::CDC)
-				{
-					CHECK_CALL(HAL_PCD_EP_Open(&m_DeviceHandle, node.CDC.CustomEndpointCommand, USB_EP_MAX_PACKET_INTR, EP_TYPE_INTR));
-					CHECK_CALL(HAL_PCD_EP_Open(&m_DeviceHandle, node.CDC.CustomEndpointOut, MaxPacketSize, EP_TYPE_BULK));
-					CHECK_CALL(HAL_PCD_EP_Open(&m_DeviceHandle, node.CDC.CustomEndpointIn, MaxPacketSize, EP_TYPE_BULK));
-				}
-			}
+			for (uint8 i = 0; i < m_DeviceCount; ++i)
+				m_Devices[i].Interface->OnReady();
 
 			DeviceTransmitAck();
 			break;
@@ -356,55 +381,22 @@ void DaisyUSB::OnSetupStage(void)
 	}
 	else if (reqType == USB_REQ_TYPE_CLASS)
 	{
-		DeviceInstanceInfo& deviceInstanceInfo = GetDevice(setup->wIndex);
+		DeviceInstanceInfo& dii = GetDeviceInstanceByIndex(setup->wIndex);
 
 		bool handled = false;
-		switch (deviceInstanceInfo.Class)
+		switch (dii.Class)
 		{
 		case USBDeviceClassses::CDC:
-			handled = reinterpret_cast<DaisyUSBCDCInterface*>(deviceInstanceInfo.Interface)->OnSetupStage(setup);
+			handled = reinterpret_cast<DaisyUSBCDCInterface*>(dii.Interface)->OnSetupStage(setup);
 			break;
 
 		case USBDeviceClassses::AMC:
-			//handled = reinterpret_cast<DaisyUSBMCInterface*>(deviceInstanceInfo.Interface)->OnSetupStage(setup);
+			//handled = reinterpret_cast<DaisyUSBMCInterface*>(dii.Interface)->OnSetupStage(setup);
 			break;
 		}
 
 		if (!handled)
 			SetStall();
-
-		//switch (setup->bRequest)
-		//{
-		//case USB_CDC_REQ_SET_LINE_CODING:
-		//{
-		//	if (setup->wLength > 0)
-		//		DeviceReceive(&m_CDCLineCoding);
-
-		//	DeviceTransmitAck();
-
-		//	break;
-		//}
-
-		//case USB_CDC_REQ_GET_LINE_CODING:
-		//{
-		//	DeviceTransmit(&m_CDCLineCoding);
-		//	DeviceReceiveAck();
-
-		//	break;
-		//}
-
-		//case USB_CDC_REQ_SET_CONTROL_LINE_STATE:
-		//{
-		//	//m_ControlLineState = static_cast<uint8>(setup->wValue & 0xFF);
-		//	DeviceTransmitAck();
-
-		//	break;
-		//}
-
-		//default:
-		//	SetStall();
-		//	break;
-		//}
 	}
 }
 
@@ -424,11 +416,28 @@ void DaisyUSB::OnDataInStage(uint8 EPNum)
 		}
 		else
 			DeviceReceiveAck();
+
+		return;
 	}
 }
 
 void DaisyUSB::OnDataOutStage(uint8 EPNum)
-{}
+{
+	if (EPNum == 0 || EPNum == (USB_EP0_IN & 0x7F))
+		return;
+
+	DeviceInstanceInfo& dii = GetDeviceInstanceByEndpoint(EPNum);
+	switch (dii.Class)
+	{
+	case USBDeviceClassses::CDC:
+		reinterpret_cast<DaisyUSBCDCInterface*>(dii.Interface)->OnDataOutStage();
+		break;
+
+	case USBDeviceClassses::AMC:
+		reinterpret_cast<DaisyUSBCDCInterface*>(dii.Interface)->OnDataOutStage();
+		break;
+	}
+}
 
 void DaisyUSB::HandleGetDescriptor(void)
 {
@@ -496,14 +505,24 @@ void DaisyUSB::HandleGetDescriptor(void)
 	}
 }
 
-void DaisyUSB::DeviceReceive(uint8* Buffer, uint16 Length)
+void DaisyUSB::OpenEndpoint(uint8 Endpoint, uint16 Length, USBEpAttr Type)
 {
-	CHECK_CALL(HAL_PCD_EP_Receive(&m_DeviceHandle, USB_EP0_OUT, Buffer, Length));
+	CHECK_CALL(HAL_PCD_EP_Open(&m_DeviceHandle, Endpoint, Length, (uint8)Type));
 }
 
-void DaisyUSB::DeviceTransmit(uint8* Buffer, uint16 Length)
+uint16 DaisyUSB::DeviceReceiveCount(uint8 Endpoint)
 {
-	CHECK_CALL(HAL_PCD_EP_Transmit(&m_DeviceHandle, USB_EP0_IN, Buffer, Length));
+	return HAL_PCD_EP_GetRxCount(&m_DeviceHandle, Endpoint);
+}
+
+void DaisyUSB::DeviceReceive(uint8* Buffer, uint16 Length, uint8 Endpoint)
+{
+	CHECK_CALL(HAL_PCD_EP_Receive(&m_DeviceHandle, Endpoint, Buffer, Length));
+}
+
+void DaisyUSB::DeviceTransmit(uint8* Buffer, uint16 Length, uint8 Endpoint)
+{
+	CHECK_CALL(HAL_PCD_EP_Transmit(&m_DeviceHandle, Endpoint, Buffer, Length));
 }
 
 void DaisyUSB::SetStall(void)
@@ -511,11 +530,24 @@ void DaisyUSB::SetStall(void)
 	CHECK_CALL(HAL_PCD_EP_SetStall(&m_DeviceHandle, USB_EP0_OUT));
 }
 
-DaisyUSB::DeviceInstanceInfo& DaisyUSB::GetDevice(uint8 InterfaceNumber)
+DaisyUSB::DeviceInstanceInfo& DaisyUSB::GetDeviceInstanceByIndex(uint8 InterfaceIndex)
 {
 	for (uint8 i = 0; i < m_DeviceCount; ++i)
 	{
-		if ((m_Devices[i].InterfaceNumberMask & (1 << InterfaceNumber)) != 0)
+		if (!m_Devices[i].Interface->MatchByInterfaceIndex(InterfaceIndex))
+			continue;
+
+		return m_Devices[i];
+	}
+
+	ASSERT(false, "Couldn't find the proper interface");
+}
+
+DaisyUSB::DeviceInstanceInfo& DaisyUSB::GetDeviceInstanceByEndpoint(uint8 Endpoint)
+{
+	for (uint8 i = 0; i < m_DeviceCount; ++i)
+	{
+		if (!m_Devices[i].Interface->MatchByEndpoint(Endpoint))
 			continue;
 
 		return m_Devices[i];
@@ -569,7 +601,6 @@ uint16 DaisyUSB::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, uint8 Interv
 	offset += sizeof(USBConfigurationDescriptor);
 
 	uint8 interfaceCounter = 0;
-
 	for (uint8 i = 0; i < Profile.ClassNodeCount; ++i)
 	{
 		const USBClassNode& node = Profile.ClassNodes[i];
@@ -578,91 +609,7 @@ uint16 DaisyUSB::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, uint8 Interv
 		{
 			DaisyUSBCDCInterface::BuildConfigurationDescriptor(EP0Buffer, offset, interfaceCounter, Interval, node.CDC);
 
-			//USBInterfaceAssociationDescriptor* iad = reinterpret_cast<USBInterfaceAssociationDescriptor*>(buffer + offset);
-			//iad->bLength = sizeof(USBInterfaceAssociationDescriptor);
-			//iad->bDescriptorType = USBDescType::InterfaceAssociation;
-			//iad->bFirstInterface = interfaceCounter;
-			//iad->bInterfaceCount = 2;
-			//iad->bFunctionClass = USBSDeviceClass::CDC;
-			//iad->bFunctionSubClass = CDCSubClass::ACM;
-			//iad->bFunctionProtocol = CDCProtocol::AT;
-			//iad->iFunction = 0;
-			//offset += sizeof(USBInterfaceAssociationDescriptor);
-
-			//USBInterfaceDescriptor* ctrlIf = reinterpret_cast<USBInterfaceDescriptor*>(buffer + offset);
-			//ctrlIf->bLength = sizeof(USBInterfaceDescriptor);
-			//ctrlIf->bDescriptorType = USBDescType::Interface;
-			//ctrlIf->bInterfaceNumber = interfaceCounter;
-			//ctrlIf->bAlternateSetting = 0;
-			//ctrlIf->bNumEndpoints = 1;
-			//ctrlIf->bInterfaceClass = USBSDeviceClass::CDC;
-			//ctrlIf->bInterfaceSubClass = CDCSubClass::ACM;
-			//ctrlIf->bInterfaceProtocol = CDCProtocol::AT;
-			//ctrlIf->iInterface = 0;
-			//offset += sizeof(USBInterfaceDescriptor);
-
-			//USBCDCHeaderFunctionalDescriptor* header = reinterpret_cast<USBCDCHeaderFunctionalDescriptor*>(buffer + offset);
-			//header->bFunctionLength = sizeof(USBCDCHeaderFunctionalDescriptor);
-			//header->bDescriptorType = USBDescType::CDCFunc;
-			//header->bDescriptorSubtype = CDC_SCS_HEADER;
-			//header->bcdCDC = USB_CDC_BCD_VERSION;
-			//offset += sizeof(USBCDCHeaderFunctionalDescriptor);
-
-			//USBCDCACMFunctionalDescriptor* acm = reinterpret_cast<USBCDCACMFunctionalDescriptor*>(buffer + offset);
-			//acm->bFunctionLength = sizeof(USBCDCACMFunctionalDescriptor);
-			//acm->bDescriptorType = USBDescType::CDCFunc;
-			//acm->bDescriptorSubtype = CDC_SCS_ACM;
-			//acm->bmCapabilities = USB_CDC_CAP_FEATURE;
-			//offset += sizeof(USBCDCACMFunctionalDescriptor);
-
-			//USBCDCUnionFunctionalDescriptor* cdcUnion = reinterpret_cast<USBCDCUnionFunctionalDescriptor*>(buffer + offset);
-			//cdcUnion->bFunctionLength = sizeof(USBCDCUnionFunctionalDescriptor);
-			//cdcUnion->bDescriptorType = USBDescType::CDCFunc;
-			//cdcUnion->bDescriptorSubtype = CDC_SCS_UNION;
-			//cdcUnion->bMasterInterface = interfaceCounter;
-			//cdcUnion->bSlaveInterface0 = interfaceCounter + 1;
-			//offset += sizeof(USBCDCUnionFunctionalDescriptor);
-
-			//USBEndpointDescriptor* ctrlEp = reinterpret_cast<USBEndpointDescriptor*>(buffer + offset);
-			//ctrlEp->bLength = sizeof(USBEndpointDescriptor);
-			//ctrlEp->bDescriptorType = USBDescType::Endpoint;
-			//ctrlEp->bEndpointAddress = node.CDC.CustomEndpointCommand;
-			//ctrlEp->bmAttributes = USBEpAttr::Control;
-			//ctrlEp->wMaxPacketSize = USB_EP_MAX_PACKET_INTR;
-			//ctrlEp->bInterval = ;
-			//offset += sizeof(USBEndpointDescriptor);
-
-			//USBInterfaceDescriptor* dataIf = reinterpret_cast<USBInterfaceDescriptor*>(buffer + offset);
-			//dataIf->bLength = sizeof(USBInterfaceDescriptor);
-			//dataIf->bDescriptorType = USBDescType::Interface;
-			//dataIf->bInterfaceNumber = interfaceCounter + 1;
-			//dataIf->bAlternateSetting = 0;
-			//dataIf->bNumEndpoints = 2;
-			//dataIf->bInterfaceClass = USBSDeviceClass::Data;
-			//dataIf->bInterfaceSubClass = static_cast<CDCSubClass>(0);
-			//dataIf->bInterfaceProtocol = static_cast<CDCProtocol>(0);
-			//dataIf->iInterface = 0;
-			//offset += sizeof(USBInterfaceDescriptor);
-
-			//USBEndpointDescriptor* outEp = reinterpret_cast<USBEndpointDescriptor*>(buffer + offset);
-			//outEp->bLength = sizeof(USBEndpointDescriptor);
-			//outEp->bDescriptorType = USBDescType::Endpoint;
-			//outEp->bEndpointAddress = node.CDC.CustomEndpointOut;
-			//outEp->bmAttributes = USBEpAttr::Bulk;
-			//outEp->wMaxPacketSize = MaxPacketSize;
-			//outEp->bInterval = 0;
-			//offset += sizeof(USBEndpointDescriptor);
-
-			//USBEndpointDescriptor* inEp = reinterpret_cast<USBEndpointDescriptor*>(buffer + offset);
-			//inEp->bLength = sizeof(USBEndpointDescriptor);
-			//inEp->bDescriptorType = USBDescType::Endpoint;
-			//inEp->bEndpointAddress = node.CDC.CustomEndpointIn;
-			//inEp->bmAttributes = USBEpAttr::Bulk;
-			//inEp->wMaxPacketSize = MaxPacketSize;
-			//inEp->bInterval = 0;
-			//offset += sizeof(USBEndpointDescriptor);
-
-			//interfaceCounter += 2;
+			interfaceCounter += DaisyUSBCDCInterface::RequiredInterfaceCount;
 		}
 		else if (node.Class == USBDeviceClassses::AMC)
 		{

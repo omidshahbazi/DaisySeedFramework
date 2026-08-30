@@ -240,8 +240,6 @@ bool DaisySeedHAL::IsDebuggerPresent(void) const
 
 void DaisySeedHAL::Crash(void) const
 {
-	Delay(1000);
-
 	if (m_CrashHandler != nullptr)
 	{
 		m_CrashHandler(this);

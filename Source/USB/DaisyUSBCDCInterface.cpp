@@ -3,8 +3,10 @@
 #include "DaisySeedFramework/USB/DaisyUSBCDCInterface.h"
 #include "DaisySeedFramework/USB/DaisyUSB.h"
 
-DaisyUSBCDCInterface::DaisyUSBCDCInterface(DaisyUSB* USB)
-	: m_USB(USB)
+DaisyUSBCDCInterface::DaisyUSBCDCInterface(DaisyUSB* USB, uint16 InterfaceIndexMask, uint8 EndpointCommand, uint8 EndpointIn, uint8 EndpointOut)
+	: DaisyUSBInterfaceCommon(USB, InterfaceIndexMask, EndpointCommand, EndpointIn, EndpointOut),
+	m_LineState(0),
+	m_IsHostConnected(false)
 {}
 
 bool DaisyUSBCDCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
@@ -14,38 +16,67 @@ bool DaisyUSBCDCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 	case USB_CDC_REQ_SET_LINE_CODING:
 	{
 		if (Setup->wLength > 0)
-			m_USB->DeviceReceive(&m_CDCLineCoding);
+			GetUSB()->DeviceReceive(&m_CDCLineCoding);
 
-		m_USB->DeviceTransmitAck();
+		GetUSB()->DeviceTransmitAck();
 
 		break;
 	}
 
 	case USB_CDC_REQ_GET_LINE_CODING:
 	{
-		m_USB->DeviceTransmit(&m_CDCLineCoding);
-		m_USB->DeviceReceiveAck();
+		GetUSB()->DeviceTransmit(&m_CDCLineCoding);
+		GetUSB()->DeviceReceiveAck();
 
 		break;
 	}
 
 	case USB_CDC_REQ_SET_CONTROL_LINE_STATE:
 	{
-		//m_ControlLineState = static_cast<uint8>(Setup->wValue & 0xFF);
-		m_USB->DeviceTransmitAck();
+		m_LineState = static_cast<uint8>(Setup->wValue & 0xFF);
+
+		bool dtr = ((m_LineState & 0x01) != 0);
+		//bool rts = ((m_LineState & 0x02) != 0);
+
+		if (dtr)
+			m_IsHostConnected = true;
+		else
+			m_IsHostConnected = false;
+
+		GetUSB()->DeviceTransmitAck();
 
 		break;
 	}
 
 	default:
 		return false;
-		break;
 	}
 
 	return true;
 }
 
-void DaisyUSBCDCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, uint16& Offset, uint8& InterfaceIndex, uint8 Interval, const CDCClassConfig& Config)
+void DaisyUSBCDCInterface::OnDataOutStage(void)
+{
+	uint16 rxLen = EndpointReceiveCount();
+	if (rxLen > 0)
+	{
+		EndpointReceive(m_ReceiveBuffer, rxLen);
+
+		// ۳. ریختن دیتا در بافر حلقوی (Ring Buffer) برای استفاده در لوپ اصلی
+		// AppRingBuffer_Write(m_RxBuffer, rxLen);
+	}
+
+	EndpointReceive(m_ReceiveBuffer, MaxPacketSize);
+}
+
+void DaisyUSBCDCInterface::OnReady(void)
+{
+	OpenEndpoints();
+
+	EndpointReceive(m_ReceiveBuffer, MaxPacketSize);
+}
+
+void DaisyUSBCDCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, uint16& Offset, uint8 InterfaceIndex, uint8 Interval, const CDCClassConfig& Config)
 {
 	uint8* buffer = EP0Buffer.configDescs;
 
@@ -98,7 +129,7 @@ void DaisyUSBCDCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, ui
 	ctrlEp->bLength = sizeof(USBEndpointDescriptor);
 	ctrlEp->bDescriptorType = USBDescType::Endpoint;
 	ctrlEp->bEndpointAddress = Config.CustomEndpointCommand;
-	ctrlEp->bmAttributes = USBEpAttr::Control;
+	ctrlEp->bmAttributes = USBEpAttr::Interrupt;
 	ctrlEp->wMaxPacketSize = USB_EP_MAX_PACKET_INTR;
 	ctrlEp->bInterval = Interval;
 	Offset += sizeof(USBEndpointDescriptor);
@@ -132,8 +163,6 @@ void DaisyUSBCDCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, ui
 	inEp->wMaxPacketSize = MaxPacketSize;
 	inEp->bInterval = 0;
 	Offset += sizeof(USBEndpointDescriptor);
-
-	InterfaceIndex += 2;
 }
 
 #endif
