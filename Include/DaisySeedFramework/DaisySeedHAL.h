@@ -4,7 +4,7 @@
 
 #include "Common.h"
 #include "DaisyInclude.h"
-#include "USB/DaisyUSBInterface.h"
+#include "USB/DaisyUSB.h"
 #include <DigitalSignalProcessing/IHAL.h>
 
 class DaisySeedHAL : public IHAL
@@ -117,12 +117,12 @@ public:
 
 	void Delay(uint16 Ms) const override;
 
-	IUSBInterface* GetPrimaryUSB(void) override
+	IUSB* GetPrimaryUSB(void) override
 	{
 		return &m_HighSpeedUSB;
 	}
 
-	IUSBInterface* GetSecondaryUSB(void) override
+	IUSB* GetSecondaryUSB(void) override
 	{
 		return &m_FullSpeedUSB;
 	}
@@ -160,8 +160,8 @@ private:
 	daisy::DaisySeed m_Hardware;
 	CrashHandler m_CrashHandler;
 
-	DaisyUSBInterface m_FullSpeedUSB;
-	DaisyUSBInterface m_HighSpeedUSB;
+	DaisyUSB m_FullSpeedUSB;
+	DaisyUSB m_HighSpeedUSB;
 
 	uint8* m_SDRAMAddress;
 	uint32 m_SDRAMSize;

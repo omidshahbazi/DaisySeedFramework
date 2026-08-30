@@ -1,12 +1,14 @@
 #pragma once
-#ifndef DAISY_USB_INTERFACE_H
-#define DAISY_USB_INTERFACE_H
+#ifndef DAISY_USB_H
+#define DAISY_USB_H
 
 #include "../Common.h"
+#include "DaisySeedFramework/USB/USBDefinitions.h"
+#include "DaisySeedFramework/USB/DaisyUSBCDCInterface.h"
+#include "DaisySeedFramework/USB/DaisyUSBAMCInterface.h"
 #include "DaisySeedFramework/DaisyInclude.h"
-#include <DigitalSignalProcessing/USB/IUSBInterface.h>
-
-struct EP0Buffer;
+#include <DigitalSignalProcessing/USB/IUSB.h>
+#include <DigitalSignalProcessing/Debug.h>
 
 extern "C"
 {
@@ -17,13 +19,16 @@ extern "C"
 	void HAL_PCD_DataOutStageCallback(PCD_HandleTypeDef* hpcd, uint8_t epnum);
 }
 
-class DaisyUSBInterface : public IUSBInterface
+class DaisyUSB : public IUSB
 {
 	friend void OTG_FS_IRQHandler(void);
 	friend void OTG_HS_IRQHandler(void);
 	friend void HAL_PCD_SetupStageCallback(PCD_HandleTypeDef* hpcd);
 	friend void HAL_PCD_DataInStageCallback(PCD_HandleTypeDef* hpcd, uint8_t epnum);
 	friend void HAL_PCD_DataOutStageCallback(PCD_HandleTypeDef* hpcd, uint8_t epnum);
+
+	friend class DaisyUSBCDCInterface;
+	friend class DaisyUSBAMCInterface;
 
 public:
 	enum class Peripherals
@@ -39,33 +44,26 @@ public:
 
 private:
 	BEGIN_PACK(1);
-	struct LineCoding
+	struct DeviceInstanceInfo
 	{
 	public:
-		uint32 dwDTERate;
-		uint8  bCharFormat; // 1 Stop bit
-		uint8  bParityType; // None
-		uint8  bDataBits;   // 8 Data bits
+		uint8 InterfaceNumberMask;
+		USBDeviceClassses Class;
+		IUSBInterface* Interface;
 	};
 	END_PACK();
 
 public:
-	DaisyUSBInterface(Peripherals Peripheral);
+	DaisyUSB(Peripherals Peripheral);
 
 	void Start(const USBProfile& Profile);
 	void Stop(void);
 
-	ICDCUSB* GetCDC(uint8 Index)
+	IUSBInterface* GetInterface(uint8 Index) override
 	{
-		return nullptr;
-	}
-	IAMCUSB* GetAMC(void)
-	{
-		return nullptr;
-	}
-	IMIDIUSB* GetMIDI(void)
-	{
-		return nullptr;
+		ASSERT(Index < m_DeviceCount, "Index out of range");
+
+		return m_Devices[Index].Interface;
 	}
 
 private:
@@ -75,10 +73,6 @@ private:
 	void OnDataOutStage(uint8 EPNum);
 
 	void HandleGetDescriptor(void);
-
-	uint16 BuildDeviceDescriptor(EP0Buffer& EP0Buffer);
-	uint16 BuildStringDescriptor(EP0Buffer& EP0Buffer, cstr Value);
-	uint16 BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, const USBDeviceProfile& profile);
 
 	void DeviceReceive(uint8* Buffer, uint16 Length);
 	template<typename T>
@@ -104,6 +98,14 @@ private:
 		DeviceTransmit(nullptr, 0);
 	}
 
+	void SetStall(void);
+
+	DeviceInstanceInfo& GetDevice(uint8 InterfaceNumber);
+
+	static uint16 BuildDeviceDescriptor(EP0Buffer& EP0Buffer, const USBProfile& Profile);
+	static uint16 BuildStringDescriptor(EP0Buffer& EP0Buffer, cstr Value);
+	static uint16 BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, uint8 Interval, const USBDeviceProfile& profile);
+
 private:
 	Peripherals m_Peripheral;
 	bool m_IsRunning;
@@ -115,10 +117,11 @@ private:
 		HCD_HandleTypeDef m_HostHandle;
 	};
 
-	LineCoding m_DeviceLineCoding;
-
 	uint16 m_EO0TransmitRemainingLength;
 	const uint8* m_EP0TransmitBufferStart;
+
+	DeviceInstanceInfo m_Devices[MaxClassCount];
+	uint8 m_DeviceCount;
 };
 
 #endif

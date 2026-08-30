@@ -64,10 +64,10 @@
     <ClCompile Include="Source\LCDCanvas.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Source\USB\DaisyUSBInterface.cpp">
+    <ClCompile Include="Source\USB\DaisyUSB.cpp">
       <Filter>Source\USB</Filter>
     </ClCompile>
-    <ClCompile Include="Source\USB\DaisyCDCUSB.cpp">
+    <ClCompile Include="Source\USB\DaisyUSBCDCInterface.cpp">
       <Filter>Source\USB</Filter>
     </ClCompile>
   </ItemGroup>
@@ -135,13 +135,19 @@
     <ClInclude Include="Include\DaisySeedFramework\DaisyInclude.h">
       <Filter>Include\DaisySeedFramework</Filter>
     </ClInclude>
-    <ClInclude Include="Include\DaisySeedFramework\USB\DaisyUSBInterface.h">
+    <ClInclude Include="Include\DaisySeedFramework\USB\DaisyUSB.h">
       <Filter>Include\DaisySeedFramework\USB</Filter>
     </ClInclude>
     <ClInclude Include="Include\DaisySeedFramework\USB\USBDefinitions.h">
       <Filter>Include\DaisySeedFramework\USB</Filter>
     </ClInclude>
-    <ClInclude Include="Include\DaisySeedFramework\USB\DaisyCDCUSB.h">
+    <ClInclude Include="Include\DaisySeedFramework\USB\DaisyUSBCDCInterface.h">
+      <Filter>Include\DaisySeedFramework\USB</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\USB\DaisyUSBAMCInterface.h">
+      <Filter>Include\DaisySeedFramework\USB</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\USB\USBCDCDefinitions.h">
       <Filter>Include\DaisySeedFramework\USB</Filter>
     </ClInclude>
   </ItemGroup>

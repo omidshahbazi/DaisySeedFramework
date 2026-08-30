@@ -6,8 +6,8 @@
 
 DaisySeedHAL::DaisySeedHAL(void* SDRAMAddress, uint32 SDRAMSize, CrashHandler CrashHandler)
 	: m_CrashHandler(CrashHandler),
-	m_FullSpeedUSB(DaisyUSBInterface::Peripherals::FullSpeed),
-	m_HighSpeedUSB(DaisyUSBInterface::Peripherals::HighSpeed),
+	m_FullSpeedUSB(DaisyUSB::Peripherals::FullSpeed),
+	m_HighSpeedUSB(DaisyUSB::Peripherals::HighSpeed),
 	m_SDRAMAddress(reinterpret_cast<uint8*>(SDRAMAddress)),
 	m_SDRAMSize(SDRAMSize),
 	m_LastFreeSDRAMIndex(0),

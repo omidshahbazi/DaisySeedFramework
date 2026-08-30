@@ -5,76 +5,87 @@
 #include <DigitalSignalProcessing/DataTypes.h>
 #include <DigitalSignalProcessing/Common.h>
 
-// --- USB Request Types (bmRequestType) ---
-#define USB_REQ_TYPE_MASK            0x60
-//#define USB_REQ_TYPE_STANDARD        0x00
-//#define USB_REQ_TYPE_CLASS           0x20
-//#define USB_REQ_TYPE_VENDOR          0x40
+// Request type mask and standard request directions
+#define USB_REQ_TYPE_MASK            0x60 // Mask for request type bits
+#define USB_REQ_DIR_HOST_TO_DEVICE   0x00 // Request direction: Host to Device
+#define USB_REQ_DIR_DEVICE_TO_HOST   0x80 // Request direction: Device to Host
 
-// --- USB Standard Requests (bRequest) ---
-//#define USB_REQ_GET_STATUS           0x00
-//#define USB_REQ_CLEAR_FEATURE        0x01
-//#define USB_REQ_SET_FEATURE          0x03
-//#define USB_REQ_SET_ADDRESS          0x05
-//#define USB_REQ_GET_DESCRIPTOR       0x06
-//#define USB_REQ_SET_DESCRIPTOR       0x07
-//#define USB_REQ_GET_CONFIGURATION    0x08
-//#define USB_REQ_SET_CONFIGURATION    0x09
-//#define USB_REQ_GET_INTERFACE        0x0A
-//#define USB_REQ_SET_INTERFACE        0x0B
+// String descriptor index definitions
+#define USB_STRING_INDEX_LANGID       0x00 // Language ID string index
+#define USB_STRING_INDEX_MANUFACTURER 0x01 // Manufacturer string index
+#define USB_STRING_INDEX_PRODUCT      0x02 // Product string index
+#define USB_STRING_INDEX_SERIAL       0x03 // Serial number string index
 
-// --- USB Descriptor Types ---
-//#define USB_DESC_TYPE_DEVICE         0x01
-//#define USB_DESC_TYPE_CONFIGURATION  0x02
-//#define USB_DESC_TYPE_STRING         0x03
-//#define USB_DESC_TYPE_INTERFACE      0x04
-//#define USB_DESC_TYPE_ENDPOINT       0x05
+// Default configurations and language ID values
+#define USB_LANGID_ENGLISH_US        0x0409 // English (United States) language ID
+#define USB_VERSION_2_0              0x0200 // USB 2.0 protocol version specification
+#define USB_EP0_OUT                  0x00   // Control endpoint 0 OUT address
+#define USB_EP0_IN                   0x80   // Control endpoint 0 IN address
+#define USB_EP_COUNT_DEFAULT         9      // Default endpoint count for initialization
+#define USB_HCD_CHANNELS_DEFAULT     16     // Default host channels count
+#define USB_CONFIG_VALUE_DEFAULT     1      // Default active configuration value
 
-// --- USB String Descriptor Indexes ---
-#define USB_STRING_INDEX_LANGID       0x00
-#define USB_STRING_INDEX_MANUFACTURER 0x01
-#define USB_STRING_INDEX_PRODUCT      0x02
-#define USB_STRING_INDEX_SERIAL       0x03
+// Endpoint packet size and polling interval defaults
+#define USB_EP_MAX_PACKET_INTR       8  // Maximum packet size for interrupt endpoints
+#define USB_EP_INTERVAL_FS           10 // Polling interval for Full-Speed endpoints (ms)
+#define USB_EP_INTERVAL_HS           6  // Polling interval for High-Speed endpoints (microframes)
 
-// --- USB Standard Values ---
-#define USB_LANGID_ENGLISH_US        0x0409
-#define USB_VERSION_2_0              0x0200
+// Global sizing constants for buffers and strings
+static constexpr uint8 MaxPacketSize = 64;     // Maximum control/bulk endpoint packet size
+static constexpr uint8 USBMaxStringLength = 31; // Maximum character length for string descriptors
 
-// --- USB Device Class / SubClass / Protocol (IAD) ---
-#define USB_CLASS_MISC               0xEF
-#define USB_SUBCLASS_COMMON          0x02
-#define USB_PROTOCOL_IAD             0x01
+// USB standard descriptor types enumeration
+enum class USBDescType : uint8
+{
+	Device = 0x01,                // Device descriptor type
+	Configuration = 0x02,         // Configuration descriptor type
+	String = 0x03,                // String descriptor type
+	Interface = 0x04,             // Interface descriptor type
+	Endpoint = 0x05,              // Endpoint descriptor type
+	InterfaceAssociation = 0x0B,  // Interface Association Descriptor (IAD) type
+	CDCFunc = 0x24                // Class-specific functional descriptor type
+};
 
-// --- USB Endpoints ---
-#define USB_EP0_OUT                  0x00
-#define USB_EP0_IN                   0x80
+// USB device class codes enumeration
+enum class USBSDeviceClass : uint8
+{
+	CDC = 0x02,   // Communications Device Class
+	Data = 0x0A,  // Data Interface Class
+	Misc = 0xEF   // Miscellaneous Device Class (often used for IAD)
+};
 
-// --- USB Class Code Definitions ---
-#define USB_CLASS_CDC                0x02
-#define USB_CLASS_DATA               0x0A
+// USB device subclass codes enumeration
+enum class USBDeviceSubClass : uint8
+{
+	None = 0x00,    // No subclass specified
+	Common = 0x02   // Common subclass designation
+};
 
-// --- CDC SubClass & Protocol ---
-#define CDC_SUBCLASS_ACM             0x02
-#define CDC_PROTOCOL_AT              0x01
+// USB device protocol codes enumeration
+enum class USBDeviceProtocol : uint8
+{
+	None = 0x00,    // No protocol specified
+	IAD = 0x01,     // Interface Association Descriptor protocol implementation
+	Vendor = 0xFF   // Vendor-specific protocol
+};
 
-// --- CDC Descriptor Types & Subtypes ---
-#define CDC_CS_INTERFACE             0x24
-#define CDC_SCS_HEADER               0x00
-#define CDC_SCS_ACM                  0x02
-#define CDC_SCS_UNION                0x06
+// USB endpoint attributes/transfer types enumeration
+enum class USBEpAttr : uint8
+{
+	Control = 0x03,   // Control transfer type
+	Bulk = 0x02,      // Bulk transfer type
+	Interrupt = 0x03  // Interrupt transfer type
+};
 
-// --- USB Request Direction (bmRequestType Bit 7) ---
-//#define USB_REQ_DIR_MASK             0x80
-#define USB_REQ_DIR_HOST_TO_DEVICE   0x00
-#define USB_REQ_DIR_DEVICE_TO_HOST   0x80
-
-#define USB_CDC_REQ_SET_LINE_CODING           0x20
-#define USB_CDC_REQ_GET_LINE_CODING           0x21
-#define USB_CDC_REQ_SET_CONTROL_LINE_STATE    0x22
-
-static constexpr uint8 MaxPacketSize = 64;
+// USB configuration power attribute masks enumeration
+enum class USBConfigAttr : uint8
+{
+	SelfPoweredMask = 0xC0, // Device is self-powered (bit 6 set, bit 7 reserved)
+	BusPoweredMask = 0x80   // Device is bus-powered
+};
 
 BEGIN_PACK(1);
+// Standard USB setup packet structure for control transfers
 struct USBDeviceSetupPacket
 {
 public:
@@ -87,15 +98,16 @@ public:
 END_PACK();
 
 BEGIN_PACK(1);
+// Standard USB Device Descriptor structure
 struct USBDeviceDescriptor
 {
 public:
 	uint8 bLength;
-	uint8 bDescriptorType;
+	USBDescType bDescriptorType;
 	uint16 bcdUSB;
-	uint8 bDeviceClass;   // Miscellaneous (IAD)
-	uint8 bDeviceSubClass;
-	uint8 bDeviceProtocol;
+	USBSDeviceClass bDeviceClass;
+	USBDeviceSubClass bDeviceSubClass;
+	USBDeviceProtocol bDeviceProtocol;
 	uint8 bMaxPacketSize0;
 	uint16 idVendor;
 	uint16 idProduct;
@@ -108,39 +120,42 @@ public:
 END_PACK();
 
 BEGIN_PACK(1);
+// Standard USB String Descriptor structure
 struct USBStringDescriptor
 {
 public:
 	uint8 bLength;
-	uint8 bDescriptorType;
-	uint16 wData[31];
+	USBDescType bDescriptorType;
+	uint16 wData[USBMaxStringLength];
 };
 END_PACK();
 
 BEGIN_PACK(1);
+// Standard USB Configuration Descriptor structure
 struct USBConfigurationDescriptor
 {
 public:
 	uint8 bLength;
-	uint8 bDescriptorType;
+	USBDescType bDescriptorType;
 	uint16 wTotalLength;
 	uint8 bNumInterfaces;
 	uint8 bConfigurationValue;
 	uint8 iConfiguration;
-	uint8 bmAttributes;
+	USBConfigAttr bmAttributes;
 	uint8 bMaxPower;
 };
 END_PACK();
 
 BEGIN_PACK(1);
+// USB Interface Association Descriptor (IAD) structure
 struct USBInterfaceAssociationDescriptor
 {
 public:
 	uint8  bLength;
-	uint8  bDescriptorType;
+	USBDescType  bDescriptorType;
 	uint8  bFirstInterface;
 	uint8  bInterfaceCount;
-	uint8  bFunctionClass;
+	USBSDeviceClass  bFunctionClass;
 	uint8  bFunctionSubClass;
 	uint8  bFunctionProtocol;
 	uint8  iFunction;
@@ -148,15 +163,16 @@ public:
 END_PACK();
 
 BEGIN_PACK(1);
+// Standard USB Interface Descriptor structure
 struct USBInterfaceDescriptor
 {
 public:
 	uint8  bLength;
-	uint8  bDescriptorType;
+	USBDescType  bDescriptorType;
 	uint8  bInterfaceNumber;
 	uint8  bAlternateSetting;
 	uint8  bNumEndpoints;
-	uint8  bInterfaceClass;
+	USBSDeviceClass  bInterfaceClass;
 	uint8  bInterfaceSubClass;
 	uint8  bInterfaceProtocol;
 	uint8  iInterface;
@@ -164,71 +180,21 @@ public:
 END_PACK();
 
 BEGIN_PACK(1);
+// Standard USB Endpoint Descriptor structure
 struct USBEndpointDescriptor
 {
 public:
 	uint8  bLength;
-	uint8  bDescriptorType;
+	USBDescType  bDescriptorType;
 	uint8  bEndpointAddress;
-	uint8  bmAttributes;
+	USBEpAttr  bmAttributes;
 	uint16 wMaxPacketSize;
 	uint8  bInterval;
 };
 END_PACK();
 
 BEGIN_PACK(1);
-struct USBCDCHeaderFunctionalDescriptor
-{
-public:
-	uint8 bFunctionLength;
-	uint8 bDescriptorType;
-	uint8 bDescriptorSubtype;
-	uint16 bcdCDC;
-};
-END_PACK();
-
-BEGIN_PACK(1);
-struct USBCDCACMFunctionalDescriptor
-{
-public:
-	uint8 bFunctionLength;
-	uint8 bDescriptorType;
-	uint8 bDescriptorSubtype;
-	uint8 bmCapabilities;
-};
-END_PACK();
-
-BEGIN_PACK(1);
-struct USBCDCUnionFunctionalDescriptor
-{
-public:
-	uint8 bFunctionLength;
-	uint8 bDescriptorType;
-	uint8 bDescriptorSubtype;
-	uint8 bMasterInterface;
-	uint8 bSlaveInterface0;
-};
-END_PACK();
-
-//BEGIN_PACK(1);
-//struct USBAudioConfiguration
-//{
-//	USBConfigurationDescriptor config;
-//
-//	USBInterfaceDescriptor     controlInterface;   
-//	AudioHeaderDescriptor      audioHeader;        
-//	AudioInputTerminal         inputTerminal;      
-//	AudioFeatureUnit           featureUnit;        
-//	AudioOutputTerminal        outputTerminal;     
-//
-//	USBInterfaceDescriptor     streamingInterface; 
-//	AudioFormatDescriptor      audioFormat;        
-//	USBEndpointDescriptor      streamingEndpoint;  
-//	AudioEndpointDescriptor    audioDataEndpoint;  
-//};
-//END_PACK();
-
-BEGIN_PACK(1);
+// Endpoint 0 control buffer container union
 struct alignas(4) EP0Buffer
 {
 public:
@@ -236,7 +202,6 @@ public:
 	{
 		USBDeviceDescriptor deviceDesc;
 		USBStringDescriptor stringDesc;
-
 		uint8 configDescs[512];
 	};
 };
