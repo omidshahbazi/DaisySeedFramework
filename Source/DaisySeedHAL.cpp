@@ -230,7 +230,7 @@ uint32 DaisySeedHAL::GetTimeSinceStartupMs(void) const
 
 void DaisySeedHAL::Print(cstr Value)
 {
-	m_Hardware.PrintLine(Value);
+	printf(Value);
 }
 
 bool DaisySeedHAL::IsDebuggerPresent(void) const

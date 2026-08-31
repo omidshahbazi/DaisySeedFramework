@@ -3,24 +3,46 @@
 #define DAISY_USB_INTERFACE_COMMON_H
 
 #include "DaisySeedFramework/USB/USBCDCDefinitions.h"
+#include <DigitalSignalProcessing/USB/USBProfile.h>
 
 class DaisyUSB;
 
 class DaisyUSBInterfaceCommon
 {
-	friend class DaisyUSB;
+public:
+	struct Configs
+	{
+	public:
+		uint8 InterfaceIndexStart;
+		uint8 InterfaceIndexCount;
+		uint8 EndpointCommand;
+		uint8 EndpointOut;
+		uint8 EndpointIn;
+		uint16 ReceivePacketSize;
+		uint16 TransmitPacketSize;
+	};
 
-protected:
-	DaisyUSBInterfaceCommon(DaisyUSB* USB, uint16 InterfaceIndexMask, uint8 EndpointCommand, uint8 EndpointIn, uint8 EndpointOut);
+public:
+	DaisyUSBInterfaceCommon(DaisyUSB* USB, const Configs& Configs);
 
 	virtual bool OnSetupStage(const USBDeviceSetupPacket* Setup) = 0;
+	virtual void OnSetupCompleted(void) = 0;
 
 	virtual void OnDataInStage(void) = 0;
 	virtual void OnDataOutStage(void) = 0;
 
-	virtual void OnReady(void) = 0;
+	virtual void BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, uint16& BufferOffset, uint8 InterfaceIndex, const USBClassNode& Class) = 0;
 
-	void OpenEndpoints(void);
+	bool MatchByInterfaceIndex(uint8 Index) const;
+	bool MatchByEndpoint(uint8 Endpoint) const;
+
+	const Configs& GetConfigs(void) const
+	{
+		return m_Configs;
+	}
+
+protected:
+	void OpenEndpoints(USBEpAttr Mode);
 
 	uint16 EndpointReceiveCount(void);
 	void EndpointReceive(uint8* Buffer, uint16 Length);
@@ -31,15 +53,10 @@ protected:
 		return m_USB;
 	}
 
-	bool MatchByInterfaceIndex(uint8 Index);
-	bool MatchByEndpoint(uint8 Endpoint);
-
 private:
 	DaisyUSB* m_USB;
+	Configs m_Configs;
 	uint16 m_InterfaceIndexMask;
-	uint8 m_EndpointCommand;
-	uint8 m_EndpointIn;
-	uint8 m_EndpointOut;
 };
 
 #endif

@@ -85,6 +85,8 @@ private:
 
 	void HandleGetDescriptor(void);
 
+	void AllocateTransmitBuffer(uint8 Endpoint, uint16 Size);
+
 	void OpenEndpoint(uint8 Endpoint, uint16 Length, USBEpAttr Type);
 
 	uint16 DeviceReceiveCount(uint8 Endpoint = USB_EP0_OUT);
@@ -117,9 +119,10 @@ private:
 	DeviceInstanceInfo& GetDeviceInstanceByIndex(uint8 InterfaceIndex);
 	DeviceInstanceInfo& GetDeviceInstanceByEndpoint(uint8 Endpoint);
 
+	uint16 BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, const USBDeviceProfile& profile);
+
 	static uint16 BuildDeviceDescriptor(EP0Buffer& EP0Buffer, const USBProfile& Profile);
 	static uint16 BuildStringDescriptor(EP0Buffer& EP0Buffer, cstr Value);
-	static uint16 BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, uint8 Interval, const USBDeviceProfile& profile);
 
 private:
 	Peripherals m_Peripheral;
@@ -132,7 +135,7 @@ private:
 		HCD_HandleTypeDef m_HostHandle;
 	};
 
-	BufferTransmitHandler<MaxPacketSize> m_EP0TransmitHandler;
+	BufferTransmitHandler m_EP0TransmitHandler;
 
 	DeviceInstanceInfo m_Devices[MaxClassCount];
 	uint8 m_DeviceCount;

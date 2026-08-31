@@ -30,8 +30,12 @@
 #define USB_EP_INTERVAL_FS           10 // Polling interval for Full-Speed endpoints (ms)
 #define USB_EP_INTERVAL_HS           6  // Polling interval for High-Speed endpoints (microframes)
 
+#define TO_ENDPOINT_NUMBER(Endpoint) ((uint8)(Endpoint & 0x7F))
+#define TO_OUT_ENDPOINT(EndpointNumber) ((uint8)(USB_EP0_OUT | EndpointNumber))
+#define TO_IN_ENDPOINT(EndpointNumber) ((uint8)(USB_EP0_IN | EndpointNumber))
+
 // Global sizing constants for buffers and strings
-static constexpr uint8 MaxPacketSize = 64;     // Maximum control/bulk endpoint packet size
+//static constexpr uint8 MaxPacketSize = 64;     // Maximum control/bulk endpoint packet size
 static constexpr uint8 USBMaxStringLength = 31; // Maximum character length for string descriptors
 
 // USB standard descriptor types enumeration
@@ -208,10 +212,13 @@ public:
 };
 END_PACK();
 
-template<uint8 MaxSize>
 class BufferTransmitHandler
 {
 public:
+	BufferTransmitHandler(uint16 ChunkSize)
+		:m_ChunkSize(ChunkSize)
+	{}
+
 	template<typename T>
 	void Set(const T* Buffer)
 	{
@@ -227,15 +234,15 @@ public:
 
 	void MoveForward(void)
 	{
-		if (m_RemainingLength < MaxSize)
+		if (m_RemainingLength < m_ChunkSize)
 		{
 			m_BufferStart = nullptr;
 			m_RemainingLength = 0;
 		}
 		else
 		{
-			m_BufferStart += MaxSize;
-			m_RemainingLength -= MaxSize;
+			m_BufferStart += m_ChunkSize;
+			m_RemainingLength -= m_ChunkSize;
 		}
 	}
 
@@ -246,8 +253,8 @@ public:
 
 	uint16 GetLength(void) const
 	{
-		if (m_RemainingLength > MaxSize)
-			return MaxSize;
+		if (m_RemainingLength > m_ChunkSize)
+			return m_ChunkSize;
 
 		return m_RemainingLength;
 	}
@@ -258,6 +265,7 @@ public:
 	}
 
 private:
+	uint16 m_ChunkSize;
 	const uint8* m_BufferStart;
 	uint16 m_RemainingLength;
 };

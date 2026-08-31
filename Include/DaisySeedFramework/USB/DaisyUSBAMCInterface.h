@@ -8,21 +8,20 @@
 
 class DaisyUSBAMCInterface : public IUSBAMCInterface, public DaisyUSBInterfaceCommon
 {
-	friend class DaisyUSB;
-
-private:
-	static constexpr uint8 RequiredInterfaceCount = 1;
-
-private:
-	DaisyUSBAMCInterface(DaisyUSB* USB, uint16 InterfaceIndexMask, uint8 EndpointCommand, uint8 EndpointIn, uint8 EndpointOut);
+public:
+	DaisyUSBAMCInterface(DaisyUSB* USB, const Configs& Configs);
 
 	bool OnSetupStage(const USBDeviceSetupPacket* Setup) override;
-
+	void OnSetupCompleted(void) override;
+	void OnDataInStage(void) override;
 	void OnDataOutStage(void) override;
 
-	static void BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, uint16& Offset, uint8& InterfaceIndex, uint8 Interval, const CDCClassConfig& Config);
+	void BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, uint16& BufferOffset, uint8 InterfaceIndex, const USBClassNode& Class) override;
 
-private:
+public:
+	static uint8 CalculateRequiredInterfaceCount(const AMCClassConfig& Class);
+
+	static uint16 CalculateIsoPacketSize(uint8 ChannelCount, const AMCClassConfig& Class);
 };
 
 #endif
