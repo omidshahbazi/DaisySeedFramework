@@ -386,20 +386,20 @@ void ILI9341_HAL::SetAddressWindow(uint16 X0, uint16 Y0, uint16 X1, uint16 Y1)
 	// Column address set
 	SendCommand(0x2A); // CASET
 	{
-		uint8 data[4] = { static_cast<uint8>((X0 >> 8) & 0xFF),
-						 static_cast<uint8>(X0 & 0xFF),
-						 static_cast<uint8>((X1 >> 8) & 0xFF),
-						 static_cast<uint8>(X1 & 0xFF) };
+		uint8 data[4] = {(uint8)((X0 >> 8) & 0xFF),
+						 (uint8)(X0 & 0xFF),
+						 (uint8)((X1 >> 8) & 0xFF),
+						 (uint8)(X1 & 0xFF) };
 		SendData(data, 4);
 	}
 
 	// Row address set
 	SendCommand(0x2B); // RASET
 	{
-		uint8 data[4] = { static_cast<uint8>((Y0 >> 8) & 0xFF),
-						 static_cast<uint8>(Y0 & 0xFF),
-						 static_cast<uint8>((Y1 >> 8) & 0xFF),
-						 static_cast<uint8>(Y1 & 0xFF) };
+		uint8 data[4] = {(uint8)((Y0 >> 8) & 0xFF),
+						 (uint8)(Y0 & 0xFF),
+						 (uint8)((Y1 >> 8) & 0xFF),
+						 (uint8)(Y1 & 0xFF) };
 		SendData(data, 4);
 	}
 

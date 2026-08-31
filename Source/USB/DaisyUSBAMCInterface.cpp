@@ -8,7 +8,9 @@ DaisyUSBAMCInterface::DaisyUSBAMCInterface(DaisyUSB* USB, uint16 InterfaceIndexM
 {}
 
 bool DaisyUSBAMCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
-{}
+{
+	return true;
+}
 
 void DaisyUSBAMCInterface::OnDataOutStage(void)
 {}

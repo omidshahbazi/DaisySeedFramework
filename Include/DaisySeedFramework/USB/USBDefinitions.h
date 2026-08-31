@@ -208,4 +208,59 @@ public:
 };
 END_PACK();
 
+template<uint8 MaxSize>
+class BufferTransmitHandler
+{
+public:
+	template<typename T>
+	void Set(const T* Buffer)
+	{
+		Set(Buffer, sizeof(T));
+	}
+
+	template<typename T>
+	void Set(const T* Buffer, uint16 Length)
+	{
+		m_BufferStart = reinterpret_cast<const uint8*>(Buffer);
+		m_RemainingLength = Length;
+	}
+
+	void MoveForward(void)
+	{
+		if (m_RemainingLength < MaxSize)
+		{
+			m_BufferStart = nullptr;
+			m_RemainingLength = 0;
+		}
+		else
+		{
+			m_BufferStart += MaxSize;
+			m_RemainingLength -= MaxSize;
+		}
+	}
+
+	const uint8* GetBuffer(void) const
+	{
+		return m_BufferStart;
+	}
+
+	uint16 GetLength(void) const
+	{
+		if (m_RemainingLength > MaxSize)
+			return MaxSize;
+
+		return m_RemainingLength;
+	}
+
+	bool HasMore(void) const
+	{
+		return (m_RemainingLength != 0);
+	}
+
+private:
+	const uint8* m_BufferStart;
+	uint16 m_RemainingLength;
+};
+
+
 #endif

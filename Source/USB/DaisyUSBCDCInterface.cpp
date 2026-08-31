@@ -9,6 +9,17 @@ DaisyUSBCDCInterface::DaisyUSBCDCInterface(DaisyUSB* USB, uint16 InterfaceIndexM
 	m_IsHostConnected(false)
 {}
 
+void DaisyUSBCDCInterface::Transmit(const uint8* Buffer, uint16 Length)
+{
+	ASSERT(m_IsHostConnected, "Host is not connected");
+
+	m_TransmitHandler.Set(Buffer, Length);
+
+	EndpointTransmit(m_TransmitHandler.GetBuffer(), m_TransmitHandler.GetLength());
+
+	m_TransmitHandler.MoveForward();
+}
+
 bool DaisyUSBCDCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 {
 	switch (Setup->bRequest)
@@ -33,7 +44,7 @@ bool DaisyUSBCDCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 
 	case USB_CDC_REQ_SET_CONTROL_LINE_STATE:
 	{
-		m_LineState = static_cast<uint8>(Setup->wValue & 0xFF);
+		m_LineState = (uint8)(Setup->wValue & 0xFF);
 
 		bool dtr = ((m_LineState & 0x01) != 0);
 		//bool rts = ((m_LineState & 0x02) != 0);
@@ -55,15 +66,26 @@ bool DaisyUSBCDCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 	return true;
 }
 
+void DaisyUSBCDCInterface::OnDataInStage(void)
+{
+	if (m_TransmitHandler.HasMore())
+	{
+		EndpointTransmit(m_TransmitHandler.GetBuffer(), m_TransmitHandler.GetLength());
+
+		m_TransmitHandler.MoveForward();
+	}
+}
+
 void DaisyUSBCDCInterface::OnDataOutStage(void)
 {
-	uint16 rxLen = EndpointReceiveCount();
-	if (rxLen > 0)
+	uint16 len = EndpointReceiveCount();
+	if (len > 0)
 	{
-		EndpointReceive(m_ReceiveBuffer, rxLen);
+		m_IsHostConnected = true;
 
-		// ۳. ریختن دیتا در بافر حلقوی (Ring Buffer) برای استفاده در لوپ اصلی
-		// AppRingBuffer_Write(m_RxBuffer, rxLen);
+		EndpointReceive(m_ReceiveBuffer, len);
+
+		m_ReceiveCallback(m_ReceiveBuffer, len);
 	}
 
 	EndpointReceive(m_ReceiveBuffer, MaxPacketSize);

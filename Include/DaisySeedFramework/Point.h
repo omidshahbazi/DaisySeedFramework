@@ -14,8 +14,8 @@ public:
 
 	template <typename T, typename U>
 	Point(T X, U Y)
-		: X(static_cast<int16>(X)),
-		Y(static_cast<int16>(Y))
+		: X((int16)(X)),
+		Y((int16)(Y))
 	{}
 
 	Point operator+(Point Other) const

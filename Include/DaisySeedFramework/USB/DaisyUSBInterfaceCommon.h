@@ -15,6 +15,7 @@ protected:
 
 	virtual bool OnSetupStage(const USBDeviceSetupPacket* Setup) = 0;
 
+	virtual void OnDataInStage(void) = 0;
 	virtual void OnDataOutStage(void) = 0;
 
 	virtual void OnReady(void) = 0;
@@ -23,6 +24,7 @@ protected:
 
 	uint16 EndpointReceiveCount(void);
 	void EndpointReceive(uint8* Buffer, uint16 Length);
+	void EndpointTransmit(const uint8* Buffer, uint16 Length);
 
 	DaisyUSB* GetUSB(void)
 	{

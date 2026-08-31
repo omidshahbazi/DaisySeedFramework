@@ -63,7 +63,18 @@ public:
 	{
 		ASSERT(Index < m_DeviceCount, "Index out of range");
 
-		return reinterpret_cast<IUSBInterface*>(m_Devices[Index].Interface);
+		const DeviceInstanceInfo& dii = m_Devices[Index];
+
+		switch (dii.Class)
+		{
+		case USBDeviceClassses::CDC:
+			return static_cast<DaisyUSBCDCInterface*>(dii.Interface);
+
+		case USBDeviceClassses::AMC:
+			return static_cast<DaisyUSBAMCInterface*>(dii.Interface);
+		}
+
+		ASSERT(false, "Class is unhandled");
 	}
 
 private:
@@ -89,7 +100,7 @@ private:
 		DeviceReceive(nullptr, 0);
 	}
 
-	void DeviceTransmit(uint8* Buffer, uint16 Length, uint8 Endpoint = USB_EP0_IN);
+	void DeviceTransmit(const uint8* Buffer, uint16 Length, uint8 Endpoint = USB_EP0_IN);
 	template<typename T>
 	void DeviceTransmit(T* Buffer)
 	{
@@ -121,8 +132,7 @@ private:
 		HCD_HandleTypeDef m_HostHandle;
 	};
 
-	uint16 m_EO0TransmitRemainingLength;
-	const uint8* m_EP0TransmitBufferStart;
+	BufferTransmitHandler<MaxPacketSize> m_EP0TransmitHandler;
 
 	DeviceInstanceInfo m_Devices[MaxClassCount];
 	uint8 m_DeviceCount;
