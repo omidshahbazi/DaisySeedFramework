@@ -138,6 +138,7 @@
     <ClInclude Include="Include\DaisySeedFramework\StaticVector.h" />
     <ClInclude Include="Include\DaisySeedFramework\USBHost.h" />
     <ClInclude Include="Include\DaisySeedFramework\USB\DaisyUSBInterfaceCommon.h" />
+    <ClInclude Include="Include\DaisySeedFramework\USB\USBAMCDefinitions.h" />
     <ClInclude Include="Include\DaisySeedFramework\USB\USBCDCDefinitions.h" />
     <ClInclude Include="Include\DaisySeedFramework\USB\DaisyUSBAMCInterface.h" />
     <ClInclude Include="Include\DaisySeedFramework\USB\DaisyUSBCDCInterface.h" />

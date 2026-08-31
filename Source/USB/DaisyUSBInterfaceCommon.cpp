@@ -29,27 +29,6 @@ bool DaisyUSBInterfaceCommon::MatchByEndpoint(uint8 Endpoint) const
 		TO_ENDPOINT_NUMBER(m_Configs.EndpointIn) == Endpoint);
 }
 
-void DaisyUSBInterfaceCommon::OpenEndpoints(USBEpAttr Mode)
-{
-	//Order matters here, it must be ordered by the actual number of Command and In
-	{
-		if (TO_ENDPOINT_NUMBER(m_Configs.EndpointCommand) != 0)
-			m_USB->AllocateTransmitBuffer(m_Configs.EndpointCommand, (uint16)PacketSizes::Max);
-
-		if (TO_ENDPOINT_NUMBER(m_Configs.EndpointIn) != 0)
-			m_USB->AllocateTransmitBuffer(m_Configs.EndpointIn, m_Configs.TransmitPacketSize);
-	}
-
-	if (TO_ENDPOINT_NUMBER(m_Configs.EndpointCommand) != 0)
-		m_USB->OpenEndpoint(m_Configs.EndpointCommand, USB_EP_MAX_PACKET_INTR, USBEpAttr::Interrupt);
-
-	if (TO_ENDPOINT_NUMBER(m_Configs.EndpointOut) != 0)
-		m_USB->OpenEndpoint(m_Configs.EndpointOut, m_Configs.ReceivePacketSize, Mode);
-
-	if (TO_ENDPOINT_NUMBER(m_Configs.EndpointIn) != 0)
-		m_USB->OpenEndpoint(m_Configs.EndpointIn, m_Configs.TransmitPacketSize, Mode);
-}
-
 uint16 DaisyUSBInterfaceCommon::EndpointReceiveCount(void)
 {
 	return m_USB->DeviceReceiveCount(m_Configs.EndpointOut);

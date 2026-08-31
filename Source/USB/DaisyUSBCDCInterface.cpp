@@ -70,7 +70,26 @@ bool DaisyUSBCDCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 
 void DaisyUSBCDCInterface::OnSetupCompleted(void)
 {
-	OpenEndpoints(USBEpAttr::Bulk);
+	DaisyUSB* usb = GetUSB();
+	const Configs& configs = GetConfigs();
+
+	//Order matters here, it must be ordered by the actual number of Command and In
+	{
+		if (TO_ENDPOINT_NUMBER(configs.EndpointCommand) != 0)
+			usb->AllocateTransmitBuffer(configs.EndpointCommand, (uint16)PacketSizes::Max);
+
+		if (TO_ENDPOINT_NUMBER(configs.EndpointIn) != 0)
+			usb->AllocateTransmitBuffer(configs.EndpointIn, configs.TransmitPacketSize);
+	}
+
+	if (TO_ENDPOINT_NUMBER(configs.EndpointCommand) != 0)
+		usb->OpenEndpoint(configs.EndpointCommand, USB_EP_MAX_PACKET_INTR, USBEpAttr::Interrupt);
+
+	if (TO_ENDPOINT_NUMBER(configs.EndpointOut) != 0)
+		usb->OpenEndpoint(configs.EndpointOut, configs.ReceivePacketSize, USBEpAttr::Bulk);
+
+	if (TO_ENDPOINT_NUMBER(configs.EndpointIn) != 0)
+		usb->OpenEndpoint(configs.EndpointIn, configs.TransmitPacketSize, USBEpAttr::Bulk);
 
 	EndpointReceive(m_ReceiveBuffer, GetConfigs().ReceivePacketSize);
 }

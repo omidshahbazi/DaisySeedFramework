@@ -3,8 +3,6 @@
 #define USB_CDC_DEFINITIONS_H
 
 #include "USBDefinitions.h"
-#include <DigitalSignalProcessing/DataTypes.h>
-#include <DigitalSignalProcessing/Common.h>
 
 // Communications Device Class (CDC) specific constants and subtypes
 #define CDC_CS_INTERFACE             0x24 // Descriptor subtype class-specific interface

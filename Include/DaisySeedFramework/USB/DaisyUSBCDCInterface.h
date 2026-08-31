@@ -3,6 +3,7 @@
 #define DAISY_USB_CDC_INTERFACE_H
 
 #include "DaisySeedFramework/USB/DaisyUSBInterfaceCommon.h"
+#include "DaisySeedFramework/USB/USBCDCDefinitions.h"
 #include <DigitalSignalProcessing/USB/IUSBCDCInterface.h>
 
 class DaisyUSBCDCInterface : public IUSBCDCInterface, public DaisyUSBInterfaceCommon
@@ -26,7 +27,14 @@ public:
 	void OnSetupCompleted(void) override;
 	void OnDataInStage(void) override;
 	void OnDataOutStage(void) override;
-
+	bool OnSetInterface(uint8 InterfaceIndex, uint8 AlternateSetting) override
+	{
+		return (AlternateSetting == 0);
+	}
+	uint8 GetCurrentAltSetting(uint8 InterfaceIndex) const override
+	{
+		return 0;
+	}
 	void BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, uint16& BufferOffset, uint8 InterfaceIndex, const USBClassNode& Class) override;
 
 public:

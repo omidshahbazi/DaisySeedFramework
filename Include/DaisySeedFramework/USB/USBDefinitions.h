@@ -47,12 +47,14 @@ enum class USBDescType : uint8
 	Interface = 0x04,             // Interface descriptor type
 	Endpoint = 0x05,              // Endpoint descriptor type
 	InterfaceAssociation = 0x0B,  // Interface Association Descriptor (IAD) type
-	CDCFunc = 0x24                // Class-specific functional descriptor type
+	CDCFunc = 0x24,               // Class-specific functional descriptor type
+	CDCEndpointFunc = 0x25,		  // CS_ENDPOINT
 };
 
 // USB device class codes enumeration
 enum class USBSDeviceClass : uint8
 {
+	Audio = 0x01, // Audio Interface Class
 	CDC = 0x02,   // Communications Device Class
 	Data = 0x0A,  // Data Interface Class
 	Misc = 0xEF   // Miscellaneous Device Class (often used for IAD)

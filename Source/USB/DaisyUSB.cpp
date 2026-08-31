@@ -270,7 +270,7 @@ void DaisyUSB::Start(const USBProfile& Profile)
 				configs.TransmitPacketSize = DaisyUSBAMCInterface::CalculateIsoPacketSize(node.AMC.InputChannelCount, node.AMC);
 
 				DaisyUSBAMCInterface* amc = Memory::Allocate<DaisyUSBAMCInterface>(1, true);
-				new (amc) DaisyUSBAMCInterface(this, configs);
+				new (amc) DaisyUSBAMCInterface(this, configs, node.AMC);
 				dii.Interface = amc;
 
 				break;
@@ -401,6 +401,33 @@ void DaisyUSB::OnSetupStage(void)
 			break;
 		}
 
+		case USB_REQ_SET_INTERFACE:
+		{
+			uint8 interfaceIndex = (uint8)(setup->wIndex & 0xFF);
+			uint8 altSetting = (uint8)(setup->wValue & 0xFF);
+
+			DeviceInstanceInfo& dii = GetDeviceInstanceByIndex(interfaceIndex);
+
+			if (!dii.Interface->OnSetInterface(interfaceIndex, altSetting))
+				SetStall();
+			else
+				DeviceTransmitAck();
+
+			break;
+		}
+
+		case USB_REQ_GET_INTERFACE:
+		{
+			uint8 interfaceIndex = (uint8)(setup->wIndex & 0xFF);
+
+			DeviceInstanceInfo& dii = GetDeviceInstanceByIndex(interfaceIndex);
+
+			uint8 altSetting = dii.Interface->GetCurrentAltSetting(interfaceIndex);
+			DeviceTransmit(&altSetting);
+
+			break;
+		}
+
 		default:
 			SetStall();
 			break;
@@ -512,6 +539,11 @@ void DaisyUSB::OpenEndpoint(uint8 Endpoint, uint16 Length, USBEpAttr Type)
 	CHECK_CALL(HAL_PCD_EP_Open(&m_DeviceHandle, Endpoint, Length, (uint8)Type));
 }
 
+void DaisyUSB::CloseEndpoint(uint8 Endpoint)
+{
+	CHECK_CALL(HAL_PCD_EP_Close(&m_DeviceHandle, Endpoint));
+}
+
 uint16 DaisyUSB::DeviceReceiveCount(uint8 Endpoint)
 {
 	return HAL_PCD_EP_GetRxCount(&m_DeviceHandle, Endpoint);
@@ -572,10 +604,11 @@ uint16 DaisyUSB::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, const USBDev
 		DeviceInstanceInfo& dii = m_Devices[i];
 		const USBClassNode& node = Profile.ClassNodes[i];
 
-		if (node.Class == USBDeviceClassses::CDC)
-			static_cast<DaisyUSBCDCInterface*>(dii.Interface)->BuildConfigurationDescriptor(EP0Buffer, offset, interfaceIndex, node);
-		else if (node.Class == USBDeviceClassses::AMC)
-			static_cast<DaisyUSBAMCInterface*>(dii.Interface)->BuildConfigurationDescriptor(EP0Buffer, offset, interfaceIndex, node);
+		//if (node.Class == USBDeviceClassses::CDC)
+		//	static_cast<DaisyUSBCDCInterface*>(dii.Interface)->BuildConfigurationDescriptor(EP0Buffer, offset, interfaceIndex, node);
+		//else if (node.Class == USBDeviceClassses::AMC)
+		//	static_cast<DaisyUSBAMCInterface*>(dii.Interface)->BuildConfigurationDescriptor(EP0Buffer, offset, interfaceIndex, node);
+		dii.Interface->BuildConfigurationDescriptor(EP0Buffer, offset, interfaceIndex, node);
 
 		interfaceIndex += dii.Interface->GetConfigs().InterfaceIndexCount;
 	}

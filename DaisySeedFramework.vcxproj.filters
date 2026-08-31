@@ -159,5 +159,8 @@
     <ClInclude Include="Include\DaisySeedFramework\USB\DaisyUSBInterfaceCommon.h">
       <Filter>Include\DaisySeedFramework\USB</Filter>
     </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\USB\USBAMCDefinitions.h">
+      <Filter>Include\DaisySeedFramework\USB</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

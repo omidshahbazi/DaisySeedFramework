@@ -2,7 +2,7 @@
 #ifndef DAISY_USB_INTERFACE_COMMON_H
 #define DAISY_USB_INTERFACE_COMMON_H
 
-#include "DaisySeedFramework/USB/USBCDCDefinitions.h"
+#include "DaisySeedFramework/USB/USBDefinitions.h"
 #include <DigitalSignalProcessing/USB/USBProfile.h>
 
 class DaisyUSB;
@@ -27,10 +27,10 @@ public:
 
 	virtual bool OnSetupStage(const USBDeviceSetupPacket* Setup) = 0;
 	virtual void OnSetupCompleted(void) = 0;
-
 	virtual void OnDataInStage(void) = 0;
 	virtual void OnDataOutStage(void) = 0;
-
+	virtual bool OnSetInterface(uint8 InterfaceIndex, uint8 AlternateSetting) = 0;
+	virtual uint8 GetCurrentAltSetting(uint8 InterfaceIndex) const = 0;
 	virtual void BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, uint16& BufferOffset, uint8 InterfaceIndex, const USBClassNode& Class) = 0;
 
 	bool MatchByInterfaceIndex(uint8 Index) const;
@@ -42,8 +42,6 @@ public:
 	}
 
 protected:
-	void OpenEndpoints(USBEpAttr Mode);
-
 	uint16 EndpointReceiveCount(void);
 	void EndpointReceive(uint8* Buffer, uint16 Length);
 	void EndpointTransmit(const uint8* Buffer, uint16 Length);

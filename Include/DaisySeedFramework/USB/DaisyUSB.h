@@ -88,6 +88,7 @@ private:
 	void AllocateTransmitBuffer(uint8 Endpoint, uint16 Size);
 
 	void OpenEndpoint(uint8 Endpoint, uint16 Length, USBEpAttr Type);
+	void CloseEndpoint(uint8 Endpoint);
 
 	uint16 DeviceReceiveCount(uint8 Endpoint = USB_EP0_OUT);
 	void DeviceReceive(uint8* Buffer, uint16 Length, uint8 Endpoint = USB_EP0_OUT);
