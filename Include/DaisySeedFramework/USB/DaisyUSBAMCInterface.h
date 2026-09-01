@@ -16,12 +16,12 @@ public:
 	void OnDataInStage(void) override;
 	void OnDataOutStage(void) override;
 	bool OnSetInterface(uint8 InterfaceIndex, uint8 AlternateSetting) override;
+	void OnSOF(void) override;
 	uint8 GetCurrentAltSetting(uint8 InterfaceIndex) const override;
 	void BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, uint16& BufferOffset, uint8 InterfaceIndex, const USBClassNode& Class) override;
 
 public:
 	bool IsSampleRateSupported(uint32 Rate) const;
-	uint16 BuildSampleRateRangeResponse(void);
 
 	static void BuildStreamingInterface(EP0Buffer& EP0Buffer, uint16& BufferOffset, uint8 InterfaceIndex, uint8 ChannelCount, uint8 Endpoint, uint8 TerminalLinkID, const AMCClassConfig& Config, bool IsOutput);
 
@@ -40,7 +40,8 @@ private:
 	uint8 m_OutInterfaceIndex;
 	uint8 m_InInterfaceIndex;
 
-	uint8 m_RangeResponseBuffer[sizeof(uint16) + SAMPLE_RATE_COUNT * sizeof(UACFreqSubRange)];
+	uint8 m_TransmitBuffer[1023];
+	bool m_StreamPrimed = false;
 };
 
 #endif

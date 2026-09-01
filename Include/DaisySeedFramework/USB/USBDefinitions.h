@@ -9,6 +9,10 @@
 #define USB_REQ_TYPE_MASK            0x60 // Mask for request type bits
 #define USB_REQ_DIR_HOST_TO_DEVICE   0x00 // Request direction: Host to Device
 #define USB_REQ_DIR_DEVICE_TO_HOST   0x80 // Request direction: Device to Host
+#define USB_REQ_RECIPIENT_MASK       0x1F
+//#define USB_REQ_RECIPIENT_DEVICE     0x00
+//#define USB_REQ_RECIPIENT_INTERFACE  0x01
+//#define USB_REQ_RECIPIENT_ENDPOINT   0x02
 
 // String descriptor index definitions
 #define USB_STRING_INDEX_LANGID       0x00 // Language ID string index
@@ -54,6 +58,7 @@ enum class USBDescType : uint8
 // USB device class codes enumeration
 enum class USBSDeviceClass : uint8
 {
+	None = 0x00,
 	Audio = 0x01, // Audio Interface Class
 	CDC = 0x02,   // Communications Device Class
 	Data = 0x0A,  // Data Interface Class

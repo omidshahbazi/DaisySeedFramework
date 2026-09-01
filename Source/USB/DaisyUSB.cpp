@@ -197,6 +197,21 @@ extern "C"
 			break;
 		}
 	}
+
+	void HAL_PCD_SOFCallback(PCD_HandleTypeDef* hpcd)
+	{
+		for (uint8_t i = 0; i < (uint8_t)DaisyUSB::Peripherals::COUNT; ++i)
+		{
+			if (s_Instance[i] == nullptr)
+				continue;
+
+			if (&s_Instance[i]->m_DeviceHandle != hpcd)
+				continue;
+
+			s_Instance[i]->OnSOF();
+			break;
+		}
+	}
 }
 
 #define CHECK_CALL(Expr) ASSERT((Expr) == HAL_OK, #Expr);
@@ -301,19 +316,31 @@ void DaisyUSB::Start(const USBProfile& Profile)
 			m_DeviceHandle.Init.phy_itface = PCD_PHY_EMBEDDED;
 		}
 
-		m_DeviceHandle.Init.Sof_enable = DISABLE;
+		m_DeviceHandle.Init.Sof_enable = ENABLE;
 		m_DeviceHandle.Init.low_power_enable = DISABLE;
 		m_DeviceHandle.Init.lpm_enable = DISABLE;
 		m_DeviceHandle.Init.vbus_sensing_enable = DISABLE;
 
+		m_DeviceHandle.Init.dma_enable = DISABLE;
+		m_DeviceHandle.Init.battery_charging_enable = ENABLE;
+		//m_DeviceHandle.Init.vbus_sensing_enable = ENABLE;
+		m_DeviceHandle.Init.use_dedicated_ep1 = DISABLE;
+
 		CHECK_CALL(HAL_PCD_Init(&m_DeviceHandle));
 
+		AllocateReceiveBuffer((uint16)PacketSizes::Max * 2);
 		AllocateTransmitBuffer(USB_EP0_IN, (uint16)PacketSizes::Max);
 
 		OpenEndpoint(USB_EP0_OUT, (uint16)PacketSizes::Max, USBEpAttr::Control);
 		OpenEndpoint(USB_EP0_IN, (uint16)PacketSizes::Max, USBEpAttr::Control);
 
 		CHECK_CALL(HAL_PCD_Start(&m_DeviceHandle));
+
+		HAL_NVIC_SetPriority(OTG_HS_IRQn, 0, 0);
+		HAL_NVIC_EnableIRQ(OTG_HS_IRQn);
+
+		HAL_NVIC_SetPriority(OTG_FS_IRQn, 0, 0);
+		HAL_NVIC_EnableIRQ(OTG_FS_IRQn);
 	}
 	else
 	{
@@ -406,7 +433,7 @@ void DaisyUSB::OnSetupStage(void)
 			uint8 interfaceIndex = (uint8)(setup->wIndex & 0xFF);
 			uint8 altSetting = (uint8)(setup->wValue & 0xFF);
 
-			DeviceInstanceInfo& dii = GetDeviceInstanceByIndex(interfaceIndex);
+			DeviceInstanceInfo& dii = GetDeviceInstanceByInterfaceIndex(interfaceIndex);
 
 			if (!dii.Interface->OnSetInterface(interfaceIndex, altSetting))
 				SetStall();
@@ -420,7 +447,7 @@ void DaisyUSB::OnSetupStage(void)
 		{
 			uint8 interfaceIndex = (uint8)(setup->wIndex & 0xFF);
 
-			DeviceInstanceInfo& dii = GetDeviceInstanceByIndex(interfaceIndex);
+			DeviceInstanceInfo& dii = GetDeviceInstanceByInterfaceIndex(interfaceIndex);
 
 			uint8 altSetting = dii.Interface->GetCurrentAltSetting(interfaceIndex);
 			DeviceTransmit(&altSetting);
@@ -435,10 +462,20 @@ void DaisyUSB::OnSetupStage(void)
 	}
 	else if (reqType == USB_REQ_TYPE_CLASS)
 	{
-		DeviceInstanceInfo& dii = GetDeviceInstanceByIndex(setup->wIndex);
+		uint8 recipient = setup->bmRequestType & USB_REQ_RECIPIENT_MASK;
 
-		if (!dii.Interface->OnSetupStage(setup))
-			SetStall();
+		if (recipient == USB_REQ_RECIPIENT_ENDPOINT)
+		{
+			DeviceInstanceInfo& dii = GetDeviceInstanceByEndpoint(TO_ENDPOINT_NUMBER((uint8)(setup->wIndex & 0xFF)));
+			if (!dii.Interface->OnSetupStage(setup))
+				SetStall();
+		}
+		else
+		{
+			DeviceInstanceInfo& dii = GetDeviceInstanceByInterfaceIndex((uint8)(setup->wIndex & 0xFF));
+			if (!dii.Interface->OnSetupStage(setup))
+				SetStall();
+		}
 	}
 }
 
@@ -469,6 +506,12 @@ void DaisyUSB::OnDataOutStage(uint8 EPNum)
 
 	DeviceInstanceInfo& dii = GetDeviceInstanceByEndpoint(EPNum);
 	dii.Interface->OnDataOutStage();
+}
+
+void DaisyUSB::OnSOF(void)
+{
+	for (uint8 i = 0; i < m_DeviceCount; ++i)
+		m_Devices[i].Interface->OnSOF();
 }
 
 void DaisyUSB::HandleGetDescriptor(void)
@@ -529,9 +572,14 @@ void DaisyUSB::HandleGetDescriptor(void)
 	}
 }
 
-void DaisyUSB::AllocateTransmitBuffer(uint8 Endpoint, uint16 Size)
+void DaisyUSB::AllocateReceiveBuffer(uint16 WordCount)
 {
-	CHECK_CALL(HAL_PCDEx_SetTxFiFo(&m_DeviceHandle, TO_ENDPOINT_NUMBER(Endpoint), Size));
+	CHECK_CALL(HAL_PCDEx_SetRxFiFo(&m_DeviceHandle, WordCount));
+}
+
+void DaisyUSB::AllocateTransmitBuffer(uint8 Endpoint, uint16 WordCount)
+{
+	CHECK_CALL(HAL_PCDEx_SetTxFiFo(&m_DeviceHandle, TO_ENDPOINT_NUMBER(Endpoint), WordCount));
 }
 
 void DaisyUSB::OpenEndpoint(uint8 Endpoint, uint16 Length, USBEpAttr Type)
@@ -564,7 +612,7 @@ void DaisyUSB::SetStall(void)
 	CHECK_CALL(HAL_PCD_EP_SetStall(&m_DeviceHandle, USB_EP0_OUT));
 }
 
-DaisyUSB::DeviceInstanceInfo& DaisyUSB::GetDeviceInstanceByIndex(uint8 InterfaceIndex)
+DaisyUSB::DeviceInstanceInfo& DaisyUSB::GetDeviceInstanceByInterfaceIndex(uint8 InterfaceIndex)
 {
 	for (uint8 i = 0; i < m_DeviceCount; ++i)
 	{
@@ -630,9 +678,9 @@ uint16 DaisyUSB::BuildDeviceDescriptor(EP0Buffer& EP0Buffer, const USBProfile& P
 	EP0Buffer.deviceDesc.bLength = sizeof(USBDeviceDescriptor);
 	EP0Buffer.deviceDesc.bDescriptorType = USBDescType::Device;
 	EP0Buffer.deviceDesc.bcdUSB = USB_VERSION_2_0;
-	EP0Buffer.deviceDesc.bDeviceClass = USBSDeviceClass::Misc;
-	EP0Buffer.deviceDesc.bDeviceSubClass = USBDeviceSubClass::Common;
-	EP0Buffer.deviceDesc.bDeviceProtocol = USBDeviceProtocol::IAD;
+	EP0Buffer.deviceDesc.bDeviceClass = USBSDeviceClass::None;// USBSDeviceClass::Misc;
+	EP0Buffer.deviceDesc.bDeviceSubClass = USBDeviceSubClass::None;//USBDeviceSubClass::Common;
+	EP0Buffer.deviceDesc.bDeviceProtocol = USBDeviceProtocol::None;//USBDeviceProtocol::IAD;
 	EP0Buffer.deviceDesc.bMaxPacketSize0 = (uint16)PacketSizes::Max;
 	EP0Buffer.deviceDesc.idVendor = Profile.Device.VendorID;
 	EP0Buffer.deviceDesc.idProduct = Profile.Device.ProductID;

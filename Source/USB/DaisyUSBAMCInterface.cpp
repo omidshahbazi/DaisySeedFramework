@@ -18,61 +18,72 @@ DaisyUSBAMCInterface::DaisyUSBAMCInterface(DaisyUSB* USB, const Configs& Configs
 
 bool DaisyUSBAMCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 {
-	uint8 entityId = (uint8)(Setup->wIndex >> 8);
+	uint8 recipient = Setup->bmRequestType & USB_REQ_RECIPIENT_MASK;
 	uint8 controlSelector = (uint8)(Setup->wValue >> 8);
 
-	if (entityId == CLOCK_SOURCE_ID && controlSelector == CS_SAM_FREQ_CONTROL)
+	// --- کنترل سمپل‌ریت: روی خود Endpoint میاد، نه یه Entity (UAC1) ---
+	if (recipient == USB_REQ_RECIPIENT_ENDPOINT && controlSelector == CS_SAM_FREQ_CONTROL)
 	{
-		bool isDeviceToHost = ((Setup->bmRequestType & USB_REQ_TYPE_MASK) == USB_REQ_DIR_DEVICE_TO_HOST);
-
-		if (Setup->bRequest == UAC2_REQ_CUR)
+		if (Setup->bRequest == UAC1_GET_CUR)
 		{
+			uint8 rateBytes[3];
+			rateBytes[0] = (uint8)(m_CurrentSampleRate & 0xFF);
+			rateBytes[1] = (uint8)((m_CurrentSampleRate >> 8) & 0xFF);
+			rateBytes[2] = (uint8)((m_CurrentSampleRate >> 16) & 0xFF);
+
+			GetUSB()->DeviceTransmit(rateBytes, sizeof(rateBytes));
+			GetUSB()->DeviceReceiveAck();
+			return true;
+		}
+
+		if (Setup->bRequest == UAC1_SET_CUR)
+		{
+			uint8 rateBytes[3];
+			GetUSB()->DeviceReceive(rateBytes, sizeof(rateBytes));
+
+			uint32 requestedRate = (uint32)rateBytes[0] | ((uint32)rateBytes[1] << 8) | ((uint32)rateBytes[2] << 16);
+
+			if (!IsSampleRateSupported(requestedRate))
+				return false;
+
+			m_CurrentSampleRate = requestedRate;
+			GetUSB()->DeviceTransmitAck();
+			return true;
+		}
+
+		// SET_MIN/GET_MIN/SET_MAX/GET_MAX/SET_RES/GET_RES پیاده نشدن —
+		// چون bSamFreqType گسسته (نه continuous) استفاده می‌کنیم، درایورهای
+		// استاندارد نباید این‌ها رو بفرستن.
+		return false;
+	}
+
+	// --- Mute/Volume: روی Feature Unit، recipient = Interface (AC) ---
+	if (recipient == USB_REQ_RECIPIENT_INTERFACE)
+	{
+		uint8 entityId = (uint8)(Setup->wIndex >> 8);
+
+		bool isFeatureUnit = (entityId == FU_SPEAKER_ID || entityId == FU_MIC_ID);
+		bool isMute = (controlSelector == CS_MUTE_CONTROL && m_Class.EnableHardwareMute);
+		bool isVolume = (controlSelector == CS_VOLUME_CONTROL && m_Class.EnableHardwareVolumeControl);
+
+		if (isFeatureUnit && (isMute || isVolume))
+		{
+			bool isDeviceToHost = ((Setup->bmRequestType & USB_REQ_TYPE_MASK) == USB_REQ_DIR_DEVICE_TO_HOST);
+
 			if (isDeviceToHost)
 			{
-				GetUSB()->DeviceTransmit(&m_CurrentSampleRate);
+				uint8 value = 0; // TODO: مقدار واقعی mute/volume رو وصل کن
+				GetUSB()->DeviceTransmit(&value, sizeof(value));
 				GetUSB()->DeviceReceiveAck();
 			}
 			else
 			{
-				uint32 requestedRate;
-				GetUSB()->DeviceReceive(&requestedRate);
-
-				if (!IsSampleRateSupported(requestedRate))
-					return false;
-
-				m_CurrentSampleRate = requestedRate;
+				uint8 requestedValue;
+				GetUSB()->DeviceReceive(&requestedValue, sizeof(requestedValue));
 				GetUSB()->DeviceTransmitAck();
 			}
 			return true;
 		}
-
-		if (Setup->bRequest == UAC2_REQ_RANGE && isDeviceToHost)
-		{
-			uint16 len = BuildSampleRateRangeResponse();
-			GetUSB()->DeviceTransmit(m_RangeResponseBuffer, len);
-			GetUSB()->DeviceReceiveAck();
-			return true;
-		}
-	}
-
-	// Feature Unit (Mute/Volume) — فعلاً فقط ACK می‌کنیم، مقدار واقعی رو ذخیره نمی‌کنیم
-	if ((entityId == FU_SPEAKER_ID || entityId == FU_MIC_ID) && controlSelector == CS_MUTE_CONTROL && m_Class.EnableHardwareMute)
-	{
-		bool isDeviceToHost = ((Setup->bmRequestType & USB_REQ_TYPE_MASK) == USB_REQ_DIR_DEVICE_TO_HOST);
-
-		if (isDeviceToHost)
-		{
-			uint8 muted = 0;
-			GetUSB()->DeviceTransmit(&muted);
-			GetUSB()->DeviceReceiveAck();
-		}
-		else
-		{
-			uint8 requestedMute;
-			GetUSB()->DeviceReceive(&requestedMute);
-			GetUSB()->DeviceTransmitAck();
-		}
-		return true;
 	}
 
 	return false;
@@ -84,11 +95,23 @@ void DaisyUSBAMCInterface::OnSetupCompleted(void)
 	const Configs& configs = GetConfigs();
 
 	if (TO_ENDPOINT_NUMBER(configs.EndpointIn) != 0)
-		usb->AllocateTransmitBuffer(configs.EndpointIn, configs.TransmitPacketSize);
+	{
+		uint16 sizeInWords = (configs.TransmitPacketSize + 3) / 4;
+		usb->AllocateTransmitBuffer(configs.EndpointIn, sizeInWords);
+
+		USBEpAttr mode = (USBEpAttr)((uint8)USBEpAttr::Isochronous | USB_EP_SYNC_TYPE_ASYNC);
+		usb->OpenEndpoint(configs.EndpointIn, configs.TransmitPacketSize, mode);
+
+		m_InAltSetting = 1;
+		m_StreamPrimed = false;   // ← دیگه اینجا EndpointTransmit صدا نمی‌زنیم
+	}
 }
 
 void DaisyUSBAMCInterface::OnDataInStage(void)
-{}
+{
+	memset(m_TransmitBuffer, 0, GetConfigs().TransmitPacketSize);
+	EndpointTransmit(m_TransmitBuffer, GetConfigs().TransmitPacketSize);
+}
 
 void DaisyUSBAMCInterface::OnDataOutStage(void)
 {}
@@ -105,27 +128,22 @@ bool DaisyUSBAMCInterface::OnSetInterface(uint8 InterfaceIndex, uint8 AlternateS
 		return false;
 
 	uint8& currentAlt = isOutInterface ? m_OutAltSetting : m_InAltSetting;
-
-	if (currentAlt == AlternateSetting)
-		return true;
-
-	uint8 endpoint = isOutInterface ? GetConfigs().EndpointOut : GetConfigs().EndpointIn;
-
-	if (AlternateSetting == 1)
-	{
-		// فقط باز کردن endpoint — بدون AllocateTransmitBuffer، چون قبلاً توی OnSetupCompleted انجام شده
-		USBEpAttr mode = USBEpAttr::Isochronous;
-		uint16 size = isOutInterface ? GetConfigs().ReceivePacketSize : GetConfigs().TransmitPacketSize;
-
-		GetUSB()->OpenEndpoint(endpoint, size, mode);
-	}
-	else
-	{
-		GetUSB()->CloseEndpoint(endpoint);
-	}
-
 	currentAlt = AlternateSetting;
+
+	// دیگه اینجا هیچ OpenEndpoint/CloseEndpoint‌ای نمی‌زنیم —
+	// endpoint همون یه‌بار توی OnSetupCompleted باز شده و همونجا می‌مونه.
 	return true;
+}
+
+void DaisyUSBAMCInterface::OnSOF(void)
+{
+	if (m_InAltSetting == 1 && !m_StreamPrimed)
+	{
+		m_StreamPrimed = true;
+
+		memset(m_TransmitBuffer, 0, GetConfigs().TransmitPacketSize);
+		EndpointTransmit(m_TransmitBuffer, GetConfigs().TransmitPacketSize);
+	}
 }
 
 uint8 DaisyUSBAMCInterface::GetCurrentAltSetting(uint8 InterfaceIndex) const
@@ -150,16 +168,16 @@ void DaisyUSBAMCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, ui
 	CalculateStreamingInterfaceIndices(GetConfigs(), Config, asOutInterface, asInInterface);
 
 	// ---------- IAD ----------
-	USBInterfaceAssociationDescriptor* iad = reinterpret_cast<USBInterfaceAssociationDescriptor*>(buffer + BufferOffset);
-	iad->bLength = sizeof(USBInterfaceAssociationDescriptor);
-	iad->bDescriptorType = USBDescType::InterfaceAssociation;
-	iad->bFirstInterface = InterfaceIndex;
-	iad->bInterfaceCount = CalculateRequiredInterfaceCount(Config);
-	iad->bFunctionClass = USBSDeviceClass::Audio;
-	iad->bFunctionSubClass = AUDIO_SUBCLASS_CONTROL;
-	iad->bFunctionProtocol = AUDIO_FUNCTION_PROTOCOL_AF_2_0;
-	iad->iFunction = 0;
-	BufferOffset += sizeof(USBInterfaceAssociationDescriptor);
+	//USBInterfaceAssociationDescriptor* iad = reinterpret_cast<USBInterfaceAssociationDescriptor*>(buffer + BufferOffset);
+	//iad->bLength = sizeof(USBInterfaceAssociationDescriptor);
+	//iad->bDescriptorType = USBDescType::InterfaceAssociation;
+	//iad->bFirstInterface = InterfaceIndex;
+	//iad->bInterfaceCount = CalculateRequiredInterfaceCount(Config);
+	//iad->bFunctionClass = USBSDeviceClass::Audio;
+	//iad->bFunctionSubClass = AUDIO_SUBCLASS_CONTROL;
+	//iad->bFunctionProtocol = 0x00; // UAC1: بدون کد پروتکل
+	//iad->iFunction = 0;
+	//BufferOffset += sizeof(USBInterfaceAssociationDescriptor);
 
 	// ---------- AC Interface (standard) ----------
 	USBInterfaceDescriptor* acIf = reinterpret_cast<USBInterfaceDescriptor*>(buffer + BufferOffset);
@@ -170,59 +188,54 @@ void DaisyUSBAMCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, ui
 	acIf->bNumEndpoints = 0;
 	acIf->bInterfaceClass = USBSDeviceClass::Audio;
 	acIf->bInterfaceSubClass = AUDIO_SUBCLASS_CONTROL;
-	acIf->bInterfaceProtocol = AUDIO_PROTOCOL_UAC2;
+	acIf->bInterfaceProtocol = 0x00;
 	acIf->iInterface = 0;
 	BufferOffset += sizeof(USBInterfaceDescriptor);
 
-	// ---------- AC Header ----------
-	// wTotalLength باید طول کل بلاک class-specific AC (Header + Clock + Terminals + FeatureUnits) باشه،
-	// نه شامل خود Interface/IAD استاندارد. اینجا آفستش رو نگه می‌داریم تا در آخر پرش کنیم.
+	// ---------- AC Header (متغیر-طول، بسته به تعداد AS interfaceها) ----------
 	uint16 acDescStart = BufferOffset;
 
-	UACHeaderDescriptor* header = reinterpret_cast<UACHeaderDescriptor*>(buffer + BufferOffset);
-	header->bLength = sizeof(UACHeaderDescriptor);
-	header->bDescriptorType = USBDescType::CDCFunc; // 0x24، همون class-specific interface subtype که CDC هم استفاده می‌کرد
-	header->bDescriptorSubtype = AC_DESC_HEADER;
-	header->bcdADC = 0x0200;
-	header->bCategory = AUDIO_CATEGORY_IO_BOX;
-	header->bmControls = 0;
-	// wTotalLength بعداً پر میشه
-	BufferOffset += sizeof(UACHeaderDescriptor);
+	uint8 asInterfaceNumbers[2];
+	uint8 asInterfaceCount = 0;
+	if (hasOutput) asInterfaceNumbers[asInterfaceCount++] = asOutInterface;
+	if (hasInput)  asInterfaceNumbers[asInterfaceCount++] = asInInterface;
 
-	// ---------- Clock Source ----------
-	UACClockSourceDescriptor* clock = reinterpret_cast<UACClockSourceDescriptor*>(buffer + BufferOffset);
-	clock->bLength = sizeof(UACClockSourceDescriptor);
-	clock->bDescriptorType = USBDescType::CDCFunc;
-	clock->bDescriptorSubtype = AC_DESC_CLOCK_SOURCE;
-	clock->bClockID = CLOCK_SOURCE_ID;
-	clock->bmAttributes = 0x03; // Internal, variable-rate (چون از پروفایل چند سمپل‌ریت پشتیبانی می‌کنیم)
-	clock->bmControls = 0x03;   // Sampling Frequency Control: Host Read + Host Write (حیاتی، وگرنه ویندوز SET_CUR نمی‌فرسته)
-	clock->bAssocTerminal = 0;
-	clock->iClockSource = 0;
-	BufferOffset += sizeof(UACClockSourceDescriptor);
+	uint8 headerLength = 8 + asInterfaceCount;
+	{
+		uint8* h = buffer + BufferOffset;
+		h[0] = headerLength;
+		h[1] = (uint8)USBDescType::CDCFunc;
+		h[2] = AC_DESC_HEADER;
+		h[3] = 0x00; h[4] = 0x01;       // bcdADC = 0x0100
+		// h[5],h[6] = wTotalLength، پایین‌تر پر میشه
+		h[7] = asInterfaceCount;         // bInCollection
+		for (uint8 i = 0; i < asInterfaceCount; ++i)
+			h[8 + i] = asInterfaceNumbers[i];
+
+		BufferOffset += headerLength;
+	}
+	uint8* headerBytes = buffer + acDescStart; // برای پر کردن wTotalLength در پایان نگه می‌داریم
 
 	// ---------- زنجیره‌ی خروجی (Playback: هاست -> پدال) ----------
 	if (hasOutput)
 	{
-		UACInputTerminalDescriptor* it = reinterpret_cast<UACInputTerminalDescriptor*>(buffer + BufferOffset);
-		it->bLength = sizeof(UACInputTerminalDescriptor);
+		UAC1InputTerminalDescriptor* it = reinterpret_cast<UAC1InputTerminalDescriptor*>(buffer + BufferOffset);
+		it->bLength = sizeof(UAC1InputTerminalDescriptor);
 		it->bDescriptorType = USBDescType::CDCFunc;
 		it->bDescriptorSubtype = AC_DESC_INPUT_TERMINAL;
 		it->bTerminalID = IT_USB_STREAMING_ID;
 		it->wTerminalType = AUDIO_TERMINAL_USB_STREAMING;
 		it->bAssocTerminal = 0;
-		it->bCSourceID = CLOCK_SOURCE_ID;
 		it->bNrChannels = Config.OutputChannelCount;
-		it->bmChannelConfig = (uint32)ChannelOutputPosition::Unknown;
+		it->wChannelConfig = (uint16)ChannelOutputPosition::Stereo;
 		it->iChannelNames = 0;
-		it->bmControls = 0;
 		it->iTerminal = 0;
-		BufferOffset += sizeof(UACInputTerminalDescriptor);
+		BufferOffset += sizeof(UAC1InputTerminalDescriptor);
 
-		//UACFeatureUnitDescriptor
+		// Feature Unit (متغیر-طول، bControlSize=1)
 		{
-			uint8 channelCount = Config.OutputChannelCount; // یا InputChannelCount
-			uint8 fuLength = 6 + (channelCount + 1) * 4;
+			uint8 channelCount = Config.OutputChannelCount;
+			uint8 fuLength = 7 + (channelCount + 1); // bControlSize=1 بایت به‌ازای هر کانال+master
 
 			uint8* fuStart = buffer + BufferOffset;
 			fuStart[0] = fuLength;
@@ -230,60 +243,52 @@ void DaisyUSBAMCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, ui
 			fuStart[2] = AC_DESC_FEATURE_UNIT;
 			fuStart[3] = FU_SPEAKER_ID;
 			fuStart[4] = IT_USB_STREAMING_ID;
+			fuStart[5] = 1; // bControlSize
 
-			uint32 masterControls = 0;
-			if (Config.EnableHardwareMute)
-				masterControls |= 0x03;
-			if (Config.EnableHardwareVolumeControl)
-				masterControls |= 0x0C;
+			uint8 masterControls = 0;
+			if (Config.EnableHardwareMute)   masterControls |= 0x01;
+			if (Config.EnableHardwareVolumeControl) masterControls |= 0x02;
 
-			memcpy(fuStart + 5, &masterControls, sizeof(uint32));
-
-			uint32 zero = 0;
+			fuStart[6] = masterControls; // کانال master
 			for (uint8 ch = 1; ch <= channelCount; ++ch)
-				memcpy(fuStart + 5 + ch * sizeof(uint32), &zero, sizeof(uint32));
+				fuStart[6 + ch] = 0; // بدون کنترل مستقل per-channel
 
-			fuStart[5 + (channelCount + 1) * 4] = 0; // iFeature
+			fuStart[6 + channelCount + 1] = 0; // iFeature
 
 			BufferOffset += fuLength;
 		}
 
-		UACOutputTerminalDescriptor* ot = reinterpret_cast<UACOutputTerminalDescriptor*>(buffer + BufferOffset);
-		ot->bLength = sizeof(UACOutputTerminalDescriptor);
+		UAC1OutputTerminalDescriptor* ot = reinterpret_cast<UAC1OutputTerminalDescriptor*>(buffer + BufferOffset);
+		ot->bLength = sizeof(UAC1OutputTerminalDescriptor);
 		ot->bDescriptorType = USBDescType::CDCFunc;
 		ot->bDescriptorSubtype = AC_DESC_OUTPUT_TERMINAL;
 		ot->bTerminalID = OT_SPEAKER_ID;
 		ot->wTerminalType = AUDIO_TERMINAL_SPEAKER;
 		ot->bAssocTerminal = 0;
 		ot->bSourceID = FU_SPEAKER_ID;
-		ot->bCSourceID = CLOCK_SOURCE_ID;
-		ot->bmControls = 0;
 		ot->iTerminal = 0;
-		BufferOffset += sizeof(UACOutputTerminalDescriptor);
+		BufferOffset += sizeof(UAC1OutputTerminalDescriptor);
 	}
 
 	// ---------- زنجیره‌ی ورودی (Capture: پدال -> هاست) ----------
 	if (hasInput)
 	{
-		UACInputTerminalDescriptor* it = reinterpret_cast<UACInputTerminalDescriptor*>(buffer + BufferOffset);
-		it->bLength = sizeof(UACInputTerminalDescriptor);
+		UAC1InputTerminalDescriptor* it = reinterpret_cast<UAC1InputTerminalDescriptor*>(buffer + BufferOffset);
+		it->bLength = sizeof(UAC1InputTerminalDescriptor);
 		it->bDescriptorType = USBDescType::CDCFunc;
 		it->bDescriptorSubtype = AC_DESC_INPUT_TERMINAL;
 		it->bTerminalID = IT_MIC_ID;
 		it->wTerminalType = AUDIO_TERMINAL_MIC;
 		it->bAssocTerminal = 0;
-		it->bCSourceID = CLOCK_SOURCE_ID;
 		it->bNrChannels = Config.InputChannelCount;
-		it->bmChannelConfig = (uint32)ChannelOutputPosition::Unknown;
+		it->wChannelConfig = (uint16)ChannelOutputPosition::Stereo;
 		it->iChannelNames = 0;
-		it->bmControls = 0;
 		it->iTerminal = 0;
-		BufferOffset += sizeof(UACInputTerminalDescriptor);
+		BufferOffset += sizeof(UAC1InputTerminalDescriptor);
 
-		//UACFeatureUnitDescriptor
 		{
 			uint8 channelCount = Config.InputChannelCount;
-			uint8 fuLength = 6 + (channelCount + 1) * 4;
+			uint8 fuLength = 7 + (channelCount + 1);
 
 			uint8* fuStart = buffer + BufferOffset;
 			fuStart[0] = fuLength;
@@ -291,48 +296,45 @@ void DaisyUSBAMCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, ui
 			fuStart[2] = AC_DESC_FEATURE_UNIT;
 			fuStart[3] = FU_MIC_ID;
 			fuStart[4] = IT_MIC_ID;
+			fuStart[5] = 1; // bControlSize
 
-			uint32 masterControls = 0;
-			if (Config.EnableHardwareMute)
-				masterControls |= 0x03;
-			if (Config.EnableHardwareVolumeControl)
-				masterControls |= 0x0C;
+			uint8 masterControls = 0;
+			if (Config.EnableHardwareMute)   masterControls |= 0x01;
+			if (Config.EnableHardwareVolumeControl) masterControls |= 0x02;
 
-			memcpy(fuStart + 5, &masterControls, sizeof(uint32));
-
-			uint32 zero = 0;
+			fuStart[6] = masterControls;
 			for (uint8 ch = 1; ch <= channelCount; ++ch)
-				memcpy(fuStart + 5 + ch * sizeof(uint32), &zero, sizeof(uint32));
+				fuStart[6 + ch] = 0;
 
-			fuStart[5 + (channelCount + 1) * 4] = 0; // iFeature
+			fuStart[6 + channelCount + 1] = 0; // iFeature
 
 			BufferOffset += fuLength;
 		}
 
-		UACOutputTerminalDescriptor* ot = reinterpret_cast<UACOutputTerminalDescriptor*>(buffer + BufferOffset);
-		ot->bLength = sizeof(UACOutputTerminalDescriptor);
+		UAC1OutputTerminalDescriptor* ot = reinterpret_cast<UAC1OutputTerminalDescriptor*>(buffer + BufferOffset);
+		ot->bLength = sizeof(UAC1OutputTerminalDescriptor);
 		ot->bDescriptorType = USBDescType::CDCFunc;
 		ot->bDescriptorSubtype = AC_DESC_OUTPUT_TERMINAL;
 		ot->bTerminalID = OT_USB_STREAMING_ID;
 		ot->wTerminalType = AUDIO_TERMINAL_USB_STREAMING;
 		ot->bAssocTerminal = 0;
 		ot->bSourceID = FU_MIC_ID;
-		ot->bCSourceID = CLOCK_SOURCE_ID;
-		ot->bmControls = 0;
 		ot->iTerminal = 0;
-		BufferOffset += sizeof(UACOutputTerminalDescriptor);
+		BufferOffset += sizeof(UAC1OutputTerminalDescriptor);
 	}
 
 	// حالا که کل بلاک AC ساخته شد، wTotalLength رو پر می‌کنیم
-	header->wTotalLength = (BufferOffset - acDescStart);
+	uint16 totalLen = BufferOffset - acDescStart;
+	headerBytes[5] = (uint8)(totalLen & 0xFF);
+	headerBytes[6] = (uint8)((totalLen >> 8) & 0xFF);
 
-	// ---------- AS Interface خروجی (Alt0 zero-bw + Alt1 با endpoint) ----------
+	// ---------- AS Interface خروجی ----------
 	if (hasOutput)
-		BuildStreamingInterface(EP0Buffer, BufferOffset, asOutInterface, Config.OutputChannelCount, GetConfigs().EndpointOut, IT_USB_STREAMING_ID, Config, /*isOutput=*/true);
+		BuildStreamingInterface(EP0Buffer, BufferOffset, asOutInterface, Config.OutputChannelCount, GetConfigs().EndpointOut, IT_USB_STREAMING_ID, Config, true);
 
 	// ---------- AS Interface ورودی ----------
 	if (hasInput)
-		BuildStreamingInterface(EP0Buffer, BufferOffset, asInInterface, Config.InputChannelCount, GetConfigs().EndpointIn, OT_USB_STREAMING_ID, Config, /*isOutput=*/false);
+		BuildStreamingInterface(EP0Buffer, BufferOffset, asInInterface, Config.InputChannelCount, GetConfigs().EndpointIn, OT_USB_STREAMING_ID, Config, false);
 }
 
 bool DaisyUSBAMCInterface::IsSampleRateSupported(uint32 Rate) const
@@ -340,26 +342,7 @@ bool DaisyUSBAMCInterface::IsSampleRateSupported(uint32 Rate) const
 	for (uint8 i = 0; i < m_Class.SupportedSampleRateCount; ++i)
 		if (m_Class.SupportedSampleRates[i] == Rate)
 			return true;
-
 	return false;
-}
-
-uint16 DaisyUSBAMCInterface::BuildSampleRateRangeResponse(void)
-{
-	uint16 numSubRanges = m_Class.SupportedSampleRateCount;
-	memcpy(m_RangeResponseBuffer, &numSubRanges, sizeof(uint16));
-
-	for (uint8 i = 0; i < m_Class.SupportedSampleRateCount; ++i)
-	{
-		UACFreqSubRange range;
-		range.dMIN = m_Class.SupportedSampleRates[i];
-		range.dMAX = m_Class.SupportedSampleRates[i];
-		range.dRES = 0;
-
-		memcpy(m_RangeResponseBuffer + sizeof(uint16) + i * sizeof(UACFreqSubRange), &range, sizeof(UACFreqSubRange));
-	}
-
-	return sizeof(uint16) + (m_Class.SupportedSampleRateCount * sizeof(UACFreqSubRange));
 }
 
 void DaisyUSBAMCInterface::BuildStreamingInterface(EP0Buffer& EP0Buffer, uint16& BufferOffset, uint8 InterfaceIndex, uint8 ChannelCount, uint8 Endpoint, uint8 TerminalLinkID, const AMCClassConfig& Config, bool IsOutput)
@@ -368,10 +351,9 @@ void DaisyUSBAMCInterface::BuildStreamingInterface(EP0Buffer& EP0Buffer, uint16&
 
 	const uint32 defaultSampleRate = Config.SupportedSampleRates[Config.DefaultSampleRateIndex];
 	const uint8 defaultBitDepths = Config.SupportedBitDepths[Config.DefaultBitDepthIndex];
-
 	uint8 subslotSize = (uint8)(defaultBitDepths / 8);
 
-	// --- Alt Setting 0: zero-bandwidth (باید طبق اسپک وجود داشته باشه) ---
+	// --- Alt Setting 0: zero-bandwidth ---
 	USBInterfaceDescriptor* alt0 = reinterpret_cast<USBInterfaceDescriptor*>(buffer + BufferOffset);
 	alt0->bLength = sizeof(USBInterfaceDescriptor);
 	alt0->bDescriptorType = USBDescType::Interface;
@@ -380,7 +362,7 @@ void DaisyUSBAMCInterface::BuildStreamingInterface(EP0Buffer& EP0Buffer, uint16&
 	alt0->bNumEndpoints = 0;
 	alt0->bInterfaceClass = USBSDeviceClass::Audio;
 	alt0->bInterfaceSubClass = AUDIO_SUBCLASS_STREAMING;
-	alt0->bInterfaceProtocol = AUDIO_PROTOCOL_UAC2;
+	alt0->bInterfaceProtocol = 0x00;
 	alt0->iInterface = 0;
 	BufferOffset += sizeof(USBInterfaceDescriptor);
 
@@ -393,31 +375,44 @@ void DaisyUSBAMCInterface::BuildStreamingInterface(EP0Buffer& EP0Buffer, uint16&
 	alt1->bNumEndpoints = 1;
 	alt1->bInterfaceClass = USBSDeviceClass::Audio;
 	alt1->bInterfaceSubClass = AUDIO_SUBCLASS_STREAMING;
-	alt1->bInterfaceProtocol = AUDIO_PROTOCOL_UAC2;
+	alt1->bInterfaceProtocol = 0x00;
 	alt1->iInterface = 0;
 	BufferOffset += sizeof(USBInterfaceDescriptor);
 
-	UACStreamingInterfaceDescriptor* asGeneral = reinterpret_cast<UACStreamingInterfaceDescriptor*>(buffer + BufferOffset);
-	asGeneral->bLength = sizeof(UACStreamingInterfaceDescriptor);
+	UAC1StreamingInterfaceDescriptor* asGeneral = reinterpret_cast<UAC1StreamingInterfaceDescriptor*>(buffer + BufferOffset);
+	asGeneral->bLength = sizeof(UAC1StreamingInterfaceDescriptor);
 	asGeneral->bDescriptorType = USBDescType::CDCFunc;
 	asGeneral->bDescriptorSubtype = AS_DESC_GENERAL;
 	asGeneral->bTerminalLink = TerminalLinkID;
-	asGeneral->bmControls = 0;
-	asGeneral->bFormatType = AUDIO_FORMAT_TYPE_I;
-	asGeneral->bmFormats = AUDIO_DATA_FORMAT_PCM;
-	asGeneral->bNrChannels = ChannelCount;
-	asGeneral->bmChannelConfig = (uint32)ChannelOutputPosition::Unknown;
-	asGeneral->iChannelNames = 0;
-	BufferOffset += sizeof(UACStreamingInterfaceDescriptor);
+	asGeneral->bDelay = 0;
+	asGeneral->wFormatTag = AUDIO_FORMAT_TAG_PCM;
+	BufferOffset += sizeof(UAC1StreamingInterfaceDescriptor);
 
-	UACFormatTypeIDescriptor* format = reinterpret_cast<UACFormatTypeIDescriptor*>(buffer + BufferOffset);
-	format->bLength = sizeof(UACFormatTypeIDescriptor);
-	format->bDescriptorType = USBDescType::CDCFunc;
-	format->bDescriptorSubtype = AS_DESC_FORMAT_TYPE;
-	format->bFormatType = AUDIO_FORMAT_TYPE_I;
-	format->bSubslotSize = subslotSize;
-	format->bBitResolution = (uint8)defaultBitDepths;
-	BufferOffset += sizeof(UACFormatTypeIDescriptor);
+	// Format Type I (متغیر-طول: لیست سمپل‌ریت‌ها مستقیم اینجا)
+	{
+		uint8 rateCount = Config.SupportedSampleRateCount;
+		uint8 formatLength = 8 + (rateCount * 3);
+
+		uint8* f = buffer + BufferOffset;
+		f[0] = formatLength;
+		f[1] = (uint8)USBDescType::CDCFunc;
+		f[2] = AS_DESC_FORMAT_TYPE;
+		f[3] = AUDIO_FORMAT_TYPE_I;
+		f[4] = ChannelCount;
+		f[5] = subslotSize;
+		f[6] = defaultBitDepths;
+		f[7] = rateCount; // bSamFreqType: گسسته، نه continuous
+
+		for (uint8 i = 0; i < rateCount; ++i)
+		{
+			uint32 rate = Config.SupportedSampleRates[i];
+			f[8 + i * 3 + 0] = (uint8)(rate & 0xFF);
+			f[8 + i * 3 + 1] = (uint8)((rate >> 8) & 0xFF);
+			f[8 + i * 3 + 2] = (uint8)((rate >> 16) & 0xFF);
+		}
+
+		BufferOffset += formatLength;
+	}
 
 	uint16 packetSize = ChannelCount * subslotSize * (uint16)(defaultSampleRate / 1000);
 
@@ -425,20 +420,19 @@ void DaisyUSBAMCInterface::BuildStreamingInterface(EP0Buffer& EP0Buffer, uint16&
 	ep->bLength = sizeof(USBEndpointDescriptor);
 	ep->bDescriptorType = USBDescType::Endpoint;
 	ep->bEndpointAddress = Endpoint;
-	ep->bmAttributes = (USBEpAttr)((uint8)USBEpAttr::Isochronous | USB_EP_SYNC_TYPE_SYNC);
+	ep->bmAttributes = (USBEpAttr)((uint8)USBEpAttr::Isochronous | USB_EP_SYNC_TYPE_ASYNC);
 	ep->wMaxPacketSize = packetSize;
-	ep->bInterval = 1; // هر 1ms، چون Full-Speed
+	ep->bInterval = 1;
 	BufferOffset += sizeof(USBEndpointDescriptor);
 
-	UACIsoEndpointDescriptor* isoDesc = reinterpret_cast<UACIsoEndpointDescriptor*>(buffer + BufferOffset);
-	isoDesc->bLength = sizeof(UACIsoEndpointDescriptor);
+	UAC1IsoEndpointDescriptor* isoDesc = reinterpret_cast<UAC1IsoEndpointDescriptor*>(buffer + BufferOffset);
+	isoDesc->bLength = sizeof(UAC1IsoEndpointDescriptor);
 	isoDesc->bDescriptorType = USBDescType::CDCEndpointFunc;
-	isoDesc->bDescriptorSubtype = 0x01; // AS General class-specific ISO endpoint
-	isoDesc->bmAttributes = 0;
-	isoDesc->bmControls = 0;
+	isoDesc->bDescriptorSubtype = AS_DESC_EP_GENERAL;
+	isoDesc->bmAttributes = 0; // این باید مطابق درخواست‌های واقعی هاست باشه
 	isoDesc->bLockDelayUnits = 0;
 	isoDesc->wLockDelay = 0;
-	BufferOffset += sizeof(UACIsoEndpointDescriptor);
+	BufferOffset += sizeof(UAC1IsoEndpointDescriptor);
 }
 
 void DaisyUSBAMCInterface::CalculateStreamingInterfaceIndices(const Configs& Configs, const AMCClassConfig& Class, uint8& OutInterfaceIndex, uint8& InInterfaceIndex)
