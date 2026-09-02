@@ -17,7 +17,7 @@ extern "C"
 	void HAL_PCD_SetupStageCallback(PCD_HandleTypeDef* hpcd);
 	void HAL_PCD_DataInStageCallback(PCD_HandleTypeDef* hpcd, uint8_t epnum);
 	void HAL_PCD_DataOutStageCallback(PCD_HandleTypeDef* hpcd, uint8_t epnum);
-	void HAL_PCD_SOFCallback(PCD_HandleTypeDef* hpcd);
+	//void HAL_PCD_SOFCallback(PCD_HandleTypeDef* hpcd);
 }
 
 class DaisyUSB : public IUSB
@@ -27,7 +27,7 @@ class DaisyUSB : public IUSB
 	friend void HAL_PCD_SetupStageCallback(PCD_HandleTypeDef* hpcd);
 	friend void HAL_PCD_DataInStageCallback(PCD_HandleTypeDef* hpcd, uint8_t epnum);
 	friend void HAL_PCD_DataOutStageCallback(PCD_HandleTypeDef* hpcd, uint8_t epnum);
-	friend void HAL_PCD_SOFCallback(PCD_HandleTypeDef* hpcd);
+	//friend void HAL_PCD_SOFCallback(PCD_HandleTypeDef* hpcd);
 
 	friend class DaisyUSBInterfaceCommon;
 	friend class DaisyUSBCDCInterface;
@@ -39,6 +39,7 @@ public:
 		FullSpeed = 0,
 		Internal = FullSpeed,
 
+		//It's not actually HighSpeed, but the USB peripheral is capable of running at HighSpeed, and the USB_OTG_HS peripheral is not available on the Daisy Seed.
 		HighSpeed,
 		External = HighSpeed,
 
@@ -84,14 +85,13 @@ private:
 	void OnSetupStage(void);
 	void OnDataInStage(uint8 EPNum);
 	void OnDataOutStage(uint8 EPNum);
-	void OnSOF(void);
 
 	void HandleGetDescriptor(void);
 
 	void AllocateReceiveBuffer(uint16 Size);
 	void AllocateTransmitBuffer(uint8 Endpoint, uint16 Size);
 
-	void OpenEndpoint(uint8 Endpoint, uint16 Length, USBEpAttr Type);
+	void OpenEndpoint(uint8 Endpoint, uint16 Length, uint8 Type);
 	void CloseEndpoint(uint8 Endpoint);
 
 	uint16 DeviceReceiveCount(uint8 Endpoint = USB_EP0_OUT);

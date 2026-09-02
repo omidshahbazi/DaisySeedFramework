@@ -198,20 +198,20 @@ extern "C"
 		}
 	}
 
-	void HAL_PCD_SOFCallback(PCD_HandleTypeDef* hpcd)
-	{
-		for (uint8_t i = 0; i < (uint8_t)DaisyUSB::Peripherals::COUNT; ++i)
-		{
-			if (s_Instance[i] == nullptr)
-				continue;
+	//void HAL_PCD_SOFCallback(PCD_HandleTypeDef* hpcd)
+	//{
+	//	for (uint8_t i = 0; i < (uint8_t)DaisyUSB::Peripherals::COUNT; ++i)
+	//	{
+	//		if (s_Instance[i] == nullptr)
+	//			continue;
 
-			if (&s_Instance[i]->m_DeviceHandle != hpcd)
-				continue;
+	//		if (&s_Instance[i]->m_DeviceHandle != hpcd)
+	//			continue;
 
-			s_Instance[i]->OnSOF();
-			break;
-		}
-	}
+	//		s_Instance[i]->OnSOF();
+	//		break;
+	//	}
+	//}
 }
 
 #define CHECK_CALL(Expr) ASSERT((Expr) == HAL_OK, #Expr);
@@ -297,34 +297,25 @@ void DaisyUSB::Start(const USBProfile& Profile)
 		}
 	}
 	else
-	{
-	}
+		ASSERT(false, "Not implemented");
 
 	if (m_Profile.Mode == USBModes::Device)
 	{
 		if (m_Peripheral == Peripherals::HighSpeed)
-		{
 			m_DeviceHandle.Instance = USB_OTG_HS;
-			m_DeviceHandle.Init.dev_endpoints = USB_EP_COUNT_DEFAULT;
-			m_DeviceHandle.Init.speed = PCD_SPEED_FULL;
-			m_DeviceHandle.Init.phy_itface = PCD_PHY_EMBEDDED;
-		}
 		else
-		{
 			m_DeviceHandle.Instance = USB_OTG_FS;
-			m_DeviceHandle.Init.dev_endpoints = USB_EP_COUNT_DEFAULT;
-			m_DeviceHandle.Init.speed = PCD_SPEED_FULL;
-			m_DeviceHandle.Init.phy_itface = PCD_PHY_EMBEDDED;
-		}
 
-		m_DeviceHandle.Init.Sof_enable = ENABLE;
+		m_DeviceHandle.Init.dev_endpoints = USB_EP_COUNT_DEFAULT;
+		m_DeviceHandle.Init.speed = PCD_SPEED_FULL;
+		m_DeviceHandle.Init.phy_itface = PCD_PHY_EMBEDDED;
+
+		//m_DeviceHandle.Init.Sof_enable = ENABLE;
 		m_DeviceHandle.Init.low_power_enable = DISABLE;
 		m_DeviceHandle.Init.lpm_enable = DISABLE;
 		m_DeviceHandle.Init.vbus_sensing_enable = DISABLE;
-
 		m_DeviceHandle.Init.dma_enable = DISABLE;
-		m_DeviceHandle.Init.battery_charging_enable = ENABLE;
-		//m_DeviceHandle.Init.vbus_sensing_enable = ENABLE;
+		m_DeviceHandle.Init.battery_charging_enable = DISABLE;
 		m_DeviceHandle.Init.use_dedicated_ep1 = DISABLE;
 
 		CHECK_CALL(HAL_PCD_Init(&m_DeviceHandle));
@@ -332,8 +323,8 @@ void DaisyUSB::Start(const USBProfile& Profile)
 		AllocateReceiveBuffer(512);
 		AllocateTransmitBuffer(USB_EP0_IN, (uint16)PacketSizes::Max);
 
-		OpenEndpoint(USB_EP0_OUT, (uint16)PacketSizes::Max, USBEpAttr::Control);
-		OpenEndpoint(USB_EP0_IN, (uint16)PacketSizes::Max, USBEpAttr::Control);
+		OpenEndpoint(USB_EP0_OUT, (uint16)PacketSizes::Max, (uint8)USBEndpointAttributes::Control);
+		OpenEndpoint(USB_EP0_IN, (uint16)PacketSizes::Max, (uint8)USBEndpointAttributes::Control);
 
 		CHECK_CALL(HAL_PCD_Start(&m_DeviceHandle));
 
@@ -373,6 +364,8 @@ void DaisyUSB::Stop(void)
 {
 	ASSERT(m_IsRunning, "Interface is not started.");
 
+	// Calling this would cause a memory leak, so we don't call it. The memory will be freed when the device is reset.
+
 	if (m_Profile.Mode == USBModes::Device)
 	{
 		CHECK_CALL(HAL_PCD_Stop(&m_DeviceHandle));
@@ -384,6 +377,11 @@ void DaisyUSB::Stop(void)
 		CHECK_CALL(HAL_HCD_DeInit(&m_HostHandle));
 	}
 
+	HAL_Delay(100);
+
+	m_EP0TransmitHandler.Reset();
+
+	m_DeviceCount = 0;
 	m_IsRunning = false;
 }
 
@@ -509,12 +507,6 @@ void DaisyUSB::OnDataOutStage(uint8 EPNum)
 	dii.Interface->OnDataOutStage();
 }
 
-void DaisyUSB::OnSOF(void)
-{
-	for (uint8 i = 0; i < m_DeviceCount; ++i)
-		m_Devices[i].Interface->OnSOF();
-}
-
 void DaisyUSB::HandleGetDescriptor(void)
 {
 	static EP0Buffer ep0Buffers[(uint8)DaisyUSB::Peripherals::COUNT] = {};
@@ -523,26 +515,26 @@ void DaisyUSB::HandleGetDescriptor(void)
 
 	EP0Buffer& ep0Buffer = ep0Buffers[(uint8)m_Peripheral];
 
-	USBDescType descType = (USBDescType)(setup->wValue >> 8);
+	USBDescTypes descType = (USBDescTypes)(setup->wValue >> 8);
 	uint8 descIndex = (uint8)(setup->wValue & 0xFF);
 	uint16 sendLen = 0;
 
 	switch (descType)
 	{
-	case USBDescType::Device:
+	case USBDescTypes::Device:
 		sendLen = BuildDeviceDescriptor(ep0Buffer, m_Profile);
 		break;
 
-	case USBDescType::Configuration:
+	case USBDescTypes::Configuration:
 		sendLen = BuildConfigurationDescriptor(ep0Buffer, m_Profile.Device);
 		break;
 
-	case USBDescType::String:
+	case USBDescTypes::String:
 	{
 		if (descIndex == USB_STRING_INDEX_LANGID)
 		{
 			ep0Buffer.stringDesc.bLength = 4;
-			ep0Buffer.stringDesc.bDescriptorType = USBDescType::String;
+			ep0Buffer.stringDesc.bDescriptorType = USBDescTypes::String;
 			ep0Buffer.stringDesc.wData[0] = USB_LANGID_ENGLISH_US;
 
 			sendLen = 4;
@@ -553,6 +545,7 @@ void DaisyUSB::HandleGetDescriptor(void)
 			sendLen = BuildStringDescriptor(ep0Buffer, m_Profile.Device.Product);
 		else if (descIndex == USB_STRING_INDEX_SERIAL)
 			sendLen = BuildStringDescriptor(ep0Buffer, m_Profile.Device.SerialNumber);
+
 		break;
 	}
 
@@ -560,6 +553,8 @@ void DaisyUSB::HandleGetDescriptor(void)
 		SetStall();
 		return;
 	}
+
+	ASSERT(sendLen <= sizeof(EP0Buffer), "Descriptor is too large for EP0Buffer");
 
 	if (sendLen > 0)
 	{
@@ -583,7 +578,7 @@ void DaisyUSB::AllocateTransmitBuffer(uint8 Endpoint, uint16 Size)
 	CHECK_CALL(HAL_PCDEx_SetTxFiFo(&m_DeviceHandle, TO_ENDPOINT_NUMBER(Endpoint), BYTES_TO_DWORDS(Size)));
 }
 
-void DaisyUSB::OpenEndpoint(uint8 Endpoint, uint16 Length, USBEpAttr Type)
+void DaisyUSB::OpenEndpoint(uint8 Endpoint, uint16 Length, uint8 Type)
 {
 	CHECK_CALL(HAL_PCD_EP_Open(&m_DeviceHandle, Endpoint, Length, (uint8)Type));
 }
@@ -653,22 +648,18 @@ uint16 DaisyUSB::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, const USBDev
 		DeviceInstanceInfo& dii = m_Devices[i];
 		const USBClassNode& node = Profile.ClassNodes[i];
 
-		//if (node.Class == USBDeviceClasses::CDC)
-		//	static_cast<DaisyUSBCDCInterface*>(dii.Interface)->BuildConfigurationDescriptor(EP0Buffer, offset, interfaceIndex, node);
-		//else if (node.Class == USBDeviceClasses::AMC)
-		//	static_cast<DaisyUSBAMCInterface*>(dii.Interface)->BuildConfigurationDescriptor(EP0Buffer, offset, interfaceIndex, node);
 		dii.Interface->BuildConfigurationDescriptor(EP0Buffer, offset, interfaceIndex, node);
 
 		interfaceIndex += dii.Interface->GetConfigs().InterfaceIndexCount;
 	}
 
 	config->bLength = sizeof(USBConfigurationDescriptor);
-	config->bDescriptorType = USBDescType::Configuration;
+	config->bDescriptorType = USBDescTypes::Configuration;
 	config->wTotalLength = offset;
 	config->bNumInterfaces = interfaceIndex;
 	config->bConfigurationValue = USB_CONFIG_VALUE_DEFAULT;
 	config->iConfiguration = 0;
-	config->bmAttributes = Profile.IsSelfPowered ? USBConfigAttr::SelfPoweredMask : USBConfigAttr::BusPoweredMask;
+	config->bmAttributes = Profile.IsSelfPowered ? USBConfigAttributes::SelfPoweredMask : USBConfigAttributes::BusPoweredMask;
 	config->bMaxPower = Profile.MaxPowerCurrent / 2;
 
 	return offset;
@@ -677,11 +668,11 @@ uint16 DaisyUSB::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, const USBDev
 uint16 DaisyUSB::BuildDeviceDescriptor(EP0Buffer& EP0Buffer, const USBProfile& Profile)
 {
 	EP0Buffer.deviceDesc.bLength = sizeof(USBDeviceDescriptor);
-	EP0Buffer.deviceDesc.bDescriptorType = USBDescType::Device;
+	EP0Buffer.deviceDesc.bDescriptorType = USBDescTypes::Device;
 	EP0Buffer.deviceDesc.bcdUSB = USB_VERSION_2_0;
-	EP0Buffer.deviceDesc.bDeviceClass = USBSDeviceClass::Misc;
-	EP0Buffer.deviceDesc.bDeviceSubClass = USBDeviceSubClass::Common;
-	EP0Buffer.deviceDesc.bDeviceProtocol = USBDeviceProtocol::IAD;
+	EP0Buffer.deviceDesc.bDeviceClass = USBSDeviceClasses::Misc;
+	EP0Buffer.deviceDesc.bDeviceSubClass = USBDeviceSubClasses::Common;
+	EP0Buffer.deviceDesc.bDeviceProtocol = USBDeviceProtocols::IAD;
 	EP0Buffer.deviceDesc.bMaxPacketSize0 = (uint16)PacketSizes::Max;
 	EP0Buffer.deviceDesc.idVendor = Profile.Device.VendorID;
 	EP0Buffer.deviceDesc.idProduct = Profile.Device.ProductID;
@@ -705,7 +696,7 @@ uint16 DaisyUSB::BuildStringDescriptor(EP0Buffer& EP0Buffer, cstr Value)
 
 	uint8 totalLength = __offsetof(USBStringDescriptor, wData) + (length * sizeof(uint16));
 	EP0Buffer.stringDesc.bLength = totalLength;
-	EP0Buffer.stringDesc.bDescriptorType = USBDescType::String;
+	EP0Buffer.stringDesc.bDescriptorType = USBDescTypes::String;
 
 	return totalLength;
 }

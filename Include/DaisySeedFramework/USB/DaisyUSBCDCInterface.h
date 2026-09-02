@@ -31,8 +31,6 @@ public:
 	{
 		return (AlternateSetting == 0);
 	}
-	void OnSOF(void) override
-	{}
 	uint8 GetCurrentAltSetting(uint8 InterfaceIndex) const override
 	{
 		return 0;

@@ -30,7 +30,7 @@ public:
 	virtual void OnDataInStage(void) = 0;
 	virtual void OnDataOutStage(void) = 0;
 	virtual bool OnSetInterface(uint8 InterfaceIndex, uint8 AlternateSetting) = 0;
-	virtual void OnSOF(void) = 0;
+	//virtual void OnSOF(void) = 0;
 	virtual uint8 GetCurrentAltSetting(uint8 InterfaceIndex) const = 0;
 	virtual void BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, uint16& BufferOffset, uint8 InterfaceIndex, const USBClassNode& Class) = 0;
 
