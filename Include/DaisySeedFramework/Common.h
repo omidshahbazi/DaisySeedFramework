@@ -104,3 +104,6 @@ static_assert(QSPI_START_ADDRESS >= QSPI_RESERVED_SIZE, "Invalid QSPI_START_ADDR
 #define QSPI_END_ADDRESS QSPI_TOTAL_SIZE
 
 #define DEFINE_LINKER_STORAGE_SECTION(Name) __attribute__((section(Name)))
+
+#define BYTES_TO_WORDS(SizeInBytes) (((SizeInBytes) + 1) / sizeof(uint32))
+#define BYTES_TO_DWORDS(SizeInBytes) (((SizeInBytes) + 3) / sizeof(uint32))

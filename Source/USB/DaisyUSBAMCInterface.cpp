@@ -95,16 +95,7 @@ void DaisyUSBAMCInterface::OnSetupCompleted(void)
 	const Configs& configs = GetConfigs();
 
 	if (TO_ENDPOINT_NUMBER(configs.EndpointIn) != 0)
-	{
-		uint16 sizeInWords = (configs.TransmitPacketSize + 3) / 4;
-		usb->AllocateTransmitBuffer(configs.EndpointIn, sizeInWords);
-
-		USBEpAttr mode = (USBEpAttr)((uint8)USBEpAttr::Isochronous | USB_EP_SYNC_TYPE_ASYNC);
-		usb->OpenEndpoint(configs.EndpointIn, configs.TransmitPacketSize, mode);
-
-		m_InAltSetting = 1;
-		m_StreamPrimed = false;   // ← دیگه اینجا EndpointTransmit صدا نمی‌زنیم
-	}
+		usb->AllocateTransmitBuffer(configs.EndpointIn, configs.TransmitPacketSize);
 }
 
 void DaisyUSBAMCInterface::OnDataInStage(void)
@@ -121,29 +112,32 @@ bool DaisyUSBAMCInterface::OnSetInterface(uint8 InterfaceIndex, uint8 AlternateS
 	if (AlternateSetting > 1)
 		return false;
 
-	bool isOutInterface = (InterfaceIndex == m_OutInterfaceIndex);
 	bool isInInterface = (InterfaceIndex == m_InInterfaceIndex);
-
-	if (!isOutInterface && !isInInterface)
+	if (!isInInterface)
 		return false;
 
-	uint8& currentAlt = isOutInterface ? m_OutAltSetting : m_InAltSetting;
-	currentAlt = AlternateSetting;
+	if (m_InAltSetting == AlternateSetting)
+		return true;
 
-	// دیگه اینجا هیچ OpenEndpoint/CloseEndpoint‌ای نمی‌زنیم —
-	// endpoint همون یه‌بار توی OnSetupCompleted باز شده و همونجا می‌مونه.
+	if (AlternateSetting == 1)
+	{
+		USBEpAttr mode = (USBEpAttr)((uint8)USBEpAttr::Isochronous | USB_EP_SYNC_TYPE_ASYNC);
+		GetUSB()->OpenEndpoint(GetConfigs().EndpointIn, GetConfigs().TransmitPacketSize, mode);
+
+		memset(m_TransmitBuffer, 0, GetConfigs().TransmitPacketSize);
+		EndpointTransmit(m_TransmitBuffer, GetConfigs().TransmitPacketSize);
+	}
+	else
+	{
+		GetUSB()->CloseEndpoint(GetConfigs().EndpointIn);
+	}
+
+	m_InAltSetting = AlternateSetting;
 	return true;
 }
 
 void DaisyUSBAMCInterface::OnSOF(void)
 {
-	if (m_InAltSetting == 1 && !m_StreamPrimed)
-	{
-		m_StreamPrimed = true;
-
-		memset(m_TransmitBuffer, 0, GetConfigs().TransmitPacketSize);
-		EndpointTransmit(m_TransmitBuffer, GetConfigs().TransmitPacketSize);
-	}
 }
 
 uint8 DaisyUSBAMCInterface::GetCurrentAltSetting(uint8 InterfaceIndex) const
@@ -168,16 +162,16 @@ void DaisyUSBAMCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, ui
 	CalculateStreamingInterfaceIndices(GetConfigs(), Config, asOutInterface, asInInterface);
 
 	// ---------- IAD ----------
-	//USBInterfaceAssociationDescriptor* iad = reinterpret_cast<USBInterfaceAssociationDescriptor*>(buffer + BufferOffset);
-	//iad->bLength = sizeof(USBInterfaceAssociationDescriptor);
-	//iad->bDescriptorType = USBDescType::InterfaceAssociation;
-	//iad->bFirstInterface = InterfaceIndex;
-	//iad->bInterfaceCount = CalculateRequiredInterfaceCount(Config);
-	//iad->bFunctionClass = USBSDeviceClass::Audio;
-	//iad->bFunctionSubClass = AUDIO_SUBCLASS_CONTROL;
-	//iad->bFunctionProtocol = 0x00; // UAC1: بدون کد پروتکل
-	//iad->iFunction = 0;
-	//BufferOffset += sizeof(USBInterfaceAssociationDescriptor);
+	USBInterfaceAssociationDescriptor* iad = reinterpret_cast<USBInterfaceAssociationDescriptor*>(buffer + BufferOffset);
+	iad->bLength = sizeof(USBInterfaceAssociationDescriptor);
+	iad->bDescriptorType = USBDescType::InterfaceAssociation;
+	iad->bFirstInterface = InterfaceIndex;
+	iad->bInterfaceCount = CalculateRequiredInterfaceCount(Config);
+	iad->bFunctionClass = USBSDeviceClass::Audio;
+	iad->bFunctionSubClass = AUDIO_SUBCLASS_CONTROL;
+	iad->bFunctionProtocol = 0x00; // UAC1: بدون کد پروتکل
+	iad->iFunction = 0;
+	BufferOffset += sizeof(USBInterfaceAssociationDescriptor);
 
 	// ---------- AC Interface (standard) ----------
 	USBInterfaceDescriptor* acIf = reinterpret_cast<USBInterfaceDescriptor*>(buffer + BufferOffset);

@@ -250,7 +250,7 @@ void DaisyUSB::Start(const USBProfile& Profile)
 
 			switch (dii.Class)
 			{
-			case USBDeviceClassses::CDC:
+			case USBDeviceClasses::CDC:
 			{
 				configs.InterfaceIndexCount = DaisyUSBCDCInterface::CalculateRequiredInterfaceCount(node.CDC);
 
@@ -270,9 +270,10 @@ void DaisyUSB::Start(const USBProfile& Profile)
 				break;
 			}
 
-			case USBDeviceClassses::AMC:
+			case USBDeviceClasses::AMC:
 			{
 				ASSERT(node.AMC.OutputChannelCount != 0 || node.AMC.InputChannelCount != 0, "AMC needs at least one channel");
+				ASSERT(node.AMC.EnableHardwareMute || node.AMC.EnableHardwareVolumeControl, "Either of EnableHardwareMute or EnableHardwareVolumeControl must be true");
 
 				configs.InterfaceIndexCount = DaisyUSBAMCInterface::CalculateRequiredInterfaceCount(node.AMC);
 
@@ -328,7 +329,7 @@ void DaisyUSB::Start(const USBProfile& Profile)
 
 		CHECK_CALL(HAL_PCD_Init(&m_DeviceHandle));
 
-		AllocateReceiveBuffer((uint16)PacketSizes::Max * 2);
+		AllocateReceiveBuffer(512);
 		AllocateTransmitBuffer(USB_EP0_IN, (uint16)PacketSizes::Max);
 
 		OpenEndpoint(USB_EP0_OUT, (uint16)PacketSizes::Max, USBEpAttr::Control);
@@ -572,14 +573,14 @@ void DaisyUSB::HandleGetDescriptor(void)
 	}
 }
 
-void DaisyUSB::AllocateReceiveBuffer(uint16 WordCount)
+void DaisyUSB::AllocateReceiveBuffer(uint16 Size)
 {
-	CHECK_CALL(HAL_PCDEx_SetRxFiFo(&m_DeviceHandle, WordCount));
+	CHECK_CALL(HAL_PCDEx_SetRxFiFo(&m_DeviceHandle, BYTES_TO_DWORDS(Size)));
 }
 
-void DaisyUSB::AllocateTransmitBuffer(uint8 Endpoint, uint16 WordCount)
+void DaisyUSB::AllocateTransmitBuffer(uint8 Endpoint, uint16 Size)
 {
-	CHECK_CALL(HAL_PCDEx_SetTxFiFo(&m_DeviceHandle, TO_ENDPOINT_NUMBER(Endpoint), WordCount));
+	CHECK_CALL(HAL_PCDEx_SetTxFiFo(&m_DeviceHandle, TO_ENDPOINT_NUMBER(Endpoint), BYTES_TO_DWORDS(Size)));
 }
 
 void DaisyUSB::OpenEndpoint(uint8 Endpoint, uint16 Length, USBEpAttr Type)
@@ -652,9 +653,9 @@ uint16 DaisyUSB::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, const USBDev
 		DeviceInstanceInfo& dii = m_Devices[i];
 		const USBClassNode& node = Profile.ClassNodes[i];
 
-		//if (node.Class == USBDeviceClassses::CDC)
+		//if (node.Class == USBDeviceClasses::CDC)
 		//	static_cast<DaisyUSBCDCInterface*>(dii.Interface)->BuildConfigurationDescriptor(EP0Buffer, offset, interfaceIndex, node);
-		//else if (node.Class == USBDeviceClassses::AMC)
+		//else if (node.Class == USBDeviceClasses::AMC)
 		//	static_cast<DaisyUSBAMCInterface*>(dii.Interface)->BuildConfigurationDescriptor(EP0Buffer, offset, interfaceIndex, node);
 		dii.Interface->BuildConfigurationDescriptor(EP0Buffer, offset, interfaceIndex, node);
 
@@ -678,9 +679,9 @@ uint16 DaisyUSB::BuildDeviceDescriptor(EP0Buffer& EP0Buffer, const USBProfile& P
 	EP0Buffer.deviceDesc.bLength = sizeof(USBDeviceDescriptor);
 	EP0Buffer.deviceDesc.bDescriptorType = USBDescType::Device;
 	EP0Buffer.deviceDesc.bcdUSB = USB_VERSION_2_0;
-	EP0Buffer.deviceDesc.bDeviceClass = USBSDeviceClass::None;// USBSDeviceClass::Misc;
-	EP0Buffer.deviceDesc.bDeviceSubClass = USBDeviceSubClass::None;//USBDeviceSubClass::Common;
-	EP0Buffer.deviceDesc.bDeviceProtocol = USBDeviceProtocol::None;//USBDeviceProtocol::IAD;
+	EP0Buffer.deviceDesc.bDeviceClass = USBSDeviceClass::Misc;
+	EP0Buffer.deviceDesc.bDeviceSubClass = USBDeviceSubClass::Common;
+	EP0Buffer.deviceDesc.bDeviceProtocol = USBDeviceProtocol::IAD;
 	EP0Buffer.deviceDesc.bMaxPacketSize0 = (uint16)PacketSizes::Max;
 	EP0Buffer.deviceDesc.idVendor = Profile.Device.VendorID;
 	EP0Buffer.deviceDesc.idProduct = Profile.Device.ProductID;

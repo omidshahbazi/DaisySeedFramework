@@ -41,7 +41,6 @@ private:
 	uint8 m_InInterfaceIndex;
 
 	uint8 m_TransmitBuffer[1023];
-	bool m_StreamPrimed = false;
 };
 
 #endif

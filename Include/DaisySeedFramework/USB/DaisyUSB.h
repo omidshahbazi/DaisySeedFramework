@@ -50,7 +50,7 @@ private:
 	struct DeviceInstanceInfo
 	{
 	public:
-		USBDeviceClassses Class;
+		USBDeviceClasses Class;
 		DaisyUSBInterfaceCommon* Interface;
 	};
 	END_PACK();
@@ -69,10 +69,10 @@ public:
 
 		switch (dii.Class)
 		{
-		case USBDeviceClassses::CDC:
+		case USBDeviceClasses::CDC:
 			return static_cast<DaisyUSBCDCInterface*>(dii.Interface);
 
-		case USBDeviceClassses::AMC:
+		case USBDeviceClasses::AMC:
 			return static_cast<DaisyUSBAMCInterface*>(dii.Interface);
 		}
 
@@ -88,8 +88,8 @@ private:
 
 	void HandleGetDescriptor(void);
 
-	void AllocateReceiveBuffer(uint16 WordCount);
-	void AllocateTransmitBuffer(uint8 Endpoint, uint16 WordCount);
+	void AllocateReceiveBuffer(uint16 Size);
+	void AllocateTransmitBuffer(uint8 Endpoint, uint16 Size);
 
 	void OpenEndpoint(uint8 Endpoint, uint16 Length, USBEpAttr Type);
 	void CloseEndpoint(uint8 Endpoint);
