@@ -13,6 +13,15 @@ class DaisyUSBAMCInterface : public IUSBAMCInterface, public DaisyUSBInterfaceCo
 public:
 	DaisyUSBAMCInterface(DaisyUSB* USB, const Configs& Configs, const AMCClassConfig& Class);
 
+	virtual void Read(float* InterleavedBuffer, uint16 TotalSampleCount)
+	{
+		PopSamples(InterleavedBuffer, TotalSampleCount);
+	}
+	virtual void Read(double* InterleavedBuffer, uint16 TotalSampleCount)
+	{
+		PopSamples(InterleavedBuffer, TotalSampleCount);
+	}
+
 	void Write(const float* const InterleavedBuffer, uint16 TotalSampleCount) override
 	{
 		PushSamples(InterleavedBuffer, TotalSampleCount);
@@ -77,6 +86,8 @@ public:
 
 private:
 	template <typename T>
+	uint16 PopSamples(T* InterleavedBuffer, uint16 TotalSampleCount);
+	template <typename T>
 	void PushSamples(const T* const InterleavedBuffer, uint16 TotalSampleCount);
 
 public:
@@ -96,8 +107,11 @@ private:
 	uint8 m_OutInterfaceIndex;
 	uint8 m_InInterfaceIndex;
 
+	uint8* m_ReceiveBuffer;
+	StaticRingBuffer<uint8, sizeof(int32) * 1024> m_ReceiveFIFO;
 	uint8* m_TransmitBuffer;
-	StaticRingBuffer<uint8, 4096> m_TransmitFIFO;
+	uint8* m_TransmitBuffer;
+	StaticRingBuffer<uint8, sizeof(int32) * 1024> m_TransmitFIFO;
 
 	ControlChangedCallback m_ControlChangedCallback;
 
@@ -112,8 +126,77 @@ private:
 };
 
 template <typename T>
+uint16 DaisyUSBAMCInterface::PopSamples(T* InterleavedBuffer, uint16 TotalSampleCount)
+{
+	ASSERT_ON_FLOATING_TYPE(T);
+
+	const BitDepths bitDepth = m_CurrentOutBitDepth;
+	const uint8 bytesPerSample = (bitDepth / 8);
+	const size_t bytesToRead = TotalSampleCount * bytesPerSample;
+
+	uint16 samplesPopped = 0;
+	if (m_ReceiveFIFO.GetSize() >= bytesToRead)
+		samplesPopped = TotalSampleCount;
+
+	switch (bitDepth)
+	{
+	case BitDepths::BitDepths16:
+	{
+		if (m_ReceiveFIFO.GetSize() >= bytesToRead)
+		{
+			for (uint16 i = 0; i < TotalSampleCount; ++i)
+			{
+				int16_t pcm16;
+				m_ReceiveFIFO.Pop(reinterpret_cast<uint8*>(&pcm16), sizeof(int16));
+
+				InterleavedBuffer[i] = (T)(pcm16 / 32768.0);
+			}
+		}
+		break;
+	}
+
+	case BitDepths::BitDepths24:
+	{
+		if (m_ReceiveFIFO.GetSize() >= bytesToRead)
+		{
+			for (uint16 i = 0; i < TotalSampleCount; ++i)
+			{
+				int24_t pcm24;
+				m_ReceiveFIFO.Pop(reinterpret_cast<uint8*>(&pcm24), sizeof(int24_t));
+
+				InterleavedBuffer[i] = (T)(pcm24 / 8388608.0);
+			}
+		}
+		break;
+	}
+
+	case BitDepths::BitDepths32:
+	{
+		if (m_ReceiveFIFO.GetSize() >= bytesToRead)
+		{
+			for (uint16 i = 0; i < TotalSampleCount; ++i)
+			{
+				int32_t pcm32;
+				m_ReceiveFIFO.Pop(reinterpret_cast<uint8*>(&pcm32), sizeof(int32_t));
+
+				InterleavedBuffer[i] = (T)(pcm32 / 2147483648.0);
+			}
+		}
+		break;
+	}
+	}
+
+	for (uint16 i = samplesPopped; i < TotalSampleCount; ++i)
+		InterleavedBuffer[i] = 0;
+
+	return samplesPopped;
+}
+
+template <typename T>
 void DaisyUSBAMCInterface::PushSamples(const T* const InterleavedBuffer, uint16 TotalSampleCount)
 {
+	ASSERT_ON_FLOATING_TYPE(T);
+
 	ASSERT(InterleavedBuffer != nullptr, "InterleavedBuffer is null");
 	ASSERT(TotalSampleCount != 0, "TotalSampleCount is zero");
 
@@ -159,9 +242,6 @@ void DaisyUSBAMCInterface::PushSamples(const T* const InterleavedBuffer, uint16 
 		}
 		break;
 	}
-
-	default:
-		break;
 	}
 }
 

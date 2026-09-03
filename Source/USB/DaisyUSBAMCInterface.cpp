@@ -11,6 +11,7 @@ DaisyUSBAMCInterface::DaisyUSBAMCInterface(DaisyUSB* USB, const Configs& Configs
 	m_InAltSetting(0),
 	m_OutInterfaceIndex(0),
 	m_InInterfaceIndex(0),
+	m_ReceiveBuffer(nullptr),
 	m_TransmitBuffer(nullptr),
 
 	m_CurrentOutSampleRate(Class.SupportedSampleRates[Class.DefaultSampleRateIndex]),
@@ -20,6 +21,7 @@ DaisyUSBAMCInterface::DaisyUSBAMCInterface(DaisyUSB* USB, const Configs& Configs
 	m_CurrentIsOutMuted(false),
 	m_CurrentIsInMuted(false)
 {
+	m_ReceiveBuffer = Memory::Allocate<uint8>(Configs.ReceivePacketSize, true);
 	m_TransmitBuffer = Memory::Allocate<uint8>(Configs.TransmitPacketSize, true);
 
 	CalculateStreamingInterfaceIndices(GetConfigs(), Class, m_OutInterfaceIndex, m_InInterfaceIndex);
@@ -35,6 +37,8 @@ bool DaisyUSBAMCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 	// ========================================================================
 	if (recipient == USB_REQ_RECIPIENT_ENDPOINT)
 	{
+		// LINE1_TODO: Mute/Volume control won't change
+
 		uint8 epAddress = (uint8)(Setup->wIndex & 0xFF);
 		const Configs& configs = GetConfigs();
 
@@ -42,21 +46,21 @@ bool DaisyUSBAMCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 		{
 			if (Setup->bRequest == UAC1_GET_CUR)
 			{
-				uint24 val;
+				uint24_t val;
 				if (epAddress == configs.EndpointOut)
 					val = m_CurrentOutSampleRate;
 				else if (epAddress == configs.EndpointIn)
 					val = m_CurrentInSampleRate;
 
-				GetUSB()->DeviceTransmit(val.bytes, sizeof(val.bytes));
+				GetUSB()->DeviceTransmit(&val);
 
 				GetUSB()->DeviceReceiveAck();
 				return true;
 			}
 			else if (Setup->bRequest == UAC1_SET_CUR)
 			{
-				uint24 val;
-				GetUSB()->DeviceReceive(val.bytes, sizeof(val.bytes));
+				uint24_t val;
+				GetUSB()->DeviceReceive(&val);
 
 				if (!IsSampleRateSupported(val))
 					return false;
@@ -95,7 +99,7 @@ bool DaisyUSBAMCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 			if (Setup->bRequest == UAC1_SET_CUR)
 			{
 				uint8 muteVal = 0;
-				GetUSB()->DeviceReceive(&muteVal, 1);
+				GetUSB()->DeviceReceive(&muteVal);
 
 				if (isSpeaker)
 				{
@@ -121,7 +125,7 @@ bool DaisyUSBAMCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 				else
 					muteVal = m_CurrentIsInMuted;
 
-				GetUSB()->DeviceTransmit(&muteVal, 1);
+				GetUSB()->DeviceTransmit(&muteVal);
 
 				GetUSB()->DeviceReceiveAck();
 				return true;
@@ -136,7 +140,7 @@ bool DaisyUSBAMCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 			case UAC1_SET_CUR:
 			{
 				int16 volumeDbRaw = 0;
-				GetUSB()->DeviceReceive(reinterpret_cast<uint8*>(&volumeDbRaw), sizeof(int16));
+				GetUSB()->DeviceReceive(&volumeDbRaw);
 
 				if (isSpeaker)
 				{
@@ -162,7 +166,7 @@ bool DaisyUSBAMCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 				else
 					volumeDbRaw = m_CurrentInVolume * VOLUME_STEPS;
 
-				GetUSB()->DeviceTransmit(reinterpret_cast<uint8*>(&volumeDbRaw), sizeof(int16));
+				GetUSB()->DeviceTransmit(&volumeDbRaw);
 
 				GetUSB()->DeviceReceiveAck();
 				return true;
@@ -170,7 +174,7 @@ bool DaisyUSBAMCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 			case UAC1_GET_MIN:
 			{
 				int16 minVol = m_Class.MinimumVolume * VOLUME_STEPS;
-				GetUSB()->DeviceTransmit(reinterpret_cast<uint8*>(&minVol), sizeof(int16));
+				GetUSB()->DeviceTransmit(&minVol);
 
 				GetUSB()->DeviceTransmitAck();
 				return true;
@@ -178,7 +182,7 @@ bool DaisyUSBAMCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 			case UAC1_GET_MAX:
 			{
 				int16 maxVol = m_Class.MaximumVolume * VOLUME_STEPS;
-				GetUSB()->DeviceTransmit(reinterpret_cast<uint8*>(&maxVol), sizeof(int16));
+				GetUSB()->DeviceTransmit(&maxVol);
 
 				GetUSB()->DeviceTransmitAck();
 				return true;
@@ -186,7 +190,7 @@ bool DaisyUSBAMCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 			case UAC1_GET_RES:
 			{
 				int16 resVol = m_Class.VolumeResolution * VOLUME_STEPS;
-				GetUSB()->DeviceTransmit(reinterpret_cast<uint8*>(&resVol), sizeof(int16));
+				GetUSB()->DeviceTransmit(&resVol);
 
 				GetUSB()->DeviceTransmitAck();
 				return true;
@@ -220,11 +224,9 @@ void DaisyUSBAMCInterface::OnDataOutStage(void)
 
 	if (len > 0)
 	{
-		uint8 rxBuffer[192]; // ظرفیت کافی برای 48kHz 16-bit Stereo (96 بایت در هر ms)
+		EndpointReceive(m_ReceiveBuffer, len);
 
-		EndpointReceive(rxBuffer, len);
-
-		m_RxAudioFIFO.Push(rxBuffer, len);
+		m_ReceiveFIFO.Push(m_ReceiveBuffer, len);
 	}
 }
 
@@ -246,7 +248,7 @@ bool DaisyUSBAMCInterface::OnSetInterface(uint8 InterfaceIndex, uint8 AlternateS
 		else
 			GetUSB()->CloseEndpoint(configs.EndpointOut);
 
-		m_RxAudioFIFO.Clear();
+		m_ReceiveFIFO.Clear();
 
 		m_OutAltSetting = AlternateSetting;
 	}
