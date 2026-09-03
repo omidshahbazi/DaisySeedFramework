@@ -7,12 +7,18 @@
 DaisyUSBAMCInterface::DaisyUSBAMCInterface(DaisyUSB* USB, const Configs& Configs, const AMCClassConfig& Class)
 	: DaisyUSBInterfaceCommon(USB, Configs),
 	m_Class(Class),
-	m_CurrentSampleRate(Class.SupportedSampleRates[Class.DefaultSampleRateIndex]),
 	m_OutAltSetting(0),
 	m_InAltSetting(0),
 	m_OutInterfaceIndex(0),
 	m_InInterfaceIndex(0),
-	m_TransmitBuffer(nullptr)
+	m_TransmitBuffer(nullptr),
+
+	m_CurrentOutSampleRate(Class.SupportedSampleRates[Class.DefaultSampleRateIndex]),
+	m_CurrentInSampleRate(Class.SupportedSampleRates[Class.DefaultSampleRateIndex]),
+	m_CurrentOutBitDepth(Class.SupportedBitDepths[Class.DefaultBitDepthIndex]),
+	m_CurrentInBitDepth(Class.SupportedBitDepths[Class.DefaultBitDepthIndex]),
+	m_CurrentIsOutMuted(false),
+	m_CurrentIsInMuted(false)
 {
 	m_TransmitBuffer = Memory::Allocate<uint8>(Configs.TransmitPacketSize, true);
 
@@ -24,71 +30,168 @@ bool DaisyUSBAMCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 	uint8 recipient = Setup->bmRequestType & USB_REQ_RECIPIENT_MASK;
 	uint8 controlSelector = (uint8)(Setup->wValue >> 8);
 
-	// --- Sampling frequency control: targets the Endpoint itself, not an Entity (UAC1) ---
-	if (recipient == USB_REQ_RECIPIENT_ENDPOINT && controlSelector == CS_SAM_FREQ_CONTROL)
+	// ========================================================================
+	// 1. Sampling Frequency Control (Target: ENDPOINT)
+	// ========================================================================
+	if (recipient == USB_REQ_RECIPIENT_ENDPOINT)
 	{
-		if (Setup->bRequest == UAC1_GET_CUR)
+		uint8 epAddress = (uint8)(Setup->wIndex & 0xFF);
+		const Configs& configs = GetConfigs();
+
+		if (controlSelector == CS_SAM_FREQ_CONTROL)
 		{
-			uint8 rateBytes[3];
-
-			rateBytes[0] = (uint8)(m_CurrentSampleRate & 0xFF);
-			rateBytes[1] = (uint8)((m_CurrentSampleRate >> 8) & 0xFF);
-			rateBytes[2] = (uint8)((m_CurrentSampleRate >> 16) & 0xFF);
-
-			GetUSB()->DeviceTransmit(rateBytes, sizeof(rateBytes));
-			GetUSB()->DeviceReceiveAck();
-			return true;
-		}
-
-		if (Setup->bRequest == UAC1_SET_CUR)
-		{
-			uint8 rateBytes[3];
-			GetUSB()->DeviceReceive(rateBytes, sizeof(rateBytes));
-
-			uint32 requestedRate = (uint32)rateBytes[0] | ((uint32)rateBytes[1] << 8) | ((uint32)rateBytes[2] << 16);
-
-			if (!IsSampleRateSupported(requestedRate))
-				return false;
-
-			m_CurrentSampleRate = requestedRate;
-
-			GetUSB()->DeviceTransmitAck();
-
-			return true;
-		}
-
-		// SET_MIN/GET_MIN/SET_MAX/GET_MAX/SET_RES/GET_RES are not implemented —
-		// since we advertise a discrete bSamFreqType (not continuous), compliant
-		// hosts should never send these.
-		return false;
-	}
-
-	// --- Mute/Volume: target a Feature Unit, recipient = Interface (AC) ---
-	if (recipient == USB_REQ_RECIPIENT_INTERFACE)
-	{
-		uint8 entityId = (uint8)(Setup->wIndex >> 8);
-
-		bool isFeatureUnit = (entityId == FU_SPEAKER_ID || entityId == FU_MIC_ID);
-		bool isMute = (controlSelector == CS_MUTE_CONTROL && m_Class.EnableHardwareMute);
-		bool isVolume = (controlSelector == CS_VOLUME_CONTROL && m_Class.EnableHardwareVolumeControl);
-
-		if (isFeatureUnit && (isMute || isVolume))
-		{
-			bool isDeviceToHost = ((Setup->bmRequestType & USB_REQ_TYPE_MASK) == USB_REQ_DIR_DEVICE_TO_HOST);
-
-			if (isDeviceToHost)
+			if (Setup->bRequest == UAC1_GET_CUR)
 			{
-				uint8 value = 0; // TODO: wire up the actual mute/volume value
-				GetUSB()->DeviceTransmit(&value, sizeof(value));
+				uint24 val;
+				if (epAddress == configs.EndpointOut)
+					val = m_CurrentOutSampleRate;
+				else if (epAddress == configs.EndpointIn)
+					val = m_CurrentInSampleRate;
+
+				GetUSB()->DeviceTransmit(val.bytes, sizeof(val.bytes));
+
 				GetUSB()->DeviceReceiveAck();
+				return true;
 			}
-			else
+			else if (Setup->bRequest == UAC1_SET_CUR)
 			{
-				uint8 requestedValue;
-				GetUSB()->DeviceReceive(&requestedValue, sizeof(requestedValue));
+				uint24 val;
+				GetUSB()->DeviceReceive(val.bytes, sizeof(val.bytes));
+
+				if (!IsSampleRateSupported(val))
+					return false;
+
+				if (epAddress == configs.EndpointOut)
+				{
+					m_CurrentOutSampleRate = val;
+
+					m_ControlChangedCallback(ControlTypes::OutSampleRate);
+				}
+				else if (epAddress == configs.EndpointIn)
+				{
+					m_CurrentInSampleRate = val;
+
+					m_ControlChangedCallback(ControlTypes::InSampleRate);
+				}
+
 				GetUSB()->DeviceTransmitAck();
+				return true;
 			}
-			return true;
+		}
+	}
+	// ========================================================================
+	// 2. Feature Unit Controls: Mute & Volume (Target: INTERFACE)
+	// ========================================================================
+	else if (recipient == USB_REQ_RECIPIENT_INTERFACE)
+	{
+		uint8 entityID = (uint8)(Setup->wIndex >> 8);
+		if (entityID != FU_OUTPUT_ID && entityID != FU_INPUT_ID)
+			return false;
+
+		bool isSpeaker = (entityID == FU_OUTPUT_ID);
+
+		if (controlSelector == CS_MUTE_CONTROL && m_Class.EnableHardwareMute)
+		{
+			if (Setup->bRequest == UAC1_SET_CUR)
+			{
+				uint8 muteVal = 0;
+				GetUSB()->DeviceReceive(&muteVal, 1);
+
+				if (isSpeaker)
+				{
+					m_CurrentIsOutMuted = (muteVal != 0);
+
+					m_ControlChangedCallback(ControlTypes::OutMute);
+				}
+				else
+				{
+					m_CurrentIsInMuted = (muteVal != 0);
+
+					m_ControlChangedCallback(ControlTypes::InMute);
+				}
+
+				GetUSB()->DeviceTransmitAck();
+				return true;
+			}
+			else if (Setup->bRequest == UAC1_GET_CUR)
+			{
+				uint8 muteVal;
+				if (isSpeaker)
+					muteVal = m_CurrentIsOutMuted;
+				else
+					muteVal = m_CurrentIsInMuted;
+
+				GetUSB()->DeviceTransmit(&muteVal, 1);
+
+				GetUSB()->DeviceReceiveAck();
+				return true;
+			}
+		}
+		else if (controlSelector == CS_VOLUME_CONTROL && m_Class.EnableHardwareVolumeControl)
+		{
+			const uint16 VOLUME_STEPS = 256; // 1/256 dB steps
+
+			switch (Setup->bRequest)
+			{
+			case UAC1_SET_CUR:
+			{
+				int16 volumeDbRaw = 0;
+				GetUSB()->DeviceReceive(reinterpret_cast<uint8*>(&volumeDbRaw), sizeof(int16));
+
+				if (isSpeaker)
+				{
+					m_CurrentOutVolume = dBGain((float)volumeDbRaw / VOLUME_STEPS);
+
+					m_ControlChangedCallback(ControlTypes::OutVolume);
+				}
+				else
+				{
+					m_CurrentInVolume = dBGain((float)volumeDbRaw / VOLUME_STEPS);
+
+					m_ControlChangedCallback(ControlTypes::InVolume);
+				}
+
+				GetUSB()->DeviceTransmitAck();
+				return true;
+			}
+			case UAC1_GET_CUR:
+			{
+				int16 volumeDbRaw;
+				if (isSpeaker)
+					volumeDbRaw = m_CurrentOutVolume * VOLUME_STEPS;
+				else
+					volumeDbRaw = m_CurrentInVolume * VOLUME_STEPS;
+
+				GetUSB()->DeviceTransmit(reinterpret_cast<uint8*>(&volumeDbRaw), sizeof(int16));
+
+				GetUSB()->DeviceReceiveAck();
+				return true;
+			}
+			case UAC1_GET_MIN:
+			{
+				int16 minVol = m_Class.MinimumVolume * VOLUME_STEPS;
+				GetUSB()->DeviceTransmit(reinterpret_cast<uint8*>(&minVol), sizeof(int16));
+
+				GetUSB()->DeviceTransmitAck();
+				return true;
+			}
+			case UAC1_GET_MAX:
+			{
+				int16 maxVol = m_Class.MaximumVolume * VOLUME_STEPS;
+				GetUSB()->DeviceTransmit(reinterpret_cast<uint8*>(&maxVol), sizeof(int16));
+
+				GetUSB()->DeviceTransmitAck();
+				return true;
+			}
+			case UAC1_GET_RES:
+			{
+				int16 resVol = m_Class.VolumeResolution * VOLUME_STEPS;
+				GetUSB()->DeviceTransmit(reinterpret_cast<uint8*>(&resVol), sizeof(int16));
+
+				GetUSB()->DeviceTransmitAck();
+				return true;
+			}
+			}
 		}
 	}
 
@@ -110,32 +213,61 @@ void DaisyUSBAMCInterface::OnDataInStage(void)
 }
 
 void DaisyUSBAMCInterface::OnDataOutStage(void)
-{}
+{
+	const Configs& configs = GetConfigs();
+
+	uint16 len = EndpointReceiveCount();
+
+	if (len > 0)
+	{
+		uint8 rxBuffer[192]; // ظرفیت کافی برای 48kHz 16-bit Stereo (96 بایت در هر ms)
+
+		EndpointReceive(rxBuffer, len);
+
+		m_RxAudioFIFO.Push(rxBuffer, len);
+	}
+}
 
 bool DaisyUSBAMCInterface::OnSetInterface(uint8 InterfaceIndex, uint8 AlternateSetting)
 {
 	if (AlternateSetting > 1)
 		return false;
 
-	bool isInInterface = (InterfaceIndex == m_InInterfaceIndex);
-	if (!isInInterface)
-		return false;
-
-	if (m_InAltSetting == AlternateSetting)
-		return true;
-
 	const Configs& configs = GetConfigs();
+	const uint8 type = (uint8)USBEndpointAttributes::Isochronous | (uint8)EndpointSyncTypes::Async;
 
-	if (AlternateSetting == 1)
+	if (InterfaceIndex == m_OutInterfaceIndex)
 	{
-		GetUSB()->OpenEndpoint(configs.EndpointIn, configs.TransmitPacketSize, (uint8)USBEndpointAttributes::Isochronous | (uint8)EndpointSyncTypes::Async);
+		if (m_OutAltSetting == AlternateSetting)
+			return true;
 
-		TransmitBuffer();
+		if (AlternateSetting == 1)
+			GetUSB()->OpenEndpoint(configs.EndpointOut, configs.ReceivePacketSize, type);
+		else
+			GetUSB()->CloseEndpoint(configs.EndpointOut);
+
+		m_RxAudioFIFO.Clear();
+
+		m_OutAltSetting = AlternateSetting;
 	}
-	else
-		GetUSB()->CloseEndpoint(configs.EndpointIn);
+	else if (InterfaceIndex == m_InInterfaceIndex)
+	{
+		if (m_InAltSetting == AlternateSetting)
+			return true;
 
-	m_InAltSetting = AlternateSetting;
+		m_TransmitFIFO.Clear();
+
+		if (AlternateSetting == 0)
+			GetUSB()->CloseEndpoint(configs.EndpointIn);
+		else
+		{
+			GetUSB()->OpenEndpoint(configs.EndpointIn, configs.TransmitPacketSize, type);
+
+			TransmitBuffer();
+		}
+
+		m_InAltSetting = AlternateSetting;
+	}
 
 	return true;
 }
@@ -224,7 +356,7 @@ void DaisyUSBAMCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, ui
 		it->wTerminalType = (uint16)TerminalTypes::USBStreaming;
 		it->bAssocTerminal = 0;
 		it->bNrChannels = Config.OutputChannelCount;
-		it->wChannelConfig = (uint16)(Config.OutputChannelCount == 1 ? ChannelOutputPositions::Unknown : ChannelOutputPositions::Stereo);
+		it->wChannelConfig = (uint16)(Config.OutputChannelCount == 2 ? ChannelOutputPositions::Stereo : ChannelOutputPositions::Unknown);
 		it->iChannelNames = 0;
 		it->iTerminal = 0;
 		BufferOffset += sizeof(UAC1InputTerminalDescriptor);
@@ -238,7 +370,7 @@ void DaisyUSBAMCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, ui
 			fuStart[0] = fuLength;
 			fuStart[1] = (uint8)USBDescTypes::CS_INTERFACE;
 			fuStart[2] = AC_DESC_FEATURE_UNIT;
-			fuStart[3] = FU_SPEAKER_ID;
+			fuStart[3] = FU_OUTPUT_ID;
 			fuStart[4] = IT_USB_STREAMING_ID;
 			fuStart[5] = 1; // bControlSize
 
@@ -259,10 +391,10 @@ void DaisyUSBAMCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, ui
 		ot->bLength = sizeof(UAC1OutputTerminalDescriptor);
 		ot->bDescriptorType = USBDescTypes::CS_INTERFACE;
 		ot->bDescriptorSubtype = AC_DESC_OUTPUT_TERMINAL;
-		ot->bTerminalID = OT_SPEAKER_ID;
-		ot->wTerminalType = (uint16)TerminalTypes::Speaker;
+		ot->bTerminalID = OT_OUTPUT_ID;
+		ot->wTerminalType = (uint16)TerminalTypes::LineOut;
 		ot->bAssocTerminal = 0;
-		ot->bSourceID = FU_SPEAKER_ID;
+		ot->bSourceID = FU_OUTPUT_ID;
 		ot->iTerminal = 0;
 		BufferOffset += sizeof(UAC1OutputTerminalDescriptor);
 	}
@@ -274,11 +406,11 @@ void DaisyUSBAMCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, ui
 		it->bLength = sizeof(UAC1InputTerminalDescriptor);
 		it->bDescriptorType = USBDescTypes::CS_INTERFACE;
 		it->bDescriptorSubtype = AC_DESC_INPUT_TERMINAL;
-		it->bTerminalID = IT_MIC_ID;
-		it->wTerminalType = (uint16)TerminalTypes::Microphone;
+		it->bTerminalID = IT_INPUT_ID;
+		it->wTerminalType = (uint16)TerminalTypes::LineIn;
 		it->bAssocTerminal = 0;
 		it->bNrChannels = Config.InputChannelCount;
-		it->wChannelConfig = (uint16)(Config.InputChannelCount == 1 ? ChannelOutputPositions::Unknown : ChannelOutputPositions::Stereo);
+		it->wChannelConfig = (uint16)(Config.InputChannelCount == 2 ? ChannelOutputPositions::Stereo : ChannelOutputPositions::Unknown);
 		it->iChannelNames = 0;
 		it->iTerminal = 0;
 		BufferOffset += sizeof(UAC1InputTerminalDescriptor);
@@ -291,8 +423,8 @@ void DaisyUSBAMCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, ui
 			fuStart[0] = fuLength;
 			fuStart[1] = (uint8)USBDescTypes::CS_INTERFACE;
 			fuStart[2] = AC_DESC_FEATURE_UNIT;
-			fuStart[3] = FU_MIC_ID;
-			fuStart[4] = IT_MIC_ID;
+			fuStart[3] = FU_INPUT_ID;
+			fuStart[4] = IT_INPUT_ID;
 			fuStart[5] = 1; // bControlSize
 
 			uint8 masterControls = 0;
@@ -315,7 +447,7 @@ void DaisyUSBAMCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, ui
 		ot->bTerminalID = OT_USB_STREAMING_ID;
 		ot->wTerminalType = (uint16)TerminalTypes::USBStreaming;
 		ot->bAssocTerminal = 0;
-		ot->bSourceID = FU_MIC_ID;
+		ot->bSourceID = FU_INPUT_ID;
 		ot->iTerminal = 0;
 		BufferOffset += sizeof(UAC1OutputTerminalDescriptor);
 	}
@@ -338,7 +470,11 @@ void DaisyUSBAMCInterface::TransmitBuffer(void)
 {
 	const Configs& configs = GetConfigs();
 
-	memset(m_TransmitBuffer, 0, configs.TransmitPacketSize);
+	uint16 bytesRead = m_TransmitFIFO.Pop(m_TransmitBuffer, configs.TransmitPacketSize);
+
+	if (bytesRead < configs.TransmitPacketSize)
+		Memory::Set(m_TransmitBuffer + bytesRead, 0, configs.TransmitPacketSize - bytesRead);
+
 	EndpointTransmit(m_TransmitBuffer, configs.TransmitPacketSize);
 }
 
@@ -356,7 +492,7 @@ void DaisyUSBAMCInterface::BuildStreamingInterface(EP0Buffer& EP0Buffer, uint16&
 	uint8* buffer = EP0Buffer.configDescs;
 
 	const uint32 defaultSampleRate = Config.SupportedSampleRates[Config.DefaultSampleRateIndex];
-	const uint8 defaultBitDepths = Config.SupportedBitDepths[Config.DefaultBitDepthIndex];
+	const uint8 defaultBitDepths = (uint8)Config.SupportedBitDepths[Config.DefaultBitDepthIndex];
 	uint8 subslotSize = (uint8)(defaultBitDepths / 8);
 
 	// --- Alt Setting 0: zero-bandwidth ---
@@ -435,7 +571,7 @@ void DaisyUSBAMCInterface::BuildStreamingInterface(EP0Buffer& EP0Buffer, uint16&
 	isoDesc->bLength = sizeof(UAC1IsoEndpointDescriptor);
 	isoDesc->bDescriptorType = USBDescTypes::CS_ENDPOINT;
 	isoDesc->bDescriptorSubtype = AS_DESC_EP_GENERAL;
-	isoDesc->bmAttributes = 0; // should match what the host actually requests
+	isoDesc->bmAttributes = (Config.SupportedSampleRateCount != 1 || Config.SupportedBitDepthCount != 1 ? 0x01 : 0x00);
 	isoDesc->bLockDelayUnits = 0;
 	isoDesc->wLockDelay = 0;
 	BufferOffset += sizeof(UAC1IsoEndpointDescriptor);
@@ -459,7 +595,7 @@ uint16 DaisyUSBAMCInterface::CalculateIsoPacketSize(uint8 ChannelCount, const AM
 	if (ChannelCount == 0)
 		return 0;
 
-	const uint8 defaultBitDepth = Class.SupportedBitDepths[Class.DefaultBitDepthIndex];
+	const uint8 defaultBitDepth = (uint8)Class.SupportedBitDepths[Class.DefaultBitDepthIndex];
 
 	// Ensure the packet size can accommodate the highest supported sample rate.
 	uint32 maxSampleRate = 0;

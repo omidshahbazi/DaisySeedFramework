@@ -134,6 +134,7 @@
     <ClInclude Include="Include\DaisySeedFramework\Point.h" />
     <ClInclude Include="Include\DaisySeedFramework\Rect.h" />
     <ClInclude Include="Include\DaisySeedFramework\SDL_HAL.h" />
+    <ClInclude Include="Include\DaisySeedFramework\StaticRingBuffer.h" />
     <ClInclude Include="Include\DaisySeedFramework\StaticStack.h" />
     <ClInclude Include="Include\DaisySeedFramework\StaticVector.h" />
     <ClInclude Include="Include\DaisySeedFramework\USBHost.h" />

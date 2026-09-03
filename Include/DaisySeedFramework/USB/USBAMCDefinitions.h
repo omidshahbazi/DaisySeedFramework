@@ -40,9 +40,14 @@ enum class AMCSubClasses : uint8
 // instead of a generic name.
 enum class TerminalTypes : uint16
 {
-	USBStreaming = 0x0101, // The "terminal" on the USB side of the topology (where samples enter/leave over USB)
-	Microphone = 0x0201,   // A microphone-type input terminal (capture path)
-	Speaker = 0x0301,      // A speaker-type output terminal (playback path)
+	USBStreaming = 0x0101,	// The "terminal" on the USB side of the topology (where samples enter/leave over USB)
+	
+	Microphone = 0x0201,	// A microphone-type input terminal (capture path)
+	LineIn = 0x0603,		// A line-type input terminal (capture path)
+	
+	Speaker = 0x0301,		// A speaker-type output terminal (playback path)
+	Headphones = 0x0302,	// A headphone-type output terminal (playback path)
+	LineOut = 0x0603		// A line-type input terminal (playback path)
 };
 
 // Control Selector values placed in the high byte of wValue on class-specific
@@ -59,17 +64,21 @@ enum class TerminalTypes : uint16
 // control, UAC1 encodes direction into the request code itself.
 #define UAC1_SET_CUR   0x01 // Host -> device: set the current value of a control
 #define UAC1_GET_CUR   0x81 // Device -> host: report the current value of a control
+#define UAC1_GET_MIN   0x82  // Get Minimum allowable setting (Device -> Host)
+#define UAC1_GET_MAX   0x83  // Get Maximum allowable setting (Device -> Host)
+#define UAC1_GET_RES   0x84  // Get Resolution/step size (Device -> Host)
 
 // Fixed Entity/Terminal/Unit ID numbers used inside a single AC interface's
 // topology graph. These IDs only need to be unique *within* one AC
 // interface (each AudioControl interface has its own ID namespace), so the
 // same constants are safely reused across multiple AMC instances.
 #define IT_USB_STREAMING_ID 2   // Input Terminal: audio coming from the host (playback path)
-#define OT_SPEAKER_ID        3  // Output Terminal: audio going out to the speaker (playback path)
-#define FU_SPEAKER_ID        4  // Feature Unit: mute/volume control on the playback path
-#define IT_MIC_ID            5  // Input Terminal: audio coming from the microphone/DSP (capture path)
+#define OT_OUTPUT_ID        3	// Output Terminal: audio going out to the speaker (playback path)
+#define FU_OUTPUT_ID        4	// Feature Unit: mute/volume control on the playback path
+
+#define IT_INPUT_ID         5	// Input Terminal: audio coming from Line In (capture path)
 #define OT_USB_STREAMING_ID  6  // Output Terminal: audio going out to the host (capture path)
-#define FU_MIC_ID            7  // Feature Unit: mute/volume control on the capture path
+#define FU_INPUT_ID         7	// Feature Unit: mute/volume control on the capture path
 
 // Synchronization type, encoded into bits D3..D2 of an isochronous
 // endpoint's bmAttributes byte. This tells the host how the device's

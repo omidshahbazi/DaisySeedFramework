@@ -274,6 +274,11 @@ void DaisyUSB::Start(const USBProfile& Profile)
 			{
 				ASSERT(node.AMC.OutputChannelCount != 0 || node.AMC.InputChannelCount != 0, "AMC needs at least one channel");
 				ASSERT(node.AMC.EnableHardwareMute || node.AMC.EnableHardwareVolumeControl, "Either of EnableHardwareMute or EnableHardwareVolumeControl must be true");
+				ASSERT(node.AMC.SupportedSampleRateCount != 0, "AMC needs at least one supported sample rate");
+				ASSERT(node.AMC.SupportedBitDepthCount != 0, "AMC needs at least one supported sample rate");
+
+				// LINE1_TODO: Add support for multiple bit depths. For now, we only support one bit depth. (Requires alt setting change)
+				ASSERT(node.AMC.SupportedBitDepthCount == 1, "AMC only supports one bit depth for now");
 
 				configs.InterfaceIndexCount = DaisyUSBAMCInterface::CalculateRequiredInterfaceCount(node.AMC);
 
@@ -566,6 +571,8 @@ void DaisyUSB::HandleGetDescriptor(void)
 
 		m_EP0TransmitHandler.MoveForward();
 	}
+	else
+		SetStall();
 }
 
 void DaisyUSB::AllocateReceiveBuffer(uint16 Size)
@@ -677,9 +684,22 @@ uint16 DaisyUSB::BuildDeviceDescriptor(EP0Buffer& EP0Buffer, const USBProfile& P
 	EP0Buffer.deviceDesc.idVendor = Profile.Device.VendorID;
 	EP0Buffer.deviceDesc.idProduct = Profile.Device.ProductID;
 	EP0Buffer.deviceDesc.bcdDevice = Profile.Device.Version;
-	EP0Buffer.deviceDesc.iManufacturer = USB_STRING_INDEX_MANUFACTURER;
-	EP0Buffer.deviceDesc.iProduct = USB_STRING_INDEX_PRODUCT;
-	EP0Buffer.deviceDesc.iSerialNumber = USB_STRING_INDEX_SERIAL;
+
+	if (GetStringLength(Profile.Device.Manufacturer) != 0)
+		EP0Buffer.deviceDesc.iManufacturer = USB_STRING_INDEX_MANUFACTURER;
+	else
+		EP0Buffer.deviceDesc.iManufacturer = 0;
+
+	if (GetStringLength(Profile.Device.Product) != 0)
+		EP0Buffer.deviceDesc.iProduct = USB_STRING_INDEX_PRODUCT;
+	else
+		EP0Buffer.deviceDesc.iProduct = 0;
+
+	if (GetStringLength(Profile.Device.SerialNumber) != 0)
+		EP0Buffer.deviceDesc.iSerialNumber = USB_STRING_INDEX_SERIAL;
+	else
+		EP0Buffer.deviceDesc.iSerialNumber = 0;
+
 	EP0Buffer.deviceDesc.bNumConfigurations = USB_CONFIG_VALUE_DEFAULT;
 
 	return sizeof(USBDeviceDescriptor);
