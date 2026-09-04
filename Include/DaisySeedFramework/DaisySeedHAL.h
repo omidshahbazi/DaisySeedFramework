@@ -111,19 +111,17 @@ public:
 
 	void Break(void) const override;
 
-	// Bootloader version has to be in sync with the libDaisy, so if you see mal-function here, update either of them
+	// Bootloader version has to be in sync with the libDaisy, so if you see malfunction here, update either of them
 	// https://flash.daisy.audio/
 	void Reset(bool InfiniteTime = true) const override;
 
 	void Delay(uint16 Ms) const override;
 
-	IUSB* GetPrimaryUSB(void) override
+	IUSB* GetUSB(uint8 Index = 0) override
 	{
-		return &m_HighSpeedUSB;
-	}
+		if (Index == 0)
+			return &m_HighSpeedUSB;
 
-	IUSB* GetSecondaryUSB(void) override
-	{
 		return &m_FullSpeedUSB;
 	}
 

@@ -27,6 +27,7 @@ public:
 	void OnSetupCompleted(void) override;
 	void OnDataInStage(void) override;
 	void OnDataOutStage(void) override;
+	
 	bool OnSetInterface(uint8 InterfaceIndex, uint8 AlternateSetting) override
 	{
 		return (AlternateSetting == 0);

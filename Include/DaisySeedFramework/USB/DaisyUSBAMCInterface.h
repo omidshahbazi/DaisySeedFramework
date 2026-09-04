@@ -74,8 +74,9 @@ public:
 
 	bool OnSetupStage(const USBDeviceSetupPacket* Setup) override;
 	void OnSetupCompleted(void) override;
-	void OnDataInStage(void) override;
 	void OnDataOutStage(void) override;
+	void OnStartOfFrame(void) override;
+
 	bool OnSetInterface(uint8 InterfaceIndex, uint8 AlternateSetting) override;
 	uint8 GetCurrentAltSetting(uint8 InterfaceIndex) const override;
 	void BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, uint16& BufferOffset, uint8 InterfaceIndex, const USBClassNode& Class) override;
@@ -108,10 +109,9 @@ private:
 	uint8 m_InInterfaceIndex;
 
 	uint8* m_ReceiveBuffer;
-	StaticRingBuffer<uint8, sizeof(int32) * 1024> m_ReceiveFIFO;
+	StaticRingBuffer<uint8, sizeof(int32) * 1024, false> m_ReceiveFIFO;
 	uint8* m_TransmitBuffer;
-	uint8* m_TransmitBuffer;
-	StaticRingBuffer<uint8, sizeof(int32) * 1024> m_TransmitFIFO;
+	StaticRingBuffer<uint8, sizeof(int32) * 1024, false> m_TransmitFIFO;
 
 	ControlChangedCallback m_ControlChangedCallback;
 
@@ -130,15 +130,14 @@ uint16 DaisyUSBAMCInterface::PopSamples(T* InterleavedBuffer, uint16 TotalSample
 {
 	ASSERT_ON_FLOATING_TYPE(T);
 
-	const BitDepths bitDepth = m_CurrentOutBitDepth;
-	const uint8 bytesPerSample = (bitDepth / 8);
+	const uint8 bytesPerSample = ((uint8)m_CurrentOutBitDepth / 8);
 	const size_t bytesToRead = TotalSampleCount * bytesPerSample;
 
 	uint16 samplesPopped = 0;
 	if (m_ReceiveFIFO.GetSize() >= bytesToRead)
 		samplesPopped = TotalSampleCount;
 
-	switch (bitDepth)
+	switch (m_CurrentOutBitDepth)
 	{
 	case BitDepths::BitDepths16:
 	{
@@ -200,9 +199,7 @@ void DaisyUSBAMCInterface::PushSamples(const T* const InterleavedBuffer, uint16 
 	ASSERT(InterleavedBuffer != nullptr, "InterleavedBuffer is null");
 	ASSERT(TotalSampleCount != 0, "TotalSampleCount is zero");
 
-	const BitDepths bitDepth = m_CurrentInBitDepth;
-
-	switch (bitDepth)
+	switch (m_CurrentInBitDepth)
 	{
 	case BitDepths::BitDepths16:
 	{
@@ -223,9 +220,9 @@ void DaisyUSBAMCInterface::PushSamples(const T* const InterleavedBuffer, uint16 
 		{
 			T sample = Math::ClampSignal(InterleavedBuffer[i]);
 
-			uint24 pcm24 = static_cast<int32>(sample * static_cast<T>(8388607.0));
+			int24_t pcm24 = static_cast<int24_t>(sample * static_cast<T>(8388607.0));
 
-			m_TransmitFIFO.Push(pcm24.bytes, sizeof(pcm24.bytes));
+			m_TransmitFIFO.Push(reinterpret_cast<const uint8*>(&pcm24), sizeof(int24_t));
 		}
 		break;
 	}

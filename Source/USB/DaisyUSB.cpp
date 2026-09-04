@@ -198,20 +198,35 @@ extern "C"
 		}
 	}
 
-	//void HAL_PCD_SOFCallback(PCD_HandleTypeDef* hpcd)
-	//{
-	//	for (uint8_t i = 0; i < (uint8_t)DaisyUSB::Peripherals::COUNT; ++i)
-	//	{
-	//		if (s_Instance[i] == nullptr)
-	//			continue;
+	void HAL_PCD_ISO_IN_IncompleteCallback(PCD_HandleTypeDef* hpcd, uint8_t epnum)
+	{
+		for (uint8_t i = 0; i < (uint8_t)DaisyUSB::Peripherals::COUNT; ++i)
+		{
+			if (s_Instance[i] == nullptr)
+				continue;
 
-	//		if (&s_Instance[i]->m_DeviceHandle != hpcd)
-	//			continue;
+			if (&s_Instance[i]->m_DeviceHandle != hpcd)
+				continue;
 
-	//		s_Instance[i]->OnSOF();
-	//		break;
-	//	}
-	//}
+			s_Instance[i]->OnIsoInIncomplete(epnum);
+			break;
+		}
+	}
+
+	void HAL_PCD_SOFCallback(PCD_HandleTypeDef* hpcd)
+	{
+		for (uint8_t i = 0; i < (uint8_t)DaisyUSB::Peripherals::COUNT; ++i)
+		{
+			if (s_Instance[i] == nullptr)
+				continue;
+
+			if (&s_Instance[i]->m_DeviceHandle != hpcd)
+				continue;
+
+			s_Instance[i]->OnStartOfFrame();
+			break;
+		}
+	}
 }
 
 #define CHECK_CALL(Expr) ASSERT((Expr) == HAL_OK, #Expr);
@@ -315,7 +330,7 @@ void DaisyUSB::Start(const USBProfile& Profile)
 		m_DeviceHandle.Init.speed = PCD_SPEED_FULL;
 		m_DeviceHandle.Init.phy_itface = PCD_PHY_EMBEDDED;
 
-		//m_DeviceHandle.Init.Sof_enable = ENABLE;
+		m_DeviceHandle.Init.Sof_enable = ENABLE;
 		m_DeviceHandle.Init.low_power_enable = DISABLE;
 		m_DeviceHandle.Init.lpm_enable = DISABLE;
 		m_DeviceHandle.Init.vbus_sensing_enable = DISABLE;
@@ -512,6 +527,21 @@ void DaisyUSB::OnDataOutStage(uint8 EPNum)
 	dii.Interface->OnDataOutStage();
 }
 
+void DaisyUSB::OnIsoInIncomplete(uint8 EPNum)
+{
+	if (EPNum == TO_ENDPOINT_NUMBER(USB_EP0_OUT))
+		return;
+
+	DeviceInstanceInfo& dii = GetDeviceInstanceByEndpoint(EPNum);
+	dii.Interface->OnIsoInIncomplete();
+}
+
+void DaisyUSB::OnStartOfFrame(void)
+{
+	for (uint8 i = 0; i < m_DeviceCount; ++i)
+		m_Devices[i].Interface->OnStartOfFrame();
+}
+
 void DaisyUSB::HandleGetDescriptor(void)
 {
 	static EP0Buffer ep0Buffers[(uint8)DaisyUSB::Peripherals::COUNT] = {};
@@ -605,9 +635,17 @@ void DaisyUSB::DeviceReceive(uint8* Buffer, uint16 Length, uint8 Endpoint)
 	CHECK_CALL(HAL_PCD_EP_Receive(&m_DeviceHandle, Endpoint, Buffer, Length));
 }
 
-void DaisyUSB::DeviceTransmit(const uint8* Buffer, uint16 Length, uint8 Endpoint)
+void DaisyUSB::DeviceTransmit(const uint8* Buffer, uint16 Length, uint8 Endpoint, bool ClearDCache)
 {
+	if (ClearDCache)
+		SCB_CleanDCache_by_Addr(const_cast<uint8*>(Buffer), Length);
+
 	CHECK_CALL(HAL_PCD_EP_Transmit(&m_DeviceHandle, Endpoint, const_cast<uint8*>(Buffer), Length));
+}
+
+void DaisyUSB::FlushEndpoint(uint8 Endpoint)
+{
+	CHECK_CALL(HAL_PCD_EP_Flush(&m_DeviceHandle, Endpoint));
 }
 
 void DaisyUSB::SetStall(void)

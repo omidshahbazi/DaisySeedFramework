@@ -29,6 +29,11 @@ bool DaisyUSBInterfaceCommon::MatchByEndpoint(uint8 Endpoint) const
 		TO_ENDPOINT_NUMBER(m_Configs.EndpointIn) == Endpoint);
 }
 
+void DaisyUSBInterfaceCommon::EndpointPrepareReceive(uint8* Buffer, uint16 Length)
+{
+	EndpointReceive(Buffer, Length);
+}
+
 uint16 DaisyUSBInterfaceCommon::EndpointReceiveCount(void)
 {
 	return m_USB->DeviceReceiveCount(m_Configs.EndpointOut);
@@ -39,9 +44,14 @@ void DaisyUSBInterfaceCommon::EndpointReceive(uint8* Buffer, uint16 Length)
 	m_USB->DeviceReceive(Buffer, Length, m_Configs.EndpointOut);
 }
 
-void DaisyUSBInterfaceCommon::EndpointTransmit(const uint8* Buffer, uint16 Length)
+void DaisyUSBInterfaceCommon::EndpointTransmit(const uint8* Buffer, uint16 Length, bool ClearDCache)
 {
-	m_USB->DeviceTransmit(Buffer, Length, m_Configs.EndpointIn);
+	m_USB->DeviceTransmit(Buffer, Length, m_Configs.EndpointIn, ClearDCache);
+}
+
+void DaisyUSBInterfaceCommon::EndpointFlush(void)
+{
+	m_USB->FlushEndpoint(m_Configs.EndpointIn);
 }
 
 #endif

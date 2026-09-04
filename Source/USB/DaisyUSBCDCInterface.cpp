@@ -90,7 +90,7 @@ void DaisyUSBCDCInterface::OnSetupCompleted(void)
 	if (TO_ENDPOINT_NUMBER(configs.EndpointIn) != 0)
 		usb->OpenEndpoint(configs.EndpointIn, configs.TransmitPacketSize, (uint8)USBEndpointAttributes::Bulk);
 
-	EndpointReceive(m_ReceiveBuffer, GetConfigs().ReceivePacketSize);
+	EndpointPrepareReceive(m_ReceiveBuffer, GetConfigs().ReceivePacketSize);
 }
 
 void DaisyUSBCDCInterface::OnDataInStage(void)
@@ -115,7 +115,7 @@ void DaisyUSBCDCInterface::OnDataOutStage(void)
 		m_ReceiveCallback(m_ReceiveBuffer, len);
 	}
 
-	EndpointReceive(m_ReceiveBuffer, GetConfigs().ReceivePacketSize);
+	EndpointPrepareReceive(m_ReceiveBuffer, GetConfigs().ReceivePacketSize);
 }
 
 void DaisyUSBCDCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, uint16& BufferOffset, uint8 InterfaceIndex, const USBClassNode& Class)

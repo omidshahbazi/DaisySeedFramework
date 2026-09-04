@@ -5,7 +5,7 @@
 #include <DigitalSignalProcessing/Debug.h>
 #include <DigitalSignalProcessing/Memory.h>
 
-template <typename T>
+template <typename T, bool AllowOverwrite = true>
 struct RingBuffer
 {
 public:
@@ -23,7 +23,19 @@ public:
 	bool Push(const T& Value)
 	{
 		if (m_Count >= m_Capacity)
-			return false;
+		{
+			if constexpr (AllowOverwrite)
+			{
+				m_Buffer[m_Head] = Value;
+				m_Head = (m_Head + 1) % m_Capacity;
+				m_Tail = (m_Tail + 1) % m_Capacity;
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
 
 		m_Buffer[m_Head] = Value;
 		m_Head = (m_Head + 1) % m_Capacity;
@@ -34,11 +46,27 @@ public:
 	uint16 Push(const T* Values, uint16 Count)
 	{
 		uint16 written = 0;
-		while (written < Count && m_Count < m_Capacity)
+		while (written < Count)
 		{
-			m_Buffer[m_Head] = Values[written];
-			m_Head = (m_Head + 1) % m_Capacity;
-			++m_Count;
+			if (m_Count >= m_Capacity)
+			{
+				if constexpr (AllowOverwrite)
+				{
+					m_Buffer[m_Head] = Values[written];
+					m_Head = (m_Head + 1) % m_Capacity;
+					m_Tail = (m_Tail + 1) % m_Capacity;
+				}
+				else
+				{
+					break;
+				}
+			}
+			else
+			{
+				m_Buffer[m_Head] = Values[written];
+				m_Head = (m_Head + 1) % m_Capacity;
+				++m_Count;
+			}
 			++written;
 		}
 		return written;
@@ -120,11 +148,12 @@ private:
 	uint16 m_Count;
 };
 
-template <typename T, uint16 MaxSize>
-struct StaticRingBuffer : public RingBuffer<T>
+template <typename T, uint16 MaxSize, bool AllowOverwrite = true>
+struct StaticRingBuffer : public RingBuffer<T, AllowOverwrite>
 {
 public:
-	StaticRingBuffer(void) : RingBuffer<T>(m_Buffer, MaxSize)
+	StaticRingBuffer(void)
+		: RingBuffer<T, AllowOverwrite>(m_Buffer, MaxSize)
 	{}
 
 private:
