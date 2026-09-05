@@ -166,6 +166,22 @@ extern "C"
 		}
 	}
 
+	void HAL_PCD_DataOutStageCallback(PCD_HandleTypeDef* hpcd, uint8_t epnum)
+	{
+		for (uint8_t i = 0; i < (uint8_t)DaisyUSB::Peripherals::COUNT; ++i)
+		{
+			if (s_Instance[i] == nullptr)
+				continue;
+
+			if (&s_Instance[i]->m_DeviceHandle != hpcd)
+				continue;
+
+			s_Instance[i]->OnDataOutStage(epnum);
+
+			break;
+		}
+	}
+
 	void HAL_PCD_DataInStageCallback(PCD_HandleTypeDef* hpcd, uint8_t epnum)
 	{
 		for (uint8_t i = 0; i < (uint8_t)DaisyUSB::Peripherals::COUNT; ++i)
@@ -182,7 +198,7 @@ extern "C"
 		}
 	}
 
-	void HAL_PCD_DataOutStageCallback(PCD_HandleTypeDef* hpcd, uint8_t epnum)
+	void HAL_PCD_ISOOUTIncompleteCallback(PCD_HandleTypeDef* hpcd, uint8_t epnum)
 	{
 		for (uint8_t i = 0; i < (uint8_t)DaisyUSB::Peripherals::COUNT; ++i)
 		{
@@ -192,8 +208,7 @@ extern "C"
 			if (&s_Instance[i]->m_DeviceHandle != hpcd)
 				continue;
 
-			s_Instance[i]->OnDataOutStage(epnum);
-
+			s_Instance[i]->OnIsoOutIncomplete(epnum);
 			break;
 		}
 	}
@@ -275,8 +290,8 @@ void DaisyUSB::Start(const USBProfile& Profile)
 				configs.EndpointIn = TO_IN_ENDPOINT(nextEndpoint);
 				nextEndpoint++;
 
-				configs.ReceivePacketSize = (uint16)node.CDC.ReceiveBufferSize;
-				configs.TransmitPacketSize = (uint16)node.CDC.SendBufferSize;
+				configs.MaxReceivePacketSize = (uint16)node.CDC.ReceiveBufferSize;
+				configs.MaxTransmitPacketSize = (uint16)node.CDC.SendBufferSize;
 
 				DaisyUSBCDCInterface* cdc = Memory::Allocate<DaisyUSBCDCInterface>(1, true);
 				new (cdc) DaisyUSBCDCInterface(this, configs);
@@ -302,8 +317,8 @@ void DaisyUSB::Start(const USBProfile& Profile)
 				configs.EndpointIn = (node.AMC.InputChannelCount == 0 ? 0 : TO_IN_ENDPOINT(nextEndpoint));
 				nextEndpoint++;
 
-				configs.ReceivePacketSize = DaisyUSBAMCInterface::CalculateIsoPacketSize(node.AMC.OutputChannelCount, node.AMC);
-				configs.TransmitPacketSize = DaisyUSBAMCInterface::CalculateIsoPacketSize(node.AMC.InputChannelCount, node.AMC);
+				configs.MaxReceivePacketSize = DaisyUSBAMCInterface::CalculateMaxPacketSize(node.AMC.OutputChannelCount, node.AMC);
+				configs.MaxTransmitPacketSize = DaisyUSBAMCInterface::CalculateMaxPacketSize(node.AMC.InputChannelCount, node.AMC);
 
 				DaisyUSBAMCInterface* amc = Memory::Allocate<DaisyUSBAMCInterface>(1, true);
 				new (amc) DaisyUSBAMCInterface(this, configs, node.AMC);
@@ -498,6 +513,15 @@ void DaisyUSB::OnSetupStage(void)
 	}
 }
 
+void DaisyUSB::OnDataOutStage(uint8 EPNum)
+{
+	if (EPNum == TO_ENDPOINT_NUMBER(USB_EP0_OUT))
+		return;
+
+	DeviceInstanceInfo& dii = GetDeviceInstanceByEndpoint(EPNum);
+	dii.Interface->OnDataOutStage();
+}
+
 void DaisyUSB::OnDataInStage(uint8 EPNum)
 {
 	if (EPNum == TO_ENDPOINT_NUMBER(USB_EP0_IN))
@@ -518,13 +542,13 @@ void DaisyUSB::OnDataInStage(uint8 EPNum)
 	dii.Interface->OnDataInStage();
 }
 
-void DaisyUSB::OnDataOutStage(uint8 EPNum)
+void DaisyUSB::OnIsoOutIncomplete(uint8 EPNum)
 {
 	if (EPNum == TO_ENDPOINT_NUMBER(USB_EP0_OUT))
 		return;
 
 	DeviceInstanceInfo& dii = GetDeviceInstanceByEndpoint(EPNum);
-	dii.Interface->OnDataOutStage();
+	dii.Interface->OnIsoOutIncomplete();
 }
 
 void DaisyUSB::OnIsoInIncomplete(uint8 EPNum)

@@ -18,8 +18,8 @@ public:
 		uint8 EndpointCommand;
 		uint8 EndpointOut;
 		uint8 EndpointIn;
-		uint16 ReceivePacketSize;
-		uint16 TransmitPacketSize;
+		uint16 MaxReceivePacketSize;
+		uint16 MaxTransmitPacketSize;
 	};
 
 public:
@@ -27,9 +27,11 @@ public:
 
 	virtual bool OnSetupStage(const USBDeviceSetupPacket* Setup) = 0;
 	virtual void OnSetupCompleted(void) = 0;
+	virtual void OnDataOutStage(void)
+	{}
 	virtual void OnDataInStage(void)
 	{}
-	virtual void OnDataOutStage(void)
+	virtual void OnIsoOutIncomplete(void)
 	{}
 	virtual void OnIsoInIncomplete(void)
 	{}

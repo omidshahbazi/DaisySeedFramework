@@ -21,8 +21,10 @@ DaisyUSBAMCInterface::DaisyUSBAMCInterface(DaisyUSB* USB, const Configs& Configs
 	m_CurrentIsOutMuted(false),
 	m_CurrentIsInMuted(false)
 {
-	m_ReceiveBuffer = Memory::Allocate<uint8>(Configs.ReceivePacketSize, true);
-	m_TransmitBuffer = Memory::Allocate<uint8>(Configs.TransmitPacketSize, true);
+	m_ReceiveBuffer = Memory::Allocate<uint8>(Configs.MaxReceivePacketSize, true);
+	m_TransmitBuffer = Memory::Allocate<uint8>(Configs.MaxTransmitPacketSize, true);
+
+	UpdatePacketSize();
 
 	CalculateStreamingInterfaceIndices(GetConfigs(), Class, m_OutInterfaceIndex, m_InInterfaceIndex);
 }
@@ -76,6 +78,8 @@ bool DaisyUSBAMCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 					m_ControlChangedCallback(ControlTypes::InSampleRate);
 				}
 
+				UpdatePacketSize();
+
 				GetUSB()->DeviceTransmitAck();
 				return true;
 			}
@@ -90,7 +94,7 @@ bool DaisyUSBAMCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 		if (entityID != FU_OUTPUT_ID && entityID != FU_INPUT_ID)
 			return false;
 
-		bool isSpeaker = (entityID == FU_OUTPUT_ID);
+		bool isOutput = (entityID == FU_OUTPUT_ID);
 
 		if (controlSelector == CS_MUTE_CONTROL && m_Class.EnableHardwareMute)
 		{
@@ -99,7 +103,7 @@ bool DaisyUSBAMCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 				uint8 muteVal = 0;
 				GetUSB()->DeviceReceive(&muteVal);
 
-				if (isSpeaker)
+				if (isOutput)
 				{
 					m_CurrentIsOutMuted = (muteVal != 0);
 
@@ -118,7 +122,7 @@ bool DaisyUSBAMCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 			else if (Setup->bRequest == UAC1_GET_CUR)
 			{
 				uint8 muteVal;
-				if (isSpeaker)
+				if (isOutput)
 					muteVal = m_CurrentIsOutMuted;
 				else
 					muteVal = m_CurrentIsInMuted;
@@ -140,7 +144,7 @@ bool DaisyUSBAMCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 				int16 volume = 0;
 				GetUSB()->DeviceReceive(&volume);
 
-				if (isSpeaker)
+				if (isOutput)
 				{
 					m_CurrentOutVolume = dBGain((float)volume / VOLUME_STEPS);
 
@@ -159,7 +163,7 @@ bool DaisyUSBAMCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 			case UAC1_GET_CUR:
 			{
 				int16 volume;
-				if (isSpeaker)
+				if (isOutput)
 					volume = m_CurrentOutVolume * VOLUME_STEPS;
 				else
 					volume = m_CurrentInVolume * VOLUME_STEPS;
@@ -206,7 +210,7 @@ void DaisyUSBAMCInterface::OnSetupCompleted(void)
 	const Configs& configs = GetConfigs();
 
 	if (TO_ENDPOINT_NUMBER(configs.EndpointIn) != 0)
-		usb->AllocateTransmitBuffer(configs.EndpointIn, configs.TransmitPacketSize);
+		usb->AllocateTransmitBuffer(configs.EndpointIn, configs.MaxTransmitPacketSize);
 }
 
 void DaisyUSBAMCInterface::OnDataOutStage(void)
@@ -222,7 +226,7 @@ void DaisyUSBAMCInterface::OnDataOutStage(void)
 		m_ReceiveFIFO.Push(m_ReceiveBuffer, len);
 	}
 
-	EndpointPrepareReceive(m_ReceiveBuffer, configs.ReceivePacketSize);
+	EndpointPrepareReceive(m_ReceiveBuffer, configs.MaxReceivePacketSize);
 }
 
 void DaisyUSBAMCInterface::OnDataInStage(void)
@@ -236,6 +240,9 @@ void DaisyUSBAMCInterface::OnIsoInIncomplete(void)
 
 	TransmitBuffer();
 }
+
+void DaisyUSBAMCInterface::OnIsoOutIncomplete(void)
+{}
 
 bool DaisyUSBAMCInterface::OnSetInterface(uint8 InterfaceIndex, uint8 AlternateSetting)
 {
@@ -251,9 +258,9 @@ bool DaisyUSBAMCInterface::OnSetInterface(uint8 InterfaceIndex, uint8 AlternateS
 
 		if (AlternateSetting == 1)
 		{
-			GetUSB()->OpenEndpoint(configs.EndpointOut, configs.ReceivePacketSize, USBEndpointAttributes::Isochronous);
+			GetUSB()->OpenEndpoint(configs.EndpointOut, configs.MaxReceivePacketSize, USBEndpointAttributes::Isochronous);
 
-			EndpointPrepareReceive(m_ReceiveBuffer, configs.ReceivePacketSize);
+			EndpointPrepareReceive(m_ReceiveBuffer, configs.MaxReceivePacketSize);
 		}
 		else
 			GetUSB()->CloseEndpoint(configs.EndpointOut);
@@ -273,7 +280,7 @@ bool DaisyUSBAMCInterface::OnSetInterface(uint8 InterfaceIndex, uint8 AlternateS
 			GetUSB()->CloseEndpoint(configs.EndpointIn);
 		else
 		{
-			GetUSB()->OpenEndpoint(configs.EndpointIn, configs.TransmitPacketSize, USBEndpointAttributes::Isochronous);
+			GetUSB()->OpenEndpoint(configs.EndpointIn, configs.MaxTransmitPacketSize, USBEndpointAttributes::Isochronous);
 
 			TransmitBuffer();
 		}
@@ -472,23 +479,23 @@ void DaisyUSBAMCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, ui
 
 	// ---------- Output AS Interface ----------
 	if (hasOutput)
-		BuildStreamingInterface(EP0Buffer, BufferOffset, asOutInterface, Config.OutputChannelCount, configs.EndpointOut, IT_USB_STREAMING_ID, Config, true);
+		BuildStreamingInterface(EP0Buffer, BufferOffset, asOutInterface, Config.OutputChannelCount, configs.EndpointOut, IT_USB_STREAMING_ID, Config);
 
 	// ---------- Input AS Interface ----------
 	if (hasInput)
-		BuildStreamingInterface(EP0Buffer, BufferOffset, asInInterface, Config.InputChannelCount, configs.EndpointIn, OT_USB_STREAMING_ID, Config, false);
+		BuildStreamingInterface(EP0Buffer, BufferOffset, asInInterface, Config.InputChannelCount, configs.EndpointIn, OT_USB_STREAMING_ID, Config);
 }
 
 void DaisyUSBAMCInterface::TransmitBuffer(void)
 {
 	const Configs& configs = GetConfigs();
 
-	uint16 bytesRead = m_TransmitFIFO.Pop(m_TransmitBuffer, configs.TransmitPacketSize);
+	uint16 bytesRead = m_TransmitFIFO.Pop(m_TransmitBuffer, m_CurrentTransmitPacketSize);
 
-	if (bytesRead < configs.TransmitPacketSize)
-		Memory::Set(m_TransmitBuffer + bytesRead, 0, configs.TransmitPacketSize - bytesRead);
+	if (bytesRead < m_CurrentTransmitPacketSize)
+		Memory::Set(m_TransmitBuffer + bytesRead, 0, m_CurrentTransmitPacketSize - bytesRead);
 
-	EndpointTransmit(m_TransmitBuffer, configs.TransmitPacketSize);
+	EndpointTransmit(m_TransmitBuffer, m_CurrentTransmitPacketSize);
 }
 
 bool DaisyUSBAMCInterface::IsSampleRateSupported(uint32 Rate) const
@@ -500,7 +507,13 @@ bool DaisyUSBAMCInterface::IsSampleRateSupported(uint32 Rate) const
 	return false;
 }
 
-void DaisyUSBAMCInterface::BuildStreamingInterface(EP0Buffer& EP0Buffer, uint16& BufferOffset, uint8 InterfaceIndex, uint8 ChannelCount, uint8 Endpoint, uint8 TerminalLinkID, const AMCClassConfig& Config, bool IsOutput)
+void DaisyUSBAMCInterface::UpdatePacketSize(void)
+{
+	m_CurrentReceivePacketSize = CalculatePacketSize(m_Class.OutputChannelCount, m_CurrentOutSampleRate, m_CurrentOutBitDepth);
+	m_CurrentTransmitPacketSize = CalculatePacketSize(m_Class.InputChannelCount, m_CurrentInSampleRate, m_CurrentInBitDepth);
+}
+
+void DaisyUSBAMCInterface::BuildStreamingInterface(EP0Buffer& EP0Buffer, uint16& BufferOffset, uint8 InterfaceIndex, uint8 ChannelCount, uint8 Endpoint, uint8 TerminalLinkID, const AMCClassConfig& Config)
 {
 	uint8* buffer = EP0Buffer.configDescs;
 
@@ -568,14 +581,12 @@ void DaisyUSBAMCInterface::BuildStreamingInterface(EP0Buffer& EP0Buffer, uint16&
 		BufferOffset += formatLength;
 	}
 
-	const uint16 packetSize = CalculateIsoPacketSize(ChannelCount, Config);
-
 	USBEndpointDescriptor* ep = reinterpret_cast<USBEndpointDescriptor*>(buffer + BufferOffset);
 	ep->bLength = sizeof(USBEndpointDescriptor);
 	ep->bDescriptorType = USBDescTypes::Endpoint;
 	ep->bEndpointAddress = Endpoint;
 	ep->bmAttributes = (uint8)USBEndpointAttributes::Isochronous | (uint8)EndpointSyncTypes::Async;
-	ep->wMaxPacketSize = packetSize;
+	ep->wMaxPacketSize = CalculateMaxPacketSize(ChannelCount, Config);
 	ep->bInterval = 1;
 	BufferOffset += sizeof(USBEndpointDescriptor);
 
@@ -602,14 +613,18 @@ uint8 DaisyUSBAMCInterface::CalculateRequiredInterfaceCount(const AMCClassConfig
 	return 1 + (Class.OutputChannelCount > 0 ? 1 : 0) + (Class.InputChannelCount > 0 ? 1 : 0);
 }
 
-uint16 DaisyUSBAMCInterface::CalculateIsoPacketSize(uint8 ChannelCount, const AMCClassConfig& Class)
+uint16 DaisyUSBAMCInterface::CalculateMaxPacketSize(uint8 ChannelCount, const AMCClassConfig& Class)
 {
 	if (ChannelCount == 0)
 		return 0;
 
-	const uint8 defaultBitDepth = (uint8)Class.SupportedBitDepths[Class.DefaultBitDepthIndex];
+	BitDepths maxBitDepth = BitDepths::BitDepths8;
+	for (uint8 i = 0; i < Class.SupportedBitDepthCount; ++i)
+	{
+		if (Class.SupportedBitDepths[i] > maxBitDepth)
+			maxBitDepth = Class.SupportedBitDepths[i];
+	}
 
-	// Ensure the packet size can accommodate the highest supported sample rate.
 	uint32 maxSampleRate = 0;
 	for (uint8 i = 0; i < Class.SupportedSampleRateCount; ++i)
 	{
@@ -617,10 +632,15 @@ uint16 DaisyUSBAMCInterface::CalculateIsoPacketSize(uint8 ChannelCount, const AM
 			maxSampleRate = Class.SupportedSampleRates[i];
 	}
 
-	uint32 bytesPerFrame = ChannelCount * (defaultBitDepth / 8);
+	return CalculatePacketSize(ChannelCount, maxSampleRate, (BitDepths)maxBitDepth);
+}
+
+uint16 DaisyUSBAMCInterface::CalculatePacketSize(uint8 ChannelCount, uint32 SampleRate, BitDepths BitDepth)
+{
+	uint32 bytesPerFrame = ChannelCount * ((uint8)BitDepth / 8);
 
 	// Formula uses (Rate + 999) / 1000 to safely accommodate fractional frequencies like 44.1kHz.
-	uint32 bytesPerPacket = bytesPerFrame * ((maxSampleRate + 999) / 1000);
+	uint32 bytesPerPacket = bytesPerFrame * ((SampleRate + 999) / 1000);
 
 	ASSERT(bytesPerPacket <= 1023, "Packet size exceeds Full-Speed isochronous limit");
 

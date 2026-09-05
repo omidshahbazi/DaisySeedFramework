@@ -25,7 +25,7 @@ public:
 		std::ifstream file(m_FilePath, std::ios::binary | std::ios::ate);
 		if (file.is_open())
 		{
-			file.read(reinterpret_cast<char*>(&m_Data), sizeof(PersistentBlobData<T>));
+			file.read(reinterpret_cast<uint8_t*>(&m_Data), sizeof(PersistentBlobData<T>));
 			file.close();
 		}
 		else
@@ -88,7 +88,7 @@ private:
 		std::ofstream file(m_FilePath, std::ios::binary);
 		if (file.is_open())
 		{
-			file.write(reinterpret_cast<const char*>(&m_Data), sizeof(PersistentBlobData<T>));
+			file.write(reinterpret_cast<const uint8_t*>(&m_Data), sizeof(PersistentBlobData<T>));
 			file.close();
 		}
 	}

@@ -7,7 +7,7 @@ DaisyUSBCDCInterface::DaisyUSBCDCInterface(DaisyUSB* USB, const Configs& Configs
 	: DaisyUSBInterfaceCommon(USB, Configs),
 	m_LineState(0),
 	m_IsHostConnected(false),
-	m_TransmitHandler(Configs.TransmitPacketSize)
+	m_TransmitHandler(Configs.MaxTransmitPacketSize)
 {}
 
 void DaisyUSBCDCInterface::Transmit(const uint8* Buffer, uint16 Length)
@@ -78,19 +78,19 @@ void DaisyUSBCDCInterface::OnSetupCompleted(void)
 			usb->AllocateTransmitBuffer(configs.EndpointCommand, (uint16)PacketSizes::Max);
 
 		if (TO_ENDPOINT_NUMBER(configs.EndpointIn) != 0)
-			usb->AllocateTransmitBuffer(configs.EndpointIn, configs.TransmitPacketSize);
+			usb->AllocateTransmitBuffer(configs.EndpointIn, configs.MaxTransmitPacketSize);
 	}
 
 	if (TO_ENDPOINT_NUMBER(configs.EndpointCommand) != 0)
 		usb->OpenEndpoint(configs.EndpointCommand, USB_EP_MAX_PACKET_INTR, USBEndpointAttributes::Interrupt);
 
 	if (TO_ENDPOINT_NUMBER(configs.EndpointOut) != 0)
-		usb->OpenEndpoint(configs.EndpointOut, configs.ReceivePacketSize, USBEndpointAttributes::Bulk);
+		usb->OpenEndpoint(configs.EndpointOut, configs.MaxReceivePacketSize, USBEndpointAttributes::Bulk);
 
 	if (TO_ENDPOINT_NUMBER(configs.EndpointIn) != 0)
-		usb->OpenEndpoint(configs.EndpointIn, configs.TransmitPacketSize, USBEndpointAttributes::Bulk);
+		usb->OpenEndpoint(configs.EndpointIn, configs.MaxTransmitPacketSize, USBEndpointAttributes::Bulk);
 
-	EndpointPrepareReceive(m_ReceiveBuffer, GetConfigs().ReceivePacketSize);
+	EndpointPrepareReceive(m_ReceiveBuffer, GetConfigs().MaxReceivePacketSize);
 }
 
 void DaisyUSBCDCInterface::OnDataInStage(void)
@@ -115,7 +115,7 @@ void DaisyUSBCDCInterface::OnDataOutStage(void)
 		m_ReceiveCallback(m_ReceiveBuffer, len);
 	}
 
-	EndpointPrepareReceive(m_ReceiveBuffer, GetConfigs().ReceivePacketSize);
+	EndpointPrepareReceive(m_ReceiveBuffer, GetConfigs().MaxReceivePacketSize);
 }
 
 void DaisyUSBCDCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, uint16& BufferOffset, uint8 InterfaceIndex, const USBClassNode& Class)

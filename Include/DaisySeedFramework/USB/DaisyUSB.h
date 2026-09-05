@@ -15,8 +15,9 @@ extern "C"
 	void OTG_FS_IRQHandler(void);
 	void OTG_HS_IRQHandler(void);
 	void HAL_PCD_SetupStageCallback(PCD_HandleTypeDef* hpcd);
-	void HAL_PCD_DataInStageCallback(PCD_HandleTypeDef* hpcd, uint8_t epnum);
 	void HAL_PCD_DataOutStageCallback(PCD_HandleTypeDef* hpcd, uint8_t epnum);
+	void HAL_PCD_DataInStageCallback(PCD_HandleTypeDef* hpcd, uint8_t epnum);
+	void HAL_PCD_ISOOUTIncompleteCallback(PCD_HandleTypeDef* hpcd, uint8_t epnum);
 	void HAL_PCD_ISOINIncompleteCallback(PCD_HandleTypeDef* hpcd, uint8_t epnum);
 	void HAL_PCD_SOFCallback(PCD_HandleTypeDef* hpcd);
 }
@@ -26,8 +27,9 @@ class DaisyUSB : public IUSB
 	friend void OTG_FS_IRQHandler(void);
 	friend void OTG_HS_IRQHandler(void);
 	friend void HAL_PCD_SetupStageCallback(PCD_HandleTypeDef* hpcd);
-	friend void HAL_PCD_DataInStageCallback(PCD_HandleTypeDef* hpcd, uint8_t epnum);
 	friend void HAL_PCD_DataOutStageCallback(PCD_HandleTypeDef* hpcd, uint8_t epnum);
+	friend void HAL_PCD_DataInStageCallback(PCD_HandleTypeDef* hpcd, uint8_t epnum);
+	friend void HAL_PCD_ISOOUTIncompleteCallback(PCD_HandleTypeDef* hpcd, uint8_t epnum);
 	friend void HAL_PCD_ISOINIncompleteCallback(PCD_HandleTypeDef* hpcd, uint8_t epnum);
 	friend void HAL_PCD_SOFCallback(PCD_HandleTypeDef* hpcd);
 
@@ -85,8 +87,9 @@ public:
 private:
 	void OnHALHandleRequest(void);
 	void OnSetupStage(void);
-	void OnDataInStage(uint8 EPNum);
 	void OnDataOutStage(uint8 EPNum);
+	void OnDataInStage(uint8 EPNum);
+	void OnIsoOutIncomplete(uint8 EPNum);
 	void OnIsoInIncomplete(uint8 EPNum);
 	void OnStartOfFrame(void);
 

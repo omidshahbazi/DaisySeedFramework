@@ -76,6 +76,7 @@ public:
 	void OnSetupCompleted(void) override;
 	void OnDataOutStage(void) override;
 	void OnDataInStage(void) override;
+	void OnIsoOutIncomplete(void) override;
 	void OnIsoInIncomplete(void) override;
 
 	bool OnSetInterface(uint8 InterfaceIndex, uint8 AlternateSetting) override;
@@ -92,13 +93,18 @@ private:
 	template <typename T>
 	void PushSamples(const T* const InterleavedBuffer, uint16 TotalSampleCount);
 
+	void UpdatePacketSize(void);
+
 public:
-	static void BuildStreamingInterface(EP0Buffer& EP0Buffer, uint16& BufferOffset, uint8 InterfaceIndex, uint8 ChannelCount, uint8 Endpoint, uint8 TerminalLinkID, const AMCClassConfig& Config, bool IsOutput);
+	static void BuildStreamingInterface(EP0Buffer& EP0Buffer, uint16& BufferOffset, uint8 InterfaceIndex, uint8 ChannelCount, uint8 Endpoint, uint8 TerminalLinkID, const AMCClassConfig& Config);
 
 	static void CalculateStreamingInterfaceIndices(const Configs& Configs, const AMCClassConfig& Class, uint8& OutInterfaceIndex, uint8& InInterfaceIndex);
 	static uint8 CalculateRequiredInterfaceCount(const AMCClassConfig& Class);
 
-	static uint16 CalculateIsoPacketSize(uint8 ChannelCount, const AMCClassConfig& Class);
+	static uint16 CalculateMaxPacketSize(uint8 ChannelCount, const AMCClassConfig& Class);
+
+private:
+	static uint16 CalculatePacketSize(uint8 ChannelCount, uint32 SampleRate, BitDepths BitDepth);
 
 private:
 	AMCClassConfig m_Class;
@@ -111,8 +117,11 @@ private:
 
 	uint8* m_ReceiveBuffer;
 	StaticRingBuffer<uint8, sizeof(int32) * 1024, false> m_ReceiveFIFO;
+	uint32 m_CurrentReceivePacketSize;
+
 	uint8* m_TransmitBuffer;
 	StaticRingBuffer<uint8, sizeof(int32) * 1024, false> m_TransmitFIFO;
+	uint32 m_CurrentTransmitPacketSize;
 
 	ControlChangedCallback m_ControlChangedCallback;
 
