@@ -198,7 +198,7 @@ extern "C"
 		}
 	}
 
-	void HAL_PCD_ISO_IN_IncompleteCallback(PCD_HandleTypeDef* hpcd, uint8_t epnum)
+	void HAL_PCD_ISOINIncompleteCallback(PCD_HandleTypeDef* hpcd, uint8_t epnum)
 	{
 		for (uint8_t i = 0; i < (uint8_t)DaisyUSB::Peripherals::COUNT; ++i)
 		{
@@ -343,8 +343,8 @@ void DaisyUSB::Start(const USBProfile& Profile)
 		AllocateReceiveBuffer(512);
 		AllocateTransmitBuffer(USB_EP0_IN, (uint16)PacketSizes::Max);
 
-		OpenEndpoint(USB_EP0_OUT, (uint16)PacketSizes::Max, (uint8)USBEndpointAttributes::Control);
-		OpenEndpoint(USB_EP0_IN, (uint16)PacketSizes::Max, (uint8)USBEndpointAttributes::Control);
+		OpenEndpoint(USB_EP0_OUT, (uint16)PacketSizes::Max, USBEndpointAttributes::Control);
+		OpenEndpoint(USB_EP0_IN, (uint16)PacketSizes::Max, USBEndpointAttributes::Control);
 
 		CHECK_CALL(HAL_PCD_Start(&m_DeviceHandle));
 
@@ -615,7 +615,7 @@ void DaisyUSB::AllocateTransmitBuffer(uint8 Endpoint, uint16 Size)
 	CHECK_CALL(HAL_PCDEx_SetTxFiFo(&m_DeviceHandle, TO_ENDPOINT_NUMBER(Endpoint), BYTES_TO_DWORDS(Size)));
 }
 
-void DaisyUSB::OpenEndpoint(uint8 Endpoint, uint16 Length, uint8 Type)
+void DaisyUSB::OpenEndpoint(uint8 Endpoint, uint16 Length, USBEndpointAttributes Type)
 {
 	CHECK_CALL(HAL_PCD_EP_Open(&m_DeviceHandle, Endpoint, Length, (uint8)Type));
 }

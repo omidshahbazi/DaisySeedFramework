@@ -225,8 +225,15 @@ void DaisyUSBAMCInterface::OnDataOutStage(void)
 	EndpointPrepareReceive(m_ReceiveBuffer, configs.ReceivePacketSize);
 }
 
-void DaisyUSBAMCInterface::OnStartOfFrame(void)
+void DaisyUSBAMCInterface::OnDataInStage(void)
 {
+	TransmitBuffer();
+}
+
+void DaisyUSBAMCInterface::OnIsoInIncomplete(void)
+{
+	EndpointFlush();
+
 	TransmitBuffer();
 }
 
@@ -236,7 +243,6 @@ bool DaisyUSBAMCInterface::OnSetInterface(uint8 InterfaceIndex, uint8 AlternateS
 		return false;
 
 	const Configs& configs = GetConfigs();
-	const uint8 type = (uint8)USBEndpointAttributes::Isochronous;
 
 	if (InterfaceIndex == m_OutInterfaceIndex)
 	{
@@ -245,7 +251,7 @@ bool DaisyUSBAMCInterface::OnSetInterface(uint8 InterfaceIndex, uint8 AlternateS
 
 		if (AlternateSetting == 1)
 		{
-			GetUSB()->OpenEndpoint(configs.EndpointOut, configs.ReceivePacketSize, type);
+			GetUSB()->OpenEndpoint(configs.EndpointOut, configs.ReceivePacketSize, USBEndpointAttributes::Isochronous);
 
 			EndpointPrepareReceive(m_ReceiveBuffer, configs.ReceivePacketSize);
 		}
@@ -267,7 +273,7 @@ bool DaisyUSBAMCInterface::OnSetInterface(uint8 InterfaceIndex, uint8 AlternateS
 			GetUSB()->CloseEndpoint(configs.EndpointIn);
 		else
 		{
-			GetUSB()->OpenEndpoint(configs.EndpointIn, configs.TransmitPacketSize, type);
+			GetUSB()->OpenEndpoint(configs.EndpointIn, configs.TransmitPacketSize, USBEndpointAttributes::Isochronous);
 
 			TransmitBuffer();
 		}
@@ -562,13 +568,13 @@ void DaisyUSBAMCInterface::BuildStreamingInterface(EP0Buffer& EP0Buffer, uint16&
 		BufferOffset += formatLength;
 	}
 
-	uint16 packetSize = CalculateIsoPacketSize(ChannelCount, Config);
+	const uint16 packetSize = CalculateIsoPacketSize(ChannelCount, Config);
 
 	USBEndpointDescriptor* ep = reinterpret_cast<USBEndpointDescriptor*>(buffer + BufferOffset);
 	ep->bLength = sizeof(USBEndpointDescriptor);
 	ep->bDescriptorType = USBDescTypes::Endpoint;
 	ep->bEndpointAddress = Endpoint;
-	ep->bmAttributes = (uint8)USBEndpointAttributes::Isochronous | (uint8)EndpointSyncTypes::Synchronous;
+	ep->bmAttributes = (uint8)USBEndpointAttributes::Isochronous | (uint8)EndpointSyncTypes::Async;
 	ep->wMaxPacketSize = packetSize;
 	ep->bInterval = 1;
 	BufferOffset += sizeof(USBEndpointDescriptor);
@@ -577,7 +583,7 @@ void DaisyUSBAMCInterface::BuildStreamingInterface(EP0Buffer& EP0Buffer, uint16&
 	isoDesc->bLength = sizeof(UAC1IsoEndpointDescriptor);
 	isoDesc->bDescriptorType = USBDescTypes::CS_ENDPOINT;
 	isoDesc->bDescriptorSubtype = AS_DESC_EP_GENERAL;
-	isoDesc->bmAttributes = (Config.SupportedSampleRateCount != 1 || Config.SupportedBitDepthCount != 1 ? 0x01 : 0x00);
+	isoDesc->bmAttributes = (uint8)(Config.SupportedSampleRateCount != 1 || Config.SupportedBitDepthCount != 1 ? 0x01 : 0x00);
 	isoDesc->bLockDelayUnits = 0;
 	isoDesc->wLockDelay = 0;
 	BufferOffset += sizeof(UAC1IsoEndpointDescriptor);

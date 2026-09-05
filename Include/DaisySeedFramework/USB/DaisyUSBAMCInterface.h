@@ -75,7 +75,8 @@ public:
 	bool OnSetupStage(const USBDeviceSetupPacket* Setup) override;
 	void OnSetupCompleted(void) override;
 	void OnDataOutStage(void) override;
-	void OnStartOfFrame(void) override;
+	void OnDataInStage(void) override;
+	void OnIsoInIncomplete(void) override;
 
 	bool OnSetInterface(uint8 InterfaceIndex, uint8 AlternateSetting) override;
 	uint8 GetCurrentAltSetting(uint8 InterfaceIndex) const override;

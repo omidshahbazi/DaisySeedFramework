@@ -17,7 +17,7 @@ extern "C"
 	void HAL_PCD_SetupStageCallback(PCD_HandleTypeDef* hpcd);
 	void HAL_PCD_DataInStageCallback(PCD_HandleTypeDef* hpcd, uint8_t epnum);
 	void HAL_PCD_DataOutStageCallback(PCD_HandleTypeDef* hpcd, uint8_t epnum);
-	void HAL_PCD_ISO_IN_IncompleteCallback(PCD_HandleTypeDef* hpcd, uint8_t epnum);
+	void HAL_PCD_ISOINIncompleteCallback(PCD_HandleTypeDef* hpcd, uint8_t epnum);
 	void HAL_PCD_SOFCallback(PCD_HandleTypeDef* hpcd);
 }
 
@@ -28,7 +28,7 @@ class DaisyUSB : public IUSB
 	friend void HAL_PCD_SetupStageCallback(PCD_HandleTypeDef* hpcd);
 	friend void HAL_PCD_DataInStageCallback(PCD_HandleTypeDef* hpcd, uint8_t epnum);
 	friend void HAL_PCD_DataOutStageCallback(PCD_HandleTypeDef* hpcd, uint8_t epnum);
-	friend void HAL_PCD_ISO_IN_IncompleteCallback(PCD_HandleTypeDef* hpcd, uint8_t epnum);
+	friend void HAL_PCD_ISOINIncompleteCallback(PCD_HandleTypeDef* hpcd, uint8_t epnum);
 	friend void HAL_PCD_SOFCallback(PCD_HandleTypeDef* hpcd);
 
 	friend class DaisyUSBInterfaceCommon;
@@ -95,7 +95,7 @@ private:
 	void AllocateReceiveBuffer(uint16 Size);
 	void AllocateTransmitBuffer(uint8 Endpoint, uint16 Size);
 
-	void OpenEndpoint(uint8 Endpoint, uint16 Length, uint8 Type);
+	void OpenEndpoint(uint8 Endpoint, uint16 Length, USBEndpointAttributes Type);
 	void CloseEndpoint(uint8 Endpoint);
 
 	uint16 DeviceReceiveCount(uint8 Endpoint = USB_EP0_OUT);

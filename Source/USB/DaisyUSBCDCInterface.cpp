@@ -82,13 +82,13 @@ void DaisyUSBCDCInterface::OnSetupCompleted(void)
 	}
 
 	if (TO_ENDPOINT_NUMBER(configs.EndpointCommand) != 0)
-		usb->OpenEndpoint(configs.EndpointCommand, USB_EP_MAX_PACKET_INTR, (uint8)USBEndpointAttributes::Interrupt);
+		usb->OpenEndpoint(configs.EndpointCommand, USB_EP_MAX_PACKET_INTR, USBEndpointAttributes::Interrupt);
 
 	if (TO_ENDPOINT_NUMBER(configs.EndpointOut) != 0)
-		usb->OpenEndpoint(configs.EndpointOut, configs.ReceivePacketSize, (uint8)USBEndpointAttributes::Bulk);
+		usb->OpenEndpoint(configs.EndpointOut, configs.ReceivePacketSize, USBEndpointAttributes::Bulk);
 
 	if (TO_ENDPOINT_NUMBER(configs.EndpointIn) != 0)
-		usb->OpenEndpoint(configs.EndpointIn, configs.TransmitPacketSize, (uint8)USBEndpointAttributes::Bulk);
+		usb->OpenEndpoint(configs.EndpointIn, configs.TransmitPacketSize, USBEndpointAttributes::Bulk);
 
 	EndpointPrepareReceive(m_ReceiveBuffer, GetConfigs().ReceivePacketSize);
 }
