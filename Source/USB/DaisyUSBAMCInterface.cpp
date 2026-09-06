@@ -4,6 +4,8 @@
 #include "DaisySeedFramework/USB/DaisyUSB.h"
 #include <DigitalSignalProcessing/Memory.h>
 
+const uint16 VOLUME_STEPS = 256; // 1/256 dB steps
+
 DaisyUSBAMCInterface::DaisyUSBAMCInterface(DaisyUSB* USB, const Configs& Configs, const AMCClassConfig& Class)
 	: DaisyUSBInterfaceCommon(USB, Configs),
 	m_Class(Class),
@@ -59,6 +61,8 @@ bool DaisyUSBAMCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 			}
 			else if (Setup->bRequest == UAC1_SET_CUR)
 			{
+				//SetPendingReceive<uint24_t>(epAddress == configs.EndpointOut ? ControlTypes::OutSampleRate : ControlTypes::InSampleRate);
+
 				uint24_t val;
 				GetUSB()->DeviceReceive(&val);
 
@@ -100,21 +104,7 @@ bool DaisyUSBAMCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 		{
 			if (Setup->bRequest == UAC1_SET_CUR)
 			{
-				uint8 muteVal = 0;
-				GetUSB()->DeviceReceive(&muteVal);
-
-				if (isOutput)
-				{
-					m_CurrentIsOutMuted = (muteVal != 0);
-
-					m_ControlChangedCallback(ControlTypes::OutMute);
-				}
-				else
-				{
-					m_CurrentIsInMuted = (muteVal != 0);
-
-					m_ControlChangedCallback(ControlTypes::InMute);
-				}
+				SetPendingReceive<uint8>(isOutput ? ControlTypes::OutMute : ControlTypes::InMute);
 
 				GetUSB()->DeviceTransmitAck();
 				return true;
@@ -135,38 +125,23 @@ bool DaisyUSBAMCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 		}
 		else if (controlSelector == CS_VOLUME_CONTROL && m_Class.EnableHardwareVolumeControl)
 		{
-			const uint16 VOLUME_STEPS = 256; // 1/256 dB steps
-
 			switch (Setup->bRequest)
 			{
 			case UAC1_SET_CUR:
 			{
-				int16 volume = 0;
-				GetUSB()->DeviceReceive(&volume);
-
-				if (isOutput)
-				{
-					m_CurrentOutVolume = dBGain((float)volume / VOLUME_STEPS);
-
-					m_ControlChangedCallback(ControlTypes::OutVolume);
-				}
-				else
-				{
-					m_CurrentInVolume = dBGain((float)volume / VOLUME_STEPS);
-
-					m_ControlChangedCallback(ControlTypes::InVolume);
-				}
+				SetPendingReceive<int16>(isOutput ? ControlTypes::OutVolume : ControlTypes::InVolume);
 
 				GetUSB()->DeviceTransmitAck();
+
 				return true;
 			}
 			case UAC1_GET_CUR:
 			{
 				int16 volume;
 				if (isOutput)
-					volume = m_CurrentOutVolume * VOLUME_STEPS;
+					volume = (dBGain)m_CurrentOutVolume * VOLUME_STEPS;
 				else
-					volume = m_CurrentInVolume * VOLUME_STEPS;
+					volume = (dBGain)m_CurrentInVolume * VOLUME_STEPS;
 
 				GetUSB()->DeviceTransmit(&volume);
 
@@ -213,6 +188,71 @@ void DaisyUSBAMCInterface::OnSetupCompleted(void)
 		usb->AllocateTransmitBuffer(configs.EndpointIn, configs.MaxTransmitPacketSize);
 }
 
+void DaisyUSBAMCInterface::OnDeviceDataOutStage(void)
+{
+	ControlTypes controlType = GetPendingType<ControlTypes>();
+
+	switch (controlType)
+	{
+	case ControlTypes::OutSampleRate:
+	{
+		uint24_t sampleRate = ReadPendingReceive<uint24_t>();
+
+		if (!IsSampleRateSupported(sampleRate))
+			return;
+
+		m_CurrentOutSampleRate = sampleRate;
+
+		UpdatePacketSize();
+
+		break;
+	}
+	case ControlTypes::InSampleRate:
+	{
+		uint24_t sampleRate = ReadPendingReceive<uint24_t>();
+
+		if (!IsSampleRateSupported(sampleRate))
+			return;
+
+		m_CurrentInSampleRate = sampleRate;
+
+		UpdatePacketSize();
+
+		break;
+	}
+
+	case ControlTypes::OutMute:
+	{
+		m_CurrentIsOutMuted = (ReadPendingReceive<uint8>() != 0);
+
+		break;
+	}
+	case ControlTypes::InMute:
+	{
+		m_CurrentIsInMuted = (ReadPendingReceive<uint8>() != 0);
+
+		break;
+	}
+
+	case ControlTypes::OutVolume:
+	{
+		m_CurrentOutVolume = dBGain((float)ReadPendingReceive<int16>() / VOLUME_STEPS);
+
+		break;
+	}
+	case ControlTypes::InVolume:
+	{
+		m_CurrentInVolume = dBGain((float)ReadPendingReceive<int16>() / VOLUME_STEPS);
+
+		break;
+	}
+	default:
+		return;
+	}
+
+	m_ControlChangedCallback(controlType);
+}
+
 void DaisyUSBAMCInterface::OnDataOutStage(void)
 {
 	const Configs& configs = GetConfigs();
@@ -236,13 +276,19 @@ void DaisyUSBAMCInterface::OnDataInStage(void)
 
 void DaisyUSBAMCInterface::OnIsoInIncomplete(void)
 {
-	EndpointFlush();
+	EndpointTransmitFlush();
 
 	TransmitBuffer();
 }
 
 void DaisyUSBAMCInterface::OnIsoOutIncomplete(void)
-{}
+{
+	const Configs& configs = GetConfigs();
+
+	EndpointReceiveFlush();
+
+	EndpointPrepareReceive(m_ReceiveBuffer, configs.MaxReceivePacketSize);
+}
 
 bool DaisyUSBAMCInterface::OnSetInterface(uint8 InterfaceIndex, uint8 AlternateSetting)
 {
@@ -302,21 +348,20 @@ uint8 DaisyUSBAMCInterface::GetCurrentAltSetting(uint8 InterfaceIndex) const
 	return 0;
 }
 
-void DaisyUSBAMCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, uint16& BufferOffset, uint8 InterfaceIndex, const USBClassNode& Class)
+void DaisyUSBAMCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, uint16& BufferOffset, uint8 InterfaceIndex) const
 {
-	const AMCClassConfig& Config = Class.AMC;
 	const Configs& configs = GetConfigs();
 
 	uint8* buffer = EP0Buffer.configDescs;
 
-	bool hasOutput = (Config.OutputChannelCount > 0);
-	bool hasInput = (Config.InputChannelCount > 0);
+	bool hasOutput = (m_Class.OutputChannelCount > 0);
+	bool hasInput = (m_Class.InputChannelCount > 0);
 
 	USBInterfaceAssociationDescriptor* iad = reinterpret_cast<USBInterfaceAssociationDescriptor*>(buffer + BufferOffset);
 	iad->bLength = sizeof(USBInterfaceAssociationDescriptor);
 	iad->bDescriptorType = USBDescTypes::InterfaceAssociation;
 	iad->bFirstInterface = InterfaceIndex;
-	iad->bInterfaceCount = CalculateRequiredInterfaceCount(Config);
+	iad->bInterfaceCount = CalculateRequiredInterfaceCount(m_Class);
 	iad->bFunctionClass = USBSDeviceClasses::Audio;
 	iad->bFunctionSubClass = (uint8)AMCSubClasses::CTRL;
 	iad->bFunctionProtocol = 0x00; // UAC1: no protocol code
@@ -338,15 +383,12 @@ void DaisyUSBAMCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, ui
 
 	uint16 acDescStart = BufferOffset;
 
-	uint8 asOutInterface, asInInterface;
-	CalculateStreamingInterfaceIndices(configs, Config, asOutInterface, asInInterface);
-
 	uint8 asInterfaceNumbers[2];
 	uint8 asInterfaceCount = 0;
 	if (hasOutput)
-		asInterfaceNumbers[asInterfaceCount++] = asOutInterface;
+		asInterfaceNumbers[asInterfaceCount++] = m_OutInterfaceIndex;
 	if (hasInput)
-		asInterfaceNumbers[asInterfaceCount++] = asInInterface;
+		asInterfaceNumbers[asInterfaceCount++] = m_InInterfaceIndex;
 
 	uint8 headerLength = 8 + asInterfaceCount;
 	{
@@ -375,15 +417,15 @@ void DaisyUSBAMCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, ui
 		it->bTerminalID = IT_USB_STREAMING_ID;
 		it->wTerminalType = (uint16)TerminalTypes::USBStreaming;
 		it->bAssocTerminal = 0;
-		it->bNrChannels = Config.OutputChannelCount;
-		it->wChannelConfig = (uint16)(Config.OutputChannelCount == 2 ? ChannelOutputPositions::Stereo : ChannelOutputPositions::Unknown);
+		it->bNrChannels = m_Class.OutputChannelCount;
+		it->wChannelConfig = (uint16)(m_Class.OutputChannelCount == 2 ? ChannelOutputPositions::Stereo : ChannelOutputPositions::Unknown);
 		it->iChannelNames = 0;
 		it->iTerminal = 0;
 		BufferOffset += sizeof(UAC1InputTerminalDescriptor);
 
 		// Feature Unit (variable-length, bControlSize=1)
 		{
-			uint8 channelCount = Config.OutputChannelCount;
+			uint8 channelCount = m_Class.OutputChannelCount;
 			uint8 fuLength = 7 + (channelCount + 1); // bControlSize=1 byte per channel + master
 
 			uint8* fuStart = buffer + BufferOffset;
@@ -395,8 +437,10 @@ void DaisyUSBAMCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, ui
 			fuStart[5] = 1; // bControlSize
 
 			uint8 masterControls = 0;
-			if (Config.EnableHardwareMute)   masterControls |= 0x01;
-			if (Config.EnableHardwareVolumeControl) masterControls |= 0x02;
+			if (m_Class.EnableHardwareMute)
+				masterControls |= 0x01;
+			if (m_Class.EnableHardwareVolumeControl)
+				masterControls |= 0x02;
 
 			fuStart[6] = masterControls; // master channel
 			for (uint8 ch = 1; ch <= channelCount; ++ch)
@@ -415,7 +459,7 @@ void DaisyUSBAMCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, ui
 		ot->wTerminalType = (uint16)TerminalTypes::LineOut;
 		ot->bAssocTerminal = 0;
 		ot->bSourceID = FU_OUTPUT_ID;
-		ot->iTerminal = 0;
+		ot->iTerminal = (m_Class.OutputTitle == nullptr ? 0 : USB_STRING_INDEX_OUT_TERMINAL_BASE + m_OutInterfaceIndex);
 		BufferOffset += sizeof(UAC1OutputTerminalDescriptor);
 	}
 
@@ -429,14 +473,14 @@ void DaisyUSBAMCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, ui
 		it->bTerminalID = IT_INPUT_ID;
 		it->wTerminalType = (uint16)TerminalTypes::LineIn;
 		it->bAssocTerminal = 0;
-		it->bNrChannels = Config.InputChannelCount;
-		it->wChannelConfig = (uint16)(Config.InputChannelCount == 2 ? ChannelOutputPositions::Stereo : ChannelOutputPositions::Unknown);
+		it->bNrChannels = m_Class.InputChannelCount;
+		it->wChannelConfig = (uint16)(m_Class.InputChannelCount == 2 ? ChannelOutputPositions::Stereo : ChannelOutputPositions::Unknown);
 		it->iChannelNames = 0;
-		it->iTerminal = 0;
+		it->iTerminal = (m_Class.InputTitle == nullptr ? 0 : USB_STRING_INDEX_IN_TERMINAL_BASE + m_InInterfaceIndex);
 		BufferOffset += sizeof(UAC1InputTerminalDescriptor);
 
 		{
-			uint8 channelCount = Config.InputChannelCount;
+			uint8 channelCount = m_Class.InputChannelCount;
 			uint8 fuLength = 7 + (channelCount + 1);
 
 			uint8* fuStart = buffer + BufferOffset;
@@ -448,8 +492,10 @@ void DaisyUSBAMCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, ui
 			fuStart[5] = 1; // bControlSize
 
 			uint8 masterControls = 0;
-			if (Config.EnableHardwareMute)   masterControls |= 0x01;
-			if (Config.EnableHardwareVolumeControl) masterControls |= 0x02;
+			if (m_Class.EnableHardwareMute)
+				masterControls |= 0x01;
+			if (m_Class.EnableHardwareVolumeControl)
+				masterControls |= 0x02;
 
 			fuStart[6] = masterControls;
 			for (uint8 ch = 1; ch <= channelCount; ++ch)
@@ -479,11 +525,21 @@ void DaisyUSBAMCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, ui
 
 	// ---------- Output AS Interface ----------
 	if (hasOutput)
-		BuildStreamingInterface(EP0Buffer, BufferOffset, asOutInterface, Config.OutputChannelCount, configs.EndpointOut, IT_USB_STREAMING_ID, Config);
+		BuildStreamingInterface(EP0Buffer, BufferOffset, m_OutInterfaceIndex, m_Class.OutputChannelCount, configs.EndpointOut, IT_USB_STREAMING_ID, m_Class);
 
 	// ---------- Input AS Interface ----------
 	if (hasInput)
-		BuildStreamingInterface(EP0Buffer, BufferOffset, asInInterface, Config.InputChannelCount, configs.EndpointIn, OT_USB_STREAMING_ID, Config);
+		BuildStreamingInterface(EP0Buffer, BufferOffset, m_InInterfaceIndex, m_Class.InputChannelCount, configs.EndpointIn, OT_USB_STREAMING_ID, m_Class);
+}
+
+uint16 DaisyUSBAMCInterface::HandleGetDescriptor(EP0Buffer& EP0Buffer, uint8& StringIndex) const
+{
+	if (StringIndex == USB_STRING_INDEX_OUT_TERMINAL_BASE + m_OutInterfaceIndex)
+		return DaisyUSB::BuildStringDescriptor(EP0Buffer, m_Class.OutputTitle);
+	else if (StringIndex == USB_STRING_INDEX_IN_TERMINAL_BASE + m_InInterfaceIndex)
+		return DaisyUSB::BuildStringDescriptor(EP0Buffer, m_Class.InputTitle);
+
+	return 0;
 }
 
 void DaisyUSBAMCInterface::TransmitBuffer(void)

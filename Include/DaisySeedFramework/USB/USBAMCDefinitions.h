@@ -41,10 +41,10 @@ enum class AMCSubClasses : uint8
 enum class TerminalTypes : uint16
 {
 	USBStreaming = 0x0101,	// The "terminal" on the USB side of the topology (where samples enter/leave over USB)
-	
+
 	Microphone = 0x0201,	// A microphone-type input terminal (capture path)
 	LineIn = 0x0603,		// A line-type input terminal (capture path)
-	
+
 	Speaker = 0x0301,		// A speaker-type output terminal (playback path)
 	Headphones = 0x0302,	// A headphone-type output terminal (playback path)
 	LineOut = 0x0603		// A line-type input terminal (playback path)
@@ -79,6 +79,9 @@ enum class TerminalTypes : uint16
 #define IT_INPUT_ID         5	// Input Terminal: audio coming from Line In (capture path)
 #define OT_USB_STREAMING_ID  6  // Output Terminal: audio going out to the host (capture path)
 #define FU_INPUT_ID         7	// Feature Unit: mute/volume control on the capture path
+
+#define USB_STRING_INDEX_OUT_TERMINAL_BASE USB_STRING_TERMINAL_1 // Terminal string descriptor index for the output terminal (playback path)
+#define USB_STRING_INDEX_IN_TERMINAL_BASE USB_STRING_TERMINAL_4 // Terminal string descriptor index for the input terminal (capture path)
 
 // Synchronization type, encoded into bits D3..D2 of an isochronous
 // endpoint's bmAttributes byte. This tells the host how the device's

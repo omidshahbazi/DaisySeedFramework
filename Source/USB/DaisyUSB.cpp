@@ -294,7 +294,7 @@ void DaisyUSB::Start(const USBProfile& Profile)
 				configs.MaxTransmitPacketSize = (uint16)node.CDC.SendBufferSize;
 
 				DaisyUSBCDCInterface* cdc = Memory::Allocate<DaisyUSBCDCInterface>(1, true);
-				new (cdc) DaisyUSBCDCInterface(this, configs);
+				new (cdc) DaisyUSBCDCInterface(this, configs, node.CDC);
 				dii.Interface = cdc;
 
 				break;
@@ -515,15 +515,22 @@ void DaisyUSB::OnSetupStage(void)
 
 void DaisyUSB::OnDataOutStage(uint8 EPNum)
 {
-	if (EPNum == TO_ENDPOINT_NUMBER(USB_EP0_OUT))
-		return;
-
 	DeviceInstanceInfo& dii = GetDeviceInstanceByEndpoint(EPNum);
+
+	if (EPNum == TO_ENDPOINT_NUMBER(USB_EP0_OUT))
+	{
+		dii.Interface->OnDeviceDataOutStage();
+
+		return;
+	}
+
 	dii.Interface->OnDataOutStage();
 }
 
 void DaisyUSB::OnDataInStage(uint8 EPNum)
 {
+	DeviceInstanceInfo& dii = GetDeviceInstanceByEndpoint(EPNum);
+
 	if (EPNum == TO_ENDPOINT_NUMBER(USB_EP0_IN))
 	{
 		if (m_EP0TransmitHandler.HasMore())
@@ -535,10 +542,11 @@ void DaisyUSB::OnDataInStage(uint8 EPNum)
 		else
 			DeviceReceiveAck();
 
+		dii.Interface->OnDeviceDataInStage();
+
 		return;
 	}
 
-	DeviceInstanceInfo& dii = GetDeviceInstanceByEndpoint(EPNum);
 	dii.Interface->OnDataInStage();
 }
 
@@ -604,7 +612,10 @@ void DaisyUSB::HandleGetDescriptor(void)
 			sendLen = BuildStringDescriptor(ep0Buffer, m_Profile.Device.Product);
 		else if (descIndex == USB_STRING_INDEX_SERIAL)
 			sendLen = BuildStringDescriptor(ep0Buffer, m_Profile.Device.SerialNumber);
-
+		else
+			for (uint8 i = 0; i < m_DeviceCount; ++i)
+				if ((sendLen = m_Devices[i].Interface->HandleGetDescriptor(ep0Buffer, descIndex)) != 0)
+					break;
 		break;
 	}
 
@@ -715,9 +726,8 @@ uint16 DaisyUSB::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, const USBDev
 	for (uint8 i = 0; i < Profile.ClassNodeCount; ++i)
 	{
 		DeviceInstanceInfo& dii = m_Devices[i];
-		const USBClassNode& node = Profile.ClassNodes[i];
 
-		dii.Interface->BuildConfigurationDescriptor(EP0Buffer, offset, interfaceIndex, node);
+		dii.Interface->BuildConfigurationDescriptor(EP0Buffer, offset, interfaceIndex);
 
 		interfaceIndex += dii.Interface->GetConfigs().InterfaceIndexCount;
 	}

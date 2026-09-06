@@ -9,7 +9,7 @@
 class DaisyUSBCDCInterface : public IUSBCDCInterface, public DaisyUSBInterfaceCommon
 {
 public:
-	DaisyUSBCDCInterface(DaisyUSB* USB, const Configs& Configs);
+	DaisyUSBCDCInterface(DaisyUSB* USB, const Configs& Configs, const CDCClassConfig& Class);
 
 	void SetReceiveCallback(ReceiveCallback Callback) override
 	{
@@ -36,7 +36,7 @@ public:
 	{
 		return 0;
 	}
-	void BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, uint16& BufferOffset, uint8 InterfaceIndex, const USBClassNode& Class) override;
+	void BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, uint16& BufferOffset, uint8 InterfaceIndex) const override;
 
 public:
 	static uint8 CalculateRequiredInterfaceCount(const CDCClassConfig& Class)
@@ -45,6 +45,8 @@ public:
 	}
 
 private:
+	CDCClassConfig m_Class;
+
 	USBCDCLineCoding m_CDCLineCoding;
 	uint8 m_LineState;
 	bool m_IsHostConnected;

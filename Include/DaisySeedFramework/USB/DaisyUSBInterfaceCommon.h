@@ -4,6 +4,7 @@
 
 #include "DaisySeedFramework/USB/USBDefinitions.h"
 #include <DigitalSignalProcessing/USB/USBProfile.h>
+#include <DigitalSignalProcessing/Debug.h>
 
 class DaisyUSB;
 
@@ -27,6 +28,10 @@ public:
 
 	virtual bool OnSetupStage(const USBDeviceSetupPacket* Setup) = 0;
 	virtual void OnSetupCompleted(void) = 0;
+	virtual void OnDeviceDataOutStage(void)
+	{}
+	virtual void OnDeviceDataInStage(void)
+	{}
 	virtual void OnDataOutStage(void)
 	{}
 	virtual void OnDataInStage(void)
@@ -40,7 +45,11 @@ public:
 
 	virtual bool OnSetInterface(uint8 InterfaceIndex, uint8 AlternateSetting) = 0;
 	virtual uint8 GetCurrentAltSetting(uint8 InterfaceIndex) const = 0;
-	virtual void BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, uint16& BufferOffset, uint8 InterfaceIndex, const USBClassNode& Class) = 0;
+	virtual void BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, uint16& BufferOffset, uint8 InterfaceIndex) const = 0;
+	virtual uint16 HandleGetDescriptor(EP0Buffer& EP0Buffer, uint8& StringIndex) const
+	{
+		return 0;
+	}
 
 	bool MatchByInterfaceIndex(uint8 Index) const;
 	bool MatchByEndpoint(uint8 Endpoint) const;
@@ -51,13 +60,43 @@ public:
 	}
 
 protected:
-	void EndpointPrepareReceive(uint8* Buffer, uint16 Length);
+	template<typename ControlType>
+	ControlType GetPendingType(void) const
+	{
+		return (ControlType)m_PendingReceiveType;
+	}
+	template<typename T, typename ControlType>
+	void SetPendingReceive(ControlType Type)
+	{
+		//ASSERT(m_PendingReceiveType == 0, "No pending receive");
+		ASSERT(sizeof(T) <= sizeof(m_PendingReceiveBuffer), "Pending receive buffer too small");
+
+		//m_PendingReceiveType = (uint8)Type;
+
+		//EndpointPrepareReceive(m_PendingReceiveBuffer, sizeof(T));
+	}
+	template<typename T>
+	T ReadPendingReceive(void)
+	{
+		ASSERT(m_PendingReceiveType != 0, "No pending receive");
+
+		T value = *reinterpret_cast<T*>(m_PendingReceiveBuffer);
+
+		m_PendingReceiveType = 0;
+
+		return value;
+	}
+
+	void EndpointPrepareReceive(uint8* Buffer, uint16 Length)
+	{
+		EndpointReceive(Buffer, Length);
+	}
 	uint16 EndpointReceiveCount(void);
 	void EndpointReceive(uint8* Buffer, uint16 Length);
+	void EndpointReceiveFlush(void);
 
 	void EndpointTransmit(const uint8* Buffer, uint16 Length, bool ClearDCache = false);
-
-	void EndpointFlush(void);
+	void EndpointTransmitFlush(void);
 
 	DaisyUSB* GetUSB(void)
 	{
@@ -68,6 +107,9 @@ private:
 	DaisyUSB* m_USB;
 	Configs m_Configs;
 	uint16 m_InterfaceIndexMask;
+
+	uint8 m_PendingReceiveType;
+	uint8_t m_PendingReceiveBuffer[sizeof(uint32_t)];
 };
 
 #endif

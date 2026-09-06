@@ -16,10 +16,14 @@
 // Fixed string descriptor indices used by the standard Device Descriptor's
 // iManufacturer/iProduct/iSerialNumber fields (index 0 is reserved for the
 // language ID list, not an actual text string).
-#define USB_STRING_INDEX_LANGID       0x00 // Index 0: not text, returns the list of supported language IDs
-#define USB_STRING_INDEX_MANUFACTURER 0x01 // Index of the manufacturer name string
-#define USB_STRING_INDEX_PRODUCT      0x02 // Index of the product name string
-#define USB_STRING_INDEX_SERIAL       0x03 // Index of the serial number string
+#define USB_STRING_INDEX_LANGID			0x00 // Index 0: not text, returns the list of supported language IDs
+#define USB_STRING_INDEX_MANUFACTURER	0x01 // Index of the manufacturer name string
+#define USB_STRING_INDEX_PRODUCT		0x02 // Index of the product name string
+#define USB_STRING_INDEX_SERIAL			0x03 // Index of the serial number string
+#define USB_STRING_TERMINAL_1			0x04 // Index of the first terminal string
+#define USB_STRING_TERMINAL_2			0x05 // Index of the second terminal string
+#define USB_STRING_TERMINAL_3			0x06 // Index of the third terminal string
+#define USB_STRING_TERMINAL_4			0x07 // Index of the fourth terminal string
 
 // Default configuration and language ID values
 #define USB_LANGID_ENGLISH_US        0x0409 // Language ID: English (United States), used for all string descriptors here

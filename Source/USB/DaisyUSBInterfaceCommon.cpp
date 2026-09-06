@@ -6,7 +6,9 @@
 DaisyUSBInterfaceCommon::DaisyUSBInterfaceCommon(DaisyUSB* USB, const Configs& Configs)
 	: m_USB(USB),
 	m_Configs(Configs),
-	m_InterfaceIndexMask(0)
+	m_InterfaceIndexMask(0),
+	m_PendingReceiveType(0),
+	m_PendingReceiveBuffer{}
 {
 	ASSERT(TO_ENDPOINT_NUMBER(m_Configs.EndpointCommand) < USB_EP_COUNT_DEFAULT, "Ran out of endpoints");
 	ASSERT(TO_ENDPOINT_NUMBER(m_Configs.EndpointOut) < USB_EP_COUNT_DEFAULT, "Ran out of endpoints");
@@ -29,11 +31,6 @@ bool DaisyUSBInterfaceCommon::MatchByEndpoint(uint8 Endpoint) const
 		TO_ENDPOINT_NUMBER(m_Configs.EndpointIn) == Endpoint);
 }
 
-void DaisyUSBInterfaceCommon::EndpointPrepareReceive(uint8* Buffer, uint16 Length)
-{
-	EndpointReceive(Buffer, Length);
-}
-
 uint16 DaisyUSBInterfaceCommon::EndpointReceiveCount(void)
 {
 	return m_USB->DeviceReceiveCount(m_Configs.EndpointOut);
@@ -44,12 +41,17 @@ void DaisyUSBInterfaceCommon::EndpointReceive(uint8* Buffer, uint16 Length)
 	m_USB->DeviceReceive(Buffer, Length, m_Configs.EndpointOut);
 }
 
+void DaisyUSBInterfaceCommon::EndpointReceiveFlush(void)
+{
+	m_USB->FlushEndpoint(m_Configs.EndpointOut);
+}
+
 void DaisyUSBInterfaceCommon::EndpointTransmit(const uint8* Buffer, uint16 Length, bool ClearDCache)
 {
 	m_USB->DeviceTransmit(Buffer, Length, m_Configs.EndpointIn, ClearDCache);
 }
 
-void DaisyUSBInterfaceCommon::EndpointFlush(void)
+void DaisyUSBInterfaceCommon::EndpointTransmitFlush(void)
 {
 	m_USB->FlushEndpoint(m_Configs.EndpointIn);
 }
