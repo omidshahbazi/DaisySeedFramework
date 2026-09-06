@@ -1,13 +1,13 @@
 #ifdef ON_HARDWARE
 
 #include "DaisySeedFramework/USB/DaisyUSBAMCInterface.h"
-#include "DaisySeedFramework/USB/DaisyUSB.h"
+#include "DaisySeedFramework/DaisyInclude.h"
 #include <DigitalSignalProcessing/Memory.h>
 
 const uint16 VOLUME_STEPS = 256; // 1/256 dB steps
 
-DaisyUSBAMCInterface::DaisyUSBAMCInterface(DaisyUSB* USB, const Configs& Configs, const AMCClassConfig& Class)
-	: DaisyUSBInterfaceCommon(USB, Configs),
+DaisyUSBAMCInterface::DaisyUSBAMCInterface(DaisyUSBDevice* Device, const Configs& Configs, const AMCClassConfig& Class)
+	: DaisyUSBInterfaceCommon(Device, Configs),
 	m_Class(Class),
 	m_OutAltSetting(0),
 	m_InAltSetting(0),

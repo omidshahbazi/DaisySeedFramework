@@ -1,10 +1,10 @@
 #ifdef ON_HARDWARE
 
 #include "DaisySeedFramework/USB/DaisyUSBInterfaceCommon.h"
-#include "DaisySeedFramework/USB/DaisyUSB.h"
+#include "DaisySeedFramework/USB/DaisyUSBDevice.h"
 
-DaisyUSBInterfaceCommon::DaisyUSBInterfaceCommon(DaisyUSB* USB, const Configs& Configs)
-	: m_USB(USB),
+DaisyUSBInterfaceCommon::DaisyUSBInterfaceCommon(DaisyUSBDevice* Device, const Configs& Configs)
+	: m_Device(Device),
 	m_Configs(Configs),
 	m_InterfaceIndexMask(0),
 	m_PendingReceiveType(0),
@@ -33,52 +33,52 @@ bool DaisyUSBInterfaceCommon::MatchByEndpoint(uint8 Endpoint) const
 
 void DaisyUSBInterfaceCommon::AllocateTransmitBuffer(uint8 Endpoint, uint16 Size)
 {
-	m_USB->AllocateTransmitBuffer(Endpoint, Size);
+	m_Device->AllocateTransmitBuffer(Endpoint, Size);
 }
 
 void DaisyUSBInterfaceCommon::OpenEndpoint(uint8 Endpoint, uint16 Length, USBEndpointAttributes Type)
 {
-	m_USB->OpenEndpoint(Endpoint, Length, Type);
+	m_Device->OpenEndpoint(Endpoint, Length, Type);
 }
 
 void DaisyUSBInterfaceCommon::CloseEndpoint(uint8 Endpoint)
 {
-	m_USB->CloseEndpoint(Endpoint);
+	m_Device->CloseEndpoint(Endpoint);
 }
 
 void DaisyUSBInterfaceCommon::DeviceReceive(uint8* Buffer, uint16 Length, uint8 Endpoint)
 {
-	m_USB->DeviceReceive(Buffer, Length, Endpoint);
+	m_Device->DeviceReceive(Buffer, Length, Endpoint);
 }
 
 void DaisyUSBInterfaceCommon::DeviceReceiveAck(void)
 {
-	m_USB->DeviceReceiveAck();
+	m_Device->DeviceReceiveAck();
 }
 
 void DaisyUSBInterfaceCommon::DeviceTransmit(const uint8* Buffer, uint16 Length, uint8 Endpoint, bool ClearDCache)
 {
-	m_USB->DeviceTransmit(Buffer, Length, Endpoint, ClearDCache);
+	m_Device->DeviceTransmit(Buffer, Length, Endpoint, ClearDCache);
 }
 
 void DaisyUSBInterfaceCommon::DeviceTransmitAck(void)
 {
-	m_USB->DeviceTransmitAck();
+	m_Device->DeviceTransmitAck();
 }
 
 uint16 DaisyUSBInterfaceCommon::EndpointReceiveCount(void)
 {
-	return m_USB->DeviceReceiveCount(m_Configs.EndpointOut);
+	return m_Device->DeviceReceiveCount(m_Configs.EndpointOut);
 }
 
 void DaisyUSBInterfaceCommon::EndpointReceiveFlush(void)
 {
-	m_USB->FlushEndpoint(m_Configs.EndpointOut);
+	m_Device->FlushEndpoint(m_Configs.EndpointOut);
 }
 
 void DaisyUSBInterfaceCommon::EndpointTransmitFlush(void)
 {
-	m_USB->FlushEndpoint(m_Configs.EndpointIn);
+	m_Device->FlushEndpoint(m_Configs.EndpointIn);
 }
 
 #endif

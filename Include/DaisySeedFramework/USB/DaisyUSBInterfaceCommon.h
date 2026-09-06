@@ -6,7 +6,7 @@
 #include <DigitalSignalProcessing/USB/USBProfile.h>
 #include <DigitalSignalProcessing/Debug.h>
 
-class DaisyUSB;
+class DaisyUSBDevice;
 
 class DaisyUSBInterfaceCommon
 {
@@ -24,7 +24,7 @@ public:
 	};
 
 public:
-	DaisyUSBInterfaceCommon(DaisyUSB* USB, const Configs& Configs);
+	DaisyUSBInterfaceCommon(DaisyUSBDevice* Device, const Configs& Configs);
 
 	virtual bool OnSetupStage(const USBDeviceSetupPacket* Setup) = 0;
 	virtual void OnSetupCompleted(void) = 0;
@@ -129,7 +129,7 @@ protected:
 	void EndpointTransmitFlush(void);
 
 private:
-	DaisyUSB* m_USB;
+	DaisyUSBDevice* m_Device;
 	Configs m_Configs;
 	uint16 m_InterfaceIndexMask;
 

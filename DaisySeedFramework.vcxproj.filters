@@ -64,7 +64,7 @@
     <ClCompile Include="Source\LCDCanvas.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Source\USB\DaisyUSB.cpp">
+    <ClCompile Include="Source\USB\DaisyUSBDevice.cpp">
       <Filter>Source\USB</Filter>
     </ClCompile>
     <ClCompile Include="Source\USB\DaisyUSBCDCInterface.cpp">
@@ -74,6 +74,12 @@
       <Filter>Source\USB</Filter>
     </ClCompile>
     <ClCompile Include="Source\USB\DaisyUSBInterfaceCommon.cpp">
+      <Filter>Source\USB</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\USB\DaisyUSB.cpp">
+      <Filter>Source\USB</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\USB\DaisyUSBHost.cpp">
       <Filter>Source\USB</Filter>
     </ClCompile>
   </ItemGroup>
@@ -141,7 +147,7 @@
     <ClInclude Include="Include\DaisySeedFramework\DaisyInclude.h">
       <Filter>Include\DaisySeedFramework</Filter>
     </ClInclude>
-    <ClInclude Include="Include\DaisySeedFramework\USB\DaisyUSB.h">
+    <ClInclude Include="Include\DaisySeedFramework\USB\DaisyUSBDevice.h">
       <Filter>Include\DaisySeedFramework\USB</Filter>
     </ClInclude>
     <ClInclude Include="Include\DaisySeedFramework\USB\USBDefinitions.h">
@@ -164,6 +170,12 @@
     </ClInclude>
     <ClInclude Include="Include\DaisySeedFramework\StaticRingBuffer.h">
       <Filter>Include\DaisySeedFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\USB\DaisyUSB.h">
+      <Filter>Include\DaisySeedFramework\USB</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\USB\DaisyUSBHost.h">
+      <Filter>Include\DaisySeedFramework\USB</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -9,7 +9,7 @@
 class DaisyUSBCDCInterface : public IUSBCDCInterface, public DaisyUSBInterfaceCommon
 {
 public:
-	DaisyUSBCDCInterface(DaisyUSB* USB, const Configs& Configs, const CDCClassConfig& Class);
+	DaisyUSBCDCInterface(DaisyUSBDevice* Device, const Configs& Configs, const CDCClassConfig& Class);
 
 	void SetReceiveCallback(ReceiveCallback Callback) override
 	{

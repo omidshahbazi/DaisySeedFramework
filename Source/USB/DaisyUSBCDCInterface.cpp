@@ -1,10 +1,9 @@
 #ifdef ON_HARDWARE
 
 #include "DaisySeedFramework/USB/DaisyUSBCDCInterface.h"
-#include "DaisySeedFramework/USB/DaisyUSB.h"
 
-DaisyUSBCDCInterface::DaisyUSBCDCInterface(DaisyUSB* USB, const Configs& Configs, const CDCClassConfig& Class)
-	: DaisyUSBInterfaceCommon(USB, Configs),
+DaisyUSBCDCInterface::DaisyUSBCDCInterface(DaisyUSBDevice* Device, const Configs& Configs, const CDCClassConfig& Class)
+	: DaisyUSBInterfaceCommon(Device, Configs),
 	m_Class(Class),
 	m_LineState(0),
 	m_IsHostConnected(false),

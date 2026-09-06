@@ -11,7 +11,7 @@
 class DaisyUSBAMCInterface : public IUSBAMCInterface, public DaisyUSBInterfaceCommon
 {
 public:
-	DaisyUSBAMCInterface(DaisyUSB* USB, const Configs& Configs, const AMCClassConfig& Class);
+	DaisyUSBAMCInterface(DaisyUSBDevice* Device, const Configs& Configs, const AMCClassConfig& Class);
 
 	virtual void Read(float* InterleavedBuffer, uint16 TotalSampleCount)
 	{

@@ -322,4 +322,16 @@ private:
 	uint16 m_RemainingLength;        // Bytes left to send, including the current chunk
 };
 
+enum class Peripherals
+{
+	FullSpeed = 0,
+	Internal = FullSpeed,
+
+	//It's not actually HighSpeed, but the USB peripheral is capable of running at HighSpeed, and the USB_OTG_HS peripheral is not available on the Daisy Seed.
+	HighSpeed,
+	External = HighSpeed,
+
+	COUNT
+};
+
 #endif
