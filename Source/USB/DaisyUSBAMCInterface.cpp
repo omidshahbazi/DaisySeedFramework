@@ -54,37 +54,18 @@ bool DaisyUSBAMCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 				else if (epAddress == configs.EndpointIn)
 					val = m_CurrentInSampleRate;
 
-				GetUSB()->DeviceTransmit(&val);
+				DeviceTransmit(&val);
 
-				GetUSB()->DeviceReceiveAck();
+				DeviceReceiveAck();
+
 				return true;
 			}
 			else if (Setup->bRequest == UAC1_SET_CUR)
 			{
-				//SetPendingReceive<uint24_t>(epAddress == configs.EndpointOut ? ControlTypes::OutSampleRate : ControlTypes::InSampleRate);
+				SetPendingReceive<uint24_t>(epAddress == configs.EndpointOut ? ControlTypes::OutSampleRate : ControlTypes::InSampleRate);
 
-				uint24_t val;
-				GetUSB()->DeviceReceive(&val);
+				DeviceTransmitAck();
 
-				if (!IsSampleRateSupported(val))
-					return false;
-
-				if (epAddress == configs.EndpointOut)
-				{
-					m_CurrentOutSampleRate = val;
-
-					m_ControlChangedCallback(ControlTypes::OutSampleRate);
-				}
-				else if (epAddress == configs.EndpointIn)
-				{
-					m_CurrentInSampleRate = val;
-
-					m_ControlChangedCallback(ControlTypes::InSampleRate);
-				}
-
-				UpdatePacketSize();
-
-				GetUSB()->DeviceTransmitAck();
 				return true;
 			}
 		}
@@ -106,7 +87,7 @@ bool DaisyUSBAMCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 			{
 				SetPendingReceive<uint8>(isOutput ? ControlTypes::OutMute : ControlTypes::InMute);
 
-				GetUSB()->DeviceTransmitAck();
+				DeviceTransmitAck();
 				return true;
 			}
 			else if (Setup->bRequest == UAC1_GET_CUR)
@@ -117,9 +98,10 @@ bool DaisyUSBAMCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 				else
 					muteVal = m_CurrentIsInMuted;
 
-				GetUSB()->DeviceTransmit(&muteVal);
+				DeviceTransmit(&muteVal);
 
-				GetUSB()->DeviceReceiveAck();
+				DeviceReceiveAck();
+
 				return true;
 			}
 		}
@@ -131,7 +113,7 @@ bool DaisyUSBAMCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 			{
 				SetPendingReceive<int16>(isOutput ? ControlTypes::OutVolume : ControlTypes::InVolume);
 
-				GetUSB()->DeviceTransmitAck();
+				DeviceTransmitAck();
 
 				return true;
 			}
@@ -143,33 +125,37 @@ bool DaisyUSBAMCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 				else
 					volume = (dBGain)m_CurrentInVolume * VOLUME_STEPS;
 
-				GetUSB()->DeviceTransmit(&volume);
+				DeviceTransmit(&volume);
 
-				GetUSB()->DeviceReceiveAck();
+				DeviceReceiveAck();
+
 				return true;
 			}
 			case UAC1_GET_MIN:
 			{
 				int16 minVol = m_Class.MinimumVolume * VOLUME_STEPS;
-				GetUSB()->DeviceTransmit(&minVol);
+				DeviceTransmit(&minVol);
 
-				GetUSB()->DeviceReceiveAck();
+				DeviceReceiveAck();
+
 				return true;
 			}
 			case UAC1_GET_MAX:
 			{
 				int16 maxVol = m_Class.MaximumVolume * VOLUME_STEPS;
-				GetUSB()->DeviceTransmit(&maxVol);
+				DeviceTransmit(&maxVol);
 
-				GetUSB()->DeviceReceiveAck();
+				DeviceReceiveAck();
+
 				return true;
 			}
 			case UAC1_GET_RES:
 			{
 				int16 resVol = m_Class.VolumeResolution * VOLUME_STEPS;
-				GetUSB()->DeviceTransmit(&resVol);
+				DeviceTransmit(&resVol);
 
-				GetUSB()->DeviceReceiveAck();
+				DeviceReceiveAck();
+
 				return true;
 			}
 			}
@@ -181,11 +167,10 @@ bool DaisyUSBAMCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 
 void DaisyUSBAMCInterface::OnSetupCompleted(void)
 {
-	DaisyUSB* usb = GetUSB();
 	const Configs& configs = GetConfigs();
 
 	if (TO_ENDPOINT_NUMBER(configs.EndpointIn) != 0)
-		usb->AllocateTransmitBuffer(configs.EndpointIn, configs.MaxTransmitPacketSize);
+		AllocateTransmitBuffer(configs.EndpointIn, configs.MaxTransmitPacketSize);
 }
 
 void DaisyUSBAMCInterface::OnDeviceDataOutStage(void)
@@ -304,12 +289,12 @@ bool DaisyUSBAMCInterface::OnSetInterface(uint8 InterfaceIndex, uint8 AlternateS
 
 		if (AlternateSetting == 1)
 		{
-			GetUSB()->OpenEndpoint(configs.EndpointOut, configs.MaxReceivePacketSize, USBEndpointAttributes::Isochronous);
+			OpenEndpoint(configs.EndpointOut, configs.MaxReceivePacketSize, USBEndpointAttributes::Isochronous);
 
 			EndpointPrepareReceive(m_ReceiveBuffer, configs.MaxReceivePacketSize);
 		}
 		else
-			GetUSB()->CloseEndpoint(configs.EndpointOut);
+			CloseEndpoint(configs.EndpointOut);
 
 		m_ReceiveFIFO.Clear();
 
@@ -323,10 +308,10 @@ bool DaisyUSBAMCInterface::OnSetInterface(uint8 InterfaceIndex, uint8 AlternateS
 		m_TransmitFIFO.Clear();
 
 		if (AlternateSetting == 0)
-			GetUSB()->CloseEndpoint(configs.EndpointIn);
+			CloseEndpoint(configs.EndpointIn);
 		else
 		{
-			GetUSB()->OpenEndpoint(configs.EndpointIn, configs.MaxTransmitPacketSize, USBEndpointAttributes::Isochronous);
+			OpenEndpoint(configs.EndpointIn, configs.MaxTransmitPacketSize, USBEndpointAttributes::Isochronous);
 
 			TransmitBuffer();
 		}
@@ -532,14 +517,14 @@ void DaisyUSBAMCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, ui
 		BuildStreamingInterface(EP0Buffer, BufferOffset, m_InInterfaceIndex, m_Class.InputChannelCount, configs.EndpointIn, OT_USB_STREAMING_ID, m_Class);
 }
 
-uint16 DaisyUSBAMCInterface::HandleGetDescriptor(EP0Buffer& EP0Buffer, uint8& StringIndex) const
+cstr DaisyUSBAMCInterface::GetDescriptorString(uint8 StringIndex) const
 {
 	if (StringIndex == USB_STRING_INDEX_OUT_TERMINAL_BASE + m_OutInterfaceIndex)
-		return DaisyUSB::BuildStringDescriptor(EP0Buffer, m_Class.OutputTitle);
+		return m_Class.OutputTitle;
 	else if (StringIndex == USB_STRING_INDEX_IN_TERMINAL_BASE + m_InInterfaceIndex)
-		return DaisyUSB::BuildStringDescriptor(EP0Buffer, m_Class.InputTitle);
+		return m_Class.InputTitle;
 
-	return 0;
+	return nullptr;
 }
 
 void DaisyUSBAMCInterface::TransmitBuffer(void)

@@ -83,7 +83,7 @@ public:
 	bool OnSetInterface(uint8 InterfaceIndex, uint8 AlternateSetting) override;
 	uint8 GetCurrentAltSetting(uint8 InterfaceIndex) const override;
 	void BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, uint16& BufferOffset, uint8 InterfaceIndex) const override;
-	uint16 HandleGetDescriptor(EP0Buffer& EP0Buffer, uint8& StringIndex) const override;
+	cstr GetDescriptorString(uint8 StringIndex) const override;
 
 	void TransmitBuffer(void);
 
@@ -152,7 +152,7 @@ uint16 DaisyUSBAMCInterface::PopSamples(T* InterleavedBuffer, uint16 TotalSample
 	if (m_ReceiveFIFO.GetSize() >= bytesToRead)
 		samplesPopped = TotalSampleCount;
 
-	const float Gain = (m_CurrentIsOutMuted ? 0 : m_CurrentOutVolume);
+	const float Gain = (m_CurrentIsOutMuted ? 0.0 : m_CurrentOutVolume);
 
 	switch (m_CurrentOutBitDepth)
 	{
@@ -216,7 +216,7 @@ void DaisyUSBAMCInterface::PushSamples(const T* const InterleavedBuffer, uint16 
 	ASSERT(InterleavedBuffer != nullptr, "InterleavedBuffer is null");
 	ASSERT(TotalSampleCount != 0, "TotalSampleCount is zero");
 
-	const float Gain = (m_CurrentIsInMuted ? 0 : m_CurrentInVolume);
+	const float Gain = (m_CurrentIsInMuted ? 0.0 : m_CurrentInVolume);
 
 	switch (m_CurrentInBitDepth)
 	{

@@ -46,9 +46,9 @@ public:
 	virtual bool OnSetInterface(uint8 InterfaceIndex, uint8 AlternateSetting) = 0;
 	virtual uint8 GetCurrentAltSetting(uint8 InterfaceIndex) const = 0;
 	virtual void BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, uint16& BufferOffset, uint8 InterfaceIndex) const = 0;
-	virtual uint16 HandleGetDescriptor(EP0Buffer& EP0Buffer, uint8& StringIndex) const
+	virtual cstr GetDescriptorString(uint8 StringIndex) const
 	{
-		return 0;
+		return nullptr;
 	}
 
 	bool MatchByInterfaceIndex(uint8 Index) const;
@@ -71,9 +71,9 @@ protected:
 		//ASSERT(m_PendingReceiveType == 0, "No pending receive");
 		ASSERT(sizeof(T) <= sizeof(m_PendingReceiveBuffer), "Pending receive buffer too small");
 
-		//m_PendingReceiveType = (uint8)Type;
+		m_PendingReceiveType = (uint8)Type;
 
-		//EndpointPrepareReceive(m_PendingReceiveBuffer, sizeof(T));
+		DeviceReceive(m_PendingReceiveBuffer, sizeof(T));
 	}
 	template<typename T>
 	T ReadPendingReceive(void)
@@ -87,21 +87,46 @@ protected:
 		return value;
 	}
 
+	// Proxy functions to the underlying DaisyUSB instance
+	//------------------------------------------------------
+	void AllocateTransmitBuffer(uint8 Endpoint, uint16 Size);
+
+	void OpenEndpoint(uint8 Endpoint, uint16 Length, USBEndpointAttributes Type);
+	void CloseEndpoint(uint8 Endpoint);
+
+	void DeviceReceive(uint8* Buffer, uint16 Length, uint8 Endpoint = USB_EP0_OUT);
+	template<typename T>
+	void DeviceReceive(T* Buffer)
+	{
+		DeviceReceive(reinterpret_cast<uint8*>(Buffer), sizeof(T));
+	}
+	void DeviceReceiveAck(void);
+
+	void DeviceTransmit(const uint8* Buffer, uint16 Length, uint8 Endpoint = USB_EP0_OUT, bool ClearDCache = false);
+	template<typename T>
+	void DeviceTransmit(T* Buffer)
+	{
+		DeviceTransmit(reinterpret_cast<uint8*>(Buffer), sizeof(T));
+	}
+	void DeviceTransmitAck(void);
+	//------------------------------------------------------
+
 	void EndpointPrepareReceive(uint8* Buffer, uint16 Length)
 	{
 		EndpointReceive(Buffer, Length);
 	}
 	uint16 EndpointReceiveCount(void);
-	void EndpointReceive(uint8* Buffer, uint16 Length);
+	void EndpointReceive(uint8* Buffer, uint16 Length)
+	{
+		DeviceReceive(Buffer, Length, m_Configs.EndpointOut);
+	}
 	void EndpointReceiveFlush(void);
 
-	void EndpointTransmit(const uint8* Buffer, uint16 Length, bool ClearDCache = false);
-	void EndpointTransmitFlush(void);
-
-	DaisyUSB* GetUSB(void)
+	void EndpointTransmit(const uint8* Buffer, uint16 Length, bool ClearDCache = false)
 	{
-		return m_USB;
+		DeviceTransmit(Buffer, Length, m_Configs.EndpointIn, ClearDCache);
 	}
+	void EndpointTransmitFlush(void);
 
 private:
 	DaisyUSB* m_USB;

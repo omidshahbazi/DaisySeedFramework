@@ -29,17 +29,17 @@ bool DaisyUSBCDCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 	case USB_CDC_REQ_SET_LINE_CODING:
 	{
 		if (Setup->wLength > 0)
-			GetUSB()->DeviceReceive(&m_CDCLineCoding);
+			DeviceReceive(&m_CDCLineCoding);
 
-		GetUSB()->DeviceTransmitAck();
+		DeviceTransmitAck();
 
 		break;
 	}
 
 	case USB_CDC_REQ_GET_LINE_CODING:
 	{
-		GetUSB()->DeviceTransmit(&m_CDCLineCoding);
-		GetUSB()->DeviceReceiveAck();
+		DeviceTransmit(&m_CDCLineCoding);
+		DeviceReceiveAck();
 
 		break;
 	}
@@ -56,7 +56,7 @@ bool DaisyUSBCDCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 		else
 			m_IsHostConnected = false;
 
-		GetUSB()->DeviceTransmitAck();
+		DeviceTransmitAck();
 
 		break;
 	}
@@ -70,26 +70,25 @@ bool DaisyUSBCDCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 
 void DaisyUSBCDCInterface::OnSetupCompleted(void)
 {
-	DaisyUSB* usb = GetUSB();
 	const Configs& configs = GetConfigs();
 
 	//Order matters here, it must be ordered by the actual number of Command and In
 	{
 		if (TO_ENDPOINT_NUMBER(configs.EndpointCommand) != 0)
-			usb->AllocateTransmitBuffer(configs.EndpointCommand, (uint16)PacketSizes::Max);
+			AllocateTransmitBuffer(configs.EndpointCommand, (uint16)PacketSizes::Max);
 
 		if (TO_ENDPOINT_NUMBER(configs.EndpointIn) != 0)
-			usb->AllocateTransmitBuffer(configs.EndpointIn, configs.MaxTransmitPacketSize);
+			AllocateTransmitBuffer(configs.EndpointIn, configs.MaxTransmitPacketSize);
 	}
 
 	if (TO_ENDPOINT_NUMBER(configs.EndpointCommand) != 0)
-		usb->OpenEndpoint(configs.EndpointCommand, USB_EP_MAX_PACKET_INTR, USBEndpointAttributes::Interrupt);
+		OpenEndpoint(configs.EndpointCommand, USB_EP_MAX_PACKET_INTR, USBEndpointAttributes::Interrupt);
 
 	if (TO_ENDPOINT_NUMBER(configs.EndpointOut) != 0)
-		usb->OpenEndpoint(configs.EndpointOut, configs.MaxReceivePacketSize, USBEndpointAttributes::Bulk);
+		OpenEndpoint(configs.EndpointOut, configs.MaxReceivePacketSize, USBEndpointAttributes::Bulk);
 
 	if (TO_ENDPOINT_NUMBER(configs.EndpointIn) != 0)
-		usb->OpenEndpoint(configs.EndpointIn, configs.MaxTransmitPacketSize, USBEndpointAttributes::Bulk);
+		OpenEndpoint(configs.EndpointIn, configs.MaxTransmitPacketSize, USBEndpointAttributes::Bulk);
 
 	EndpointPrepareReceive(m_ReceiveBuffer, configs.MaxReceivePacketSize);
 }

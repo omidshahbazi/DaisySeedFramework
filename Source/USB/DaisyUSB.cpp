@@ -258,8 +258,8 @@ DaisyUSB::DaisyUSB(Peripherals Peripheral)
 void DaisyUSB::Start(const USBProfile& Profile)
 {
 	ASSERT(!m_IsRunning, "Interface has already started.");
-	ASSERT(Profile.Mode != USBModes::Device || Profile.Device.ClassNodeCount <= MaxClassCount, "Invalid ClassNodeCount");
-	ASSERT(Profile.Mode != USBModes::Host || Profile.Host.SupportedClassCount <= MaxClassCount, "Invalid SupportedClassCount");
+	ASSERT(Profile.Mode != USBModes::Device || (0 < Profile.Device.ClassNodeCount && Profile.Device.ClassNodeCount <= MaxClassCount), "Invalid ClassNodeCount");
+	ASSERT(Profile.Mode != USBModes::Host || (0 < Profile.Host.SupportedClassCount && Profile.Host.SupportedClassCount <= MaxClassCount), "Invalid SupportedClassCount");
 
 	m_Profile = Profile;
 
@@ -614,8 +614,14 @@ void DaisyUSB::HandleGetDescriptor(void)
 			sendLen = BuildStringDescriptor(ep0Buffer, m_Profile.Device.SerialNumber);
 		else
 			for (uint8 i = 0; i < m_DeviceCount; ++i)
-				if ((sendLen = m_Devices[i].Interface->HandleGetDescriptor(ep0Buffer, descIndex)) != 0)
-					break;
+			{
+				cstr string = m_Devices[i].Interface->GetDescriptorString(descIndex);
+				if (string == nullptr)
+					continue;
+
+				sendLen = BuildStringDescriptor(ep0Buffer, string);
+				break;
+			}
 		break;
 	}
 

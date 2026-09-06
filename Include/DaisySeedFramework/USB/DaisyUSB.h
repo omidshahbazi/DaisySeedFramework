@@ -34,8 +34,6 @@ class DaisyUSB : public IUSB
 	friend void HAL_PCD_SOFCallback(PCD_HandleTypeDef* hpcd);
 
 	friend class DaisyUSBInterfaceCommon;
-	friend class DaisyUSBCDCInterface;
-	friend class DaisyUSBAMCInterface;
 
 public:
 	enum class Peripherals
