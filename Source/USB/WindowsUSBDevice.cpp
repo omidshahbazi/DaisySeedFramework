@@ -20,8 +20,7 @@ void WindowsUSBDevice::Start(uint8 Index, const USBDeviceProfile& Profile)
 			break;
 
 		default:
-			ASSERT(false, "Unsupported class type %i", node.Class);
-			break;
+			NOT_IMPLEMENTED();
 		}
 
 		m_DeviceCount++;

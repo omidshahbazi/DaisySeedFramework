@@ -28,7 +28,7 @@ void DaisyUSBHost::Start(const USBHostProfile& Profile)
 
 	m_Profile = Profile;
 
-	ASSERT(false, "Not implemented");
+	NOT_IMPLEMENTED();
 
 	if (m_Peripheral == Peripherals::HighSpeed)
 	{

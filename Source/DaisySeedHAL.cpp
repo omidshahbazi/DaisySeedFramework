@@ -58,7 +58,7 @@ void DaisySeedHAL::Setup(uint8 FrameLength, uint32 SampleRate, bool Boost)
 		break;
 
 	default:
-		ASSERT(false, "No suitable sample rate for %i found in the daisy", SampleRate);
+		NOT_IMPLEMENTED();
 	}
 
 	m_Hardware.SetAudioSampleRate(daisySampleRate);
@@ -347,9 +347,10 @@ daisy::Pin DaisySeedHAL::GetPin(uint8 Pin)
 		return daisy::seed::D30;
 	case 31:
 		return daisy::seed::D31;
-	}
 
-	ASSERT(false, "Invalid Pin %i", Pin);
+	default:
+		NOT_IMPLEMENTED();
+	}
 }
 
 void DaisySeedHAL::InitializeADC(void)
@@ -404,7 +405,7 @@ uint8 DaisySeedHAL::GetAnalogPinIndex(uint8 Pin) const
 		return index;
 	}
 
-	ASSERT(false, "Couldn't find the state for pin %i", Pin);
+	BREAK("Couldn't find the state for pin %i", Pin);
 }
 
 DaisySeedHAL::PinState<daisy::AdcChannelConfig>* DaisySeedHAL::FindAnalogPin(uint8 Pin)

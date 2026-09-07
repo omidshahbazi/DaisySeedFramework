@@ -650,7 +650,7 @@ DaisyUSBDevice::DeviceInstanceInfo& DaisyUSBDevice::GetDeviceInstanceByInterface
 		return m_Devices[i];
 	}
 
-	ASSERT(false, "Couldn't find the proper interface");
+	BREAK("Couldn't find the proper interface");
 }
 
 DaisyUSBDevice::DeviceInstanceInfo& DaisyUSBDevice::GetDeviceInstanceByEndpoint(uint8 Endpoint)
@@ -663,7 +663,7 @@ DaisyUSBDevice::DeviceInstanceInfo& DaisyUSBDevice::GetDeviceInstanceByEndpoint(
 		return m_Devices[i];
 	}
 
-	ASSERT(false, "Couldn't find the proper interface");
+	BREAK("Couldn't find the proper interface");
 }
 
 uint16 DaisyUSBDevice::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, const USBDeviceProfile& Profile)

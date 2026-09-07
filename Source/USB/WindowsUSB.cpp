@@ -10,7 +10,7 @@ void WindowsUSB::Start(const USBProfile& Profile)
 	if (Profile.Mode == USBModes::Device)
 		m_Device.Start(0, Profile.Device);
 	else
-		ASSERT(false, "Host mode is not supported on Windows");
+		NOT_IMPLEMENTED();
 }
 
 void WindowsUSB::Stop(void)

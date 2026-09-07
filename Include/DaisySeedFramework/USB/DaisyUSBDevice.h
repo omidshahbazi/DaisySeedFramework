@@ -63,7 +63,7 @@ public:
 			return static_cast<DaisyUSBAMCInterface*>(dii.Interface);
 		}
 
-		ASSERT(false, "Class is unhandled");
+		NOT_IMPLEMENTED();
 	}
 
 private:
