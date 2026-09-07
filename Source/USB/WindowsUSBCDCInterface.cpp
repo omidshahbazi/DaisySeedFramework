@@ -1,6 +1,6 @@
 #ifdef ON_WINDOWS
 
-#include "DaisySeedFramework/WindowsUSBInterface.h"
+#include "DaisySeedFramework/USB/WindowsUSBCDCInterface.h"
 #include <DigitalSignalProcessing/Debug.h>
 #include <DigitalSignalProcessing/Math.h>
 #include <string>
@@ -13,16 +13,15 @@
 #define ns *0.000'001
 #define ms *0.001
 
-WindowsUSBInterface::WindowsUSBInterface(cstr Name) :
-	m_Name(Name),
-	m_Pipe(INVALID_HANDLE_VALUE)
+WindowsUSBCDCInterface::WindowsUSBCDCInterface(void)
+	: m_Pipe(INVALID_HANDLE_VALUE)
 {}
 
-void WindowsUSBInterface::Start(USBInterfaces Interface)
+void WindowsUSBCDCInterface::Start(uint8 Index, const CDCClassConfig& Config)
 {
 	ASSERT(!m_IsRunning, "Already started");
 
-	const std::string name = m_Name;
+	const std::string name = "WindowsUSBCDCInterface-" + std::to_string(Index);
 	const std::wstring path = L"\\\\.\\pipe\\USB-PIPE-" + std::wstring(name.begin(), name.end());
 
 	m_Pipe = CreateNamedPipeW(path.c_str(), PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, 1, 1024, 1024, 0, nullptr);
@@ -30,7 +29,7 @@ void WindowsUSBInterface::Start(USBInterfaces Interface)
 	ListenForClient();
 }
 
-void WindowsUSBInterface::Stop(void)
+void WindowsUSBCDCInterface::Stop(void)
 {
 	ASSERT(m_IsRunning, "Already stopped");
 
@@ -43,7 +42,7 @@ void WindowsUSBInterface::Stop(void)
 	m_IsClientConnected = false;
 }
 
-void WindowsUSBInterface::Update(void)
+void WindowsUSBCDCInterface::Update(void)
 {
 	if (!m_IsClientConnected)
 		return;
@@ -67,7 +66,7 @@ void WindowsUSBInterface::Update(void)
 		Disconnect();
 }
 
-void WindowsUSBInterface::Transmit(const uint8* Buffer, uint16 Length) const
+void WindowsUSBCDCInterface::Transmit(const uint8* Buffer, uint16 Length)
 {
 	if (!m_IsClientConnected)
 		return;
@@ -86,7 +85,7 @@ void WindowsUSBInterface::Transmit(const uint8* Buffer, uint16 Length) const
 	}
 }
 
-void WindowsUSBInterface::Disconnect(void)
+void WindowsUSBCDCInterface::Disconnect(void)
 {
 	if (!m_IsClientConnected)
 		return;
@@ -96,7 +95,7 @@ void WindowsUSBInterface::Disconnect(void)
 	m_IsClientConnected = false;
 }
 
-void WindowsUSBInterface::ListenForClient(void)
+void WindowsUSBCDCInterface::ListenForClient(void)
 {
 	m_IsRunning = true;
 

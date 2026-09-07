@@ -118,7 +118,7 @@ void WindowsHAL::Delay(uint16 Ms) const
 
 void WindowsHAL::Update(void)
 {
-	m_USBInterface.Update();
+	m_USB.Update();
 }
 
 int WindowsHAL::AudioCallback(const void* InputBuffer, void* OutputBuffer, uint32 FramesPerBuffer, const PaStreamCallbackTimeInfo* TimeInfo, uint32 StatusFlags, void* UserData)

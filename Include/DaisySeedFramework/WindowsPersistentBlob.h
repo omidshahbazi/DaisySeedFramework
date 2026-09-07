@@ -19,13 +19,13 @@ public:
 	{
 		ASSERT(!m_IsInitialized, "WindowsPersistentBlob is already initialized");
 
-		m_FilePath = std::filesystem::current_path() / (std::to_string(PersistentBlobBase::GetAndIncrementOffset(sizeof(T))) + ".bin");
+		m_FilePath = std::filesystem::current_path() / "Persistent" / (std::to_string(PersistentBlobBase::GetAndIncrementOffset(sizeof(T))) + ".bin");
 		m_IsInitialized = true;
 
 		std::ifstream file(m_FilePath, std::ios::binary | std::ios::ate);
 		if (file.is_open())
 		{
-			file.read(reinterpret_cast<uint8_t*>(&m_Data), sizeof(PersistentBlobData<T>));
+			file.read(reinterpret_cast<char*>(&m_Data), sizeof(PersistentBlobData<T>));
 			file.close();
 		}
 		else
@@ -33,7 +33,7 @@ public:
 			m_Data.Data = DefaultData;
 
 			FlushToFile();
-			
+
 			return false;
 		}
 
@@ -88,7 +88,7 @@ private:
 		std::ofstream file(m_FilePath, std::ios::binary);
 		if (file.is_open())
 		{
-			file.write(reinterpret_cast<const uint8_t*>(&m_Data), sizeof(PersistentBlobData<T>));
+			file.write(reinterpret_cast<const char*>(&m_Data), sizeof(PersistentBlobData<T>));
 			file.close();
 		}
 	}

@@ -115,8 +115,10 @@
     <ClCompile Include="Source\USB\DaisyUSBDevice.cpp" />
     <ClCompile Include="Source\USB\DaisyUSBHost.cpp" />
     <ClCompile Include="Source\USB\DaisyUSBInterfaceCommon.cpp" />
+    <ClCompile Include="Source\USB\WindowsUSB.cpp" />
+    <ClCompile Include="Source\USB\WindowsUSBCDCInterface.cpp" />
+    <ClCompile Include="Source\USB\WindowsUSBDevice.cpp" />
     <ClCompile Include="Source\WindowsHAL.cpp" />
-    <ClCompile Include="Source\WindowsUSBInterface.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\DaisySeedFramework\Bitmap.h" />
@@ -145,8 +147,10 @@
     <ClInclude Include="Include\DaisySeedFramework\USB\DaisyUSBCDCInterface.h" />
     <ClInclude Include="Include\DaisySeedFramework\USB\DaisyUSBDevice.h" />
     <ClInclude Include="Include\DaisySeedFramework\USB\USBDefinitions.h" />
+    <ClInclude Include="Include\DaisySeedFramework\USB\WindowsUSB.h" />
+    <ClInclude Include="Include\DaisySeedFramework\USB\WindowsUSBCDCInterface.h" />
+    <ClInclude Include="Include\DaisySeedFramework\USB\WindowsUSBDevice.h" />
     <ClInclude Include="Include\DaisySeedFramework\WindowsHAL.h" />
     <ClInclude Include="Include\DaisySeedFramework\WindowsPersistentBlob.h" />
-    <ClInclude Include="Include\DaisySeedFramework\WindowsUSBInterface.h" />
   </ItemGroup>
 </Project>

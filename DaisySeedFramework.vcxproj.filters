@@ -52,9 +52,6 @@
     <ClCompile Include="Source\WindowsHAL.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Source\WindowsUSBInterface.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Source\LCDCanvas.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -74,6 +71,15 @@
       <Filter>Source\USB</Filter>
     </ClCompile>
     <ClCompile Include="Source\USB\DaisyUSBHost.cpp">
+      <Filter>Source\USB</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\USB\WindowsUSB.cpp">
+      <Filter>Source\USB</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\USB\WindowsUSBDevice.cpp">
+      <Filter>Source\USB</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\USB\WindowsUSBCDCInterface.cpp">
       <Filter>Source\USB</Filter>
     </ClCompile>
   </ItemGroup>
@@ -115,9 +121,6 @@
       <Filter>Include\DaisySeedFramework</Filter>
     </ClInclude>
     <ClInclude Include="Include\DaisySeedFramework\WindowsPersistentBlob.h">
-      <Filter>Include\DaisySeedFramework</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\DaisySeedFramework\WindowsUSBInterface.h">
       <Filter>Include\DaisySeedFramework</Filter>
     </ClInclude>
     <ClInclude Include="Include\DaisySeedFramework\Point.h">
@@ -163,6 +166,15 @@
       <Filter>Include\DaisySeedFramework\USB</Filter>
     </ClInclude>
     <ClInclude Include="Include\DaisySeedFramework\USB\DaisyUSBHost.h">
+      <Filter>Include\DaisySeedFramework\USB</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\USB\WindowsUSB.h">
+      <Filter>Include\DaisySeedFramework\USB</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\USB\WindowsUSBDevice.h">
+      <Filter>Include\DaisySeedFramework\USB</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\USB\WindowsUSBCDCInterface.h">
       <Filter>Include\DaisySeedFramework\USB</Filter>
     </ClInclude>
   </ItemGroup>

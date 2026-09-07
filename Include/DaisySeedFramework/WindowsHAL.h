@@ -4,7 +4,7 @@
 
 #include "Common.h"
 #include <DigitalSignalProcessing/IHAL.h>
-#include "WindowsUSBInterface.h"
+#include "USB/WindowsUSB.h"
 #include <chrono>
 
 struct PaStreamCallbackTimeInfo;
@@ -120,9 +120,9 @@ public:
 
 	void Delay(uint16 Ms) const override;
 
-	IUSBInterface* GetUSBInterface(void) override
+	IUSB* GetUSB(uint8 Index) override
 	{
-		return &m_USBInterface;
+		return &m_USB;
 	}
 
 	void EraseQSPIData(void) override
@@ -142,7 +142,7 @@ private:
 
 	CrashHandler m_CrashHandler;
 
-	WindowsUSBInterface m_USBInterface;
+	WindowsUSB m_USB;
 
 	uint8* m_SDRAMAddress;
 	uint32 m_SDRAMSize;
