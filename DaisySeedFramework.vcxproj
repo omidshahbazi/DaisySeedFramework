@@ -76,10 +76,15 @@
       <CPPLanguageStandard>CPP17</CPPLanguageStandard>
       <AdditionalIncludeDirectories>Include;DSP/Include;Libraries/;Libraries/libDaisy/src;Libraries/libDaisy/src/sys;Libraries/libDaisy/src/usbh;Libraries/libDaisy/Drivers/STM32H7xx_HAL_Driver/Inc;Libraries/libDaisy/Drivers/CMSIS-Device/ST/STM32H7xx/Include;Libraries/libDaisy/Drivers/CMSIS/Core/Include;Libraries/libDaisy/Drivers/CMSIS_5/CMSIS/Core/Include;Libraries/libDaisy/Middlewares/ST/STM32_USB_Host_Library/Core/Inc;Libraries/libDaisy/Middlewares/Third_Party/FatFs/src</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>ON_HARDWARE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LinkTimeOptimization>true</LinkTimeOptimization>
+      <Optimization>Os</Optimization>
     </ClCompile>
     <Link>
       <ProduceRelocationRecords>true</ProduceRelocationRecords>
     </Link>
+    <Lib>
+      <ArchiverToolName>gcc-ar</ArchiverToolName>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
