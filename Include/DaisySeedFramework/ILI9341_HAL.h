@@ -6,7 +6,7 @@
 #include "I_LCD_HAL.h"
 #include "DaisyInclude.h"
 #include <DigitalSignalProcessing/IHAL.h>
-#include <DigitalSignalProcessing/ContextCallback.h>
+#include <DigitalSignalProcessing/FixedFunction.h>
 
 class ILI9341_HAL : public I_LCD_HAL
 {
@@ -17,7 +17,7 @@ private:
 	static_assert(FRAME_BUFFER_CHUNK_COUNT > 2, "FRAME_BUFFER_CHUNK_COUNT must be greater than 2, cause the HAL_SPI_Transmit_DMA accepts the length as uint16");
 
 public:
-	typedef ContextCallback<void> RenderEventHandler;
+	typedef FixedFunction<void(void)> RenderEventHandler;
 
 public:
 	ILI9341_HAL(IHAL* HAL, GPIOPins SCLK, GPIOPins MOSI, GPIOPins NSS, GPIOPins DC, GPIOPins RST, Orientations Orientation, Point PixelSize);

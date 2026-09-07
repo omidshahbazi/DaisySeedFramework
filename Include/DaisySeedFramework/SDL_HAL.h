@@ -5,7 +5,7 @@
 #include "Common.h"
 #include "I_LCD_HAL.h"
 #include <DigitalSignalProcessing/IHAL.h>
-#include <DigitalSignalProcessing/ContextCallback.h>
+#include <DigitalSignalProcessing/FixedFunction.h>
 
 struct SDL_Window;
 struct SDL_Renderer;
@@ -16,7 +16,7 @@ class SDL_HAL : public I_LCD_HAL
 	static constexpr uint8 MAX_FRAME_RATE = 60;
 
 public:
-	typedef ContextCallback<void> RenderEventHandler;
+	typedef FixedFunction<void(void)> RenderEventHandler;
 
 public:
 	SDL_HAL(IHAL* HAL, GPIOPins, GPIOPins, GPIOPins, GPIOPins, GPIOPins, Orientations Orientation, Point PixelSize);
