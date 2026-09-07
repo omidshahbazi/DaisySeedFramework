@@ -106,8 +106,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\DaisySeedHAL.cpp" />
-    <ClCompile Include="Source\DaisyUSBAudioInterface.cpp" />
-    <ClCompile Include="Source\DaisyUSBInterface.cpp" />
     <ClCompile Include="Source\ILI9341_HAL.cpp" />
     <ClCompile Include="Source\LCDCanvas.cpp" />
     <ClCompile Include="Source\SDL_HAL.cpp" />
@@ -126,8 +124,6 @@
     <ClInclude Include="Include\DaisySeedFramework\DaisyInclude.h" />
     <ClInclude Include="Include\DaisySeedFramework\DaisyPersistentBlob.h" />
     <ClInclude Include="Include\DaisySeedFramework\DaisySeedHAL.h" />
-    <ClInclude Include="Include\DaisySeedFramework\DaisyUSBAudioInterface.h" />
-    <ClInclude Include="Include\DaisySeedFramework\DaisyUSBInterface.h" />
     <ClInclude Include="Include\DaisySeedFramework\Font.h" />
     <ClInclude Include="Include\DaisySeedFramework\ILI9341_HAL.h" />
     <ClInclude Include="Include\DaisySeedFramework\I_LCD_HAL.h" />
@@ -139,7 +135,7 @@
     <ClInclude Include="Include\DaisySeedFramework\StaticRingBuffer.h" />
     <ClInclude Include="Include\DaisySeedFramework\StaticStack.h" />
     <ClInclude Include="Include\DaisySeedFramework\StaticVector.h" />
-    <ClInclude Include="Include\DaisySeedFramework\USBHost.h" />
+    <ClInclude Include="Include\DaisySeedFramework\ChunkDataAssembler.h" />
     <ClInclude Include="Include\DaisySeedFramework\USB\DaisyUSB.h" />
     <ClInclude Include="Include\DaisySeedFramework\USB\DaisyUSBHost.h" />
     <ClInclude Include="Include\DaisySeedFramework\USB\DaisyUSBInterfaceCommon.h" />

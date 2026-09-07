@@ -358,7 +358,7 @@ void DaisyUSBDevice::Stop(void)
 {
 	ASSERT(m_IsRunning, "Interface is not started.");
 
-	// LINE1_TODO:  Calling this would cause a memory leak, so we don't call it. The memory will be freed when the device is reset.
+	// LINE1_TODO: Calling this would cause a memory leak, so we don't call it. The memory will be freed when the device is reset.
 
 	CHECK_CALL(HAL_PCD_Stop(&m_DeviceHandle));
 	CHECK_CALL(HAL_PCD_DeInit(&m_DeviceHandle));

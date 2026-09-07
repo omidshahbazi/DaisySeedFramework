@@ -46,12 +46,6 @@
     <ClCompile Include="Source\ILI9341_HAL.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Source\DaisyUSBAudioInterface.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\DaisyUSBInterface.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Source\SDL_HAL.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -93,12 +87,6 @@
     <ClInclude Include="Include\DaisySeedFramework\DaisySeedHAL.h">
       <Filter>Include\DaisySeedFramework</Filter>
     </ClInclude>
-    <ClInclude Include="Include\DaisySeedFramework\DaisyUSBAudioInterface.h">
-      <Filter>Include\DaisySeedFramework</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\DaisySeedFramework\DaisyUSBInterface.h">
-      <Filter>Include\DaisySeedFramework</Filter>
-    </ClInclude>
     <ClInclude Include="Include\DaisySeedFramework\ILI9341_HAL.h">
       <Filter>Include\DaisySeedFramework</Filter>
     </ClInclude>
@@ -120,7 +108,7 @@
     <ClInclude Include="Include\DaisySeedFramework\StaticVector.h">
       <Filter>Include\DaisySeedFramework</Filter>
     </ClInclude>
-    <ClInclude Include="Include\DaisySeedFramework\USBHost.h">
+    <ClInclude Include="Include\DaisySeedFramework\ChunkDataAssembler.h">
       <Filter>Include\DaisySeedFramework</Filter>
     </ClInclude>
     <ClInclude Include="Include\DaisySeedFramework\WindowsHAL.h">
