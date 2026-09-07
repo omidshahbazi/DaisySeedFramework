@@ -44,18 +44,18 @@ enum class GPIOPins
 
 enum class AnalogPins
 {
-	Pin0 = (uint8)GPIOPins::Pin15,
-	Pin1 = (uint8)GPIOPins::Pin16,
-	Pin2 = (uint8)GPIOPins::Pin17,
-	Pin3 = (uint8)GPIOPins::Pin18,
-	Pin4 = (uint8)GPIOPins::Pin19,
-	Pin5 = (uint8)GPIOPins::Pin20,
-	Pin6 = (uint8)GPIOPins::Pin21,
-	Pin7 = (uint8)GPIOPins::Pin22,
-	Pin8 = (uint8)GPIOPins::Pin23,
-	Pin9 = (uint8)GPIOPins::Pin24,
-	Pin10 = (uint8)GPIOPins::Pin25,
-	Pin11 = (uint8)GPIOPins::Pin28,
+	Pin0 = (uint8_t)GPIOPins::Pin15,
+	Pin1 = (uint8_t)GPIOPins::Pin16,
+	Pin2 = (uint8_t)GPIOPins::Pin17,
+	Pin3 = (uint8_t)GPIOPins::Pin18,
+	Pin4 = (uint8_t)GPIOPins::Pin19,
+	Pin5 = (uint8_t)GPIOPins::Pin20,
+	Pin6 = (uint8_t)GPIOPins::Pin21,
+	Pin7 = (uint8_t)GPIOPins::Pin22,
+	Pin8 = (uint8_t)GPIOPins::Pin23,
+	Pin9 = (uint8_t)GPIOPins::Pin24,
+	Pin10 = (uint8_t)GPIOPins::Pin25,
+	Pin11 = (uint8_t)GPIOPins::Pin28,
 	COUNT = 12
 };
 
@@ -64,16 +64,16 @@ enum class AnalogPins
 #if defined(ON_WINDOWS)
 
 #define DEFINE_LARGE_MEMORY_BUFFER(Name, Size)  \
-	static constexpr uint32 Name##_Size = Size; \
-	uint8 g_##Name[Name##_Size] = {0};
+	static constexpr uint32_t Name##_Size = Size; \
+	uint8_t g_##Name[Name##_Size] = {0};
 
 #elif defined(ON_HARDWARE)
 #include <libDaisy/src/dev/sdram.h>
 
 
 #define DEFINE_LARGE_MEMORY_BUFFER(Name, Size)  \
-	static constexpr uint32 Name##_Size = Size; \
-	uint8 DSY_SDRAM_BSS g_##Name[Name##_Size];
+	static constexpr uint32_t Name##_Size = Size; \
+	uint8_t DSY_SDRAM_BSS g_##Name[Name##_Size];
 #endif
 
 //This is reserved for Bootloader
@@ -105,5 +105,5 @@ static_assert(QSPI_START_ADDRESS >= QSPI_RESERVED_SIZE, "Invalid QSPI_START_ADDR
 
 #define DEFINE_LINKER_STORAGE_SECTION(Name) __attribute__((section(Name)))
 
-#define BYTES_TO_WORDS(SizeInBytes) (((SizeInBytes) + 1) / sizeof(uint32))
-#define BYTES_TO_DWORDS(SizeInBytes) (((SizeInBytes) + 3) / sizeof(uint32))
+#define BYTES_TO_WORDS(SizeInBytes) (((SizeInBytes) + 1) / sizeof(uint32_t))
+#define BYTES_TO_DWORDS(SizeInBytes) (((SizeInBytes) + 3) / sizeof(uint32_t))

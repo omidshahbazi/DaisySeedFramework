@@ -7,13 +7,13 @@
 struct Bitmap
 {
 public:
-	typedef uint64 DataType;
+	typedef uint64_t DataType;
 
 public:
-	uint8 Width;
-	uint8 Height;
+	uint8_t Width;
+	uint8_t Height;
 	const DataType* const Data;
-	uint8 BitsPerPixel;
+	uint8_t BitsPerPixel;
 };
 
 #endif

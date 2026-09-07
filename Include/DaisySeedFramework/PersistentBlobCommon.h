@@ -11,13 +11,13 @@ class PersistentBlobBase
 	friend class WindowsPersistentBlob;
 
 private:
-	static uint32 GetAndIncrementOffset(uint16 Size)
+	static uint32_t GetAndIncrementOffset(uint16_t Size)
 	{
-		const uint32 SECTOR_SIZE = QSPI_PAGE_SIZE;
+		const uint32_t SECTOR_SIZE = QSPI_PAGE_SIZE;
 
-		static uint32 offset = QSPI_START_ADDRESS;
+		static uint32_t offset = QSPI_START_ADDRESS;
 
-		uint32 current = offset;
+		uint32_t current = offset;
 
 		ASSERT(current + Size < QSPI_END_ADDRESS, "We're running out of QSPI bound");
 
@@ -38,10 +38,10 @@ public:
 
 	bool operator!=(const PersistentBlobData& Other)
 	{
-		const uint8* selfData = reinterpret_cast<const uint8*>(&Data);
-		const uint8* otherData = reinterpret_cast<const uint8*>(&Other.Data);
+		const uint8_t* selfData = reinterpret_cast<const uint8_t*>(&Data);
+		const uint8_t* otherData = reinterpret_cast<const uint8_t*>(&Other.Data);
 
-		for (uint16 i = 0; i < sizeof(T); ++i)
+		for (uint16_t i = 0; i < sizeof(T); ++i)
 			if (selfData[i] != otherData[i])
 				return true;
 
@@ -55,7 +55,7 @@ public:
 
 	T Data;
 
-	uint32 DataSize;
+	uint32_t DataSize;
 };
 
 template <typename BlobType>

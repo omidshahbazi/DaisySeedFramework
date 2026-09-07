@@ -42,17 +42,17 @@
 // Endpoint address helpers. A USB endpoint "address" packs a direction bit
 // (D7) and a physical endpoint number (D6..0) into one byte; these macros
 // convert between the two representations.
-#define TO_ENDPOINT_NUMBER(Endpoint) ((uint8)(Endpoint & 0x7F))         // Strip the direction bit, leaving the raw endpoint number
-#define TO_OUT_ENDPOINT(EndpointNumber) ((uint8)(USB_EP0_OUT | EndpointNumber)) // Build an OUT-direction endpoint address from a raw number
-#define TO_IN_ENDPOINT(EndpointNumber) ((uint8)(USB_EP0_IN | EndpointNumber))   // Build an IN-direction endpoint address from a raw number
+#define TO_ENDPOINT_NUMBER(Endpoint) ((uint8_t)(Endpoint & 0x7F))         // Strip the direction bit, leaving the raw endpoint number
+#define TO_OUT_ENDPOINT(EndpointNumber) ((uint8_t)(USB_EP0_OUT | EndpointNumber)) // Build an OUT-direction endpoint address from a raw number
+#define TO_IN_ENDPOINT(EndpointNumber) ((uint8_t)(USB_EP0_IN | EndpointNumber))   // Build an IN-direction endpoint address from a raw number
 
 // Global sizing constants for buffers and strings
-static constexpr uint8 USBMaxStringLength = 31; // Maximum number of UTF-16 characters a string descriptor here can hold
+static constexpr uint8_t USBMaxStringLength = 31; // Maximum number of UTF-16 characters a string descriptor here can hold
 
 // bDescriptorType values: identifies which kind of descriptor a given block
 // of bytes is (standard descriptors defined by the USB spec, plus the two
 // class-specific "functional descriptor" types used by CDC/Audio).
-enum class USBDescTypes : uint8
+enum class USBDescTypes : uint8_t
 {
 	Device = 0x01,                // Standard Device Descriptor
 	Configuration = 0x02,         // Standard Configuration Descriptor
@@ -67,7 +67,7 @@ enum class USBDescTypes : uint8
 // bFunctionClass/bInterfaceClass values: identifies which USB-IF-defined
 // class an interface (or IAD-grouped function) implements. This is what
 // tells the host which built-in driver to bind (e.g. usbaudio.sys for Audio).
-enum class USBSDeviceClasses : uint8
+enum class USBSDeviceClasses : uint8_t
 {
 	None = 0x00, // No class specified at this level (class defined per-interface instead)
 	Audio = 0x01, // Audio Interface Class
@@ -78,7 +78,7 @@ enum class USBSDeviceClasses : uint8
 
 // bDeviceSubClass values, only meaningful when bDeviceClass = Misc; declares
 // that the device follows the "Common Class" IAD convention.
-enum class USBDeviceSubClasses : uint8
+enum class USBDeviceSubClasses : uint8_t
 {
 	None = 0x00,    // No subclass specified
 	Common = 0x02   // Interface Association Descriptor (IAD) convention subclass
@@ -86,7 +86,7 @@ enum class USBDeviceSubClasses : uint8
 
 // bDeviceProtocol values, only meaningful when bDeviceClass = Misc; declares
 // that IADs are used to group the device's interfaces into functions.
-enum class USBDeviceProtocols : uint8
+enum class USBDeviceProtocols : uint8_t
 {
 	None = 0x00,    // No protocol specified
 	IAD = 0x01,     // Device uses Interface Association Descriptors
@@ -96,7 +96,7 @@ enum class USBDeviceProtocols : uint8
 // bmAttributes transfer-type bits (D1..0) of a standard Endpoint Descriptor.
 // Sync-type and usage-type bits for isochronous endpoints are layered on
 // top of Isochronous separately (see EndpointSyncTypes in USBAMCDefinitions.h).
-enum class USBEndpointAttributes : uint8
+enum class USBEndpointAttributes : uint8_t
 {
 	Control = 0x00,    // Control transfer type (used only by EP0)
 	Isochronous = 0x01,// Isochronous transfer type (used by Audio streaming endpoints)
@@ -105,7 +105,7 @@ enum class USBEndpointAttributes : uint8
 };
 
 // bmAttributes power-source bits of the standard Configuration Descriptor.
-enum class USBConfigAttributes : uint8
+enum class USBConfigAttributes : uint8_t
 {
 	SelfPoweredMask = 0xC0, // D7 (reserved, must be 1) + D6 (Self Powered) both set
 	BusPoweredMask = 0x80   // D7 (reserved, must be 1) only; device draws power from the bus
@@ -118,11 +118,11 @@ BEGIN_PACK(1);
 struct USBDeviceSetupPacket
 {
 public:
-	uint8 bmRequestType; // Direction (D7) + Type (D6..5) + Recipient (D4..0) - see USB_REQ_* masks above
-	uint8 bRequest;       // Which request this is (meaning depends on Type: standard/class/vendor)
-	uint16 wValue;         // Request-specific parameter (e.g. descriptor type/index, or a control selector)
-	uint16 wIndex;         // Usually an interface or endpoint number/entity ID, depending on recipient
-	uint16 wLength;        // Number of bytes to transfer in the following Data stage, or 0 for no data stage
+	uint8_t bmRequestType; // Direction (D7) + Type (D6..5) + Recipient (D4..0) - see USB_REQ_* masks above
+	uint8_t bRequest;       // Which request this is (meaning depends on Type: standard/class/vendor)
+	uint16_t wValue;         // Request-specific parameter (e.g. descriptor type/index, or a control selector)
+	uint16_t wIndex;         // Usually an interface or endpoint number/entity ID, depending on recipient
+	uint16_t wLength;        // Number of bytes to transfer in the following Data stage, or 0 for no data stage
 };
 END_PACK();
 
@@ -132,20 +132,20 @@ BEGIN_PACK(1);
 struct USBDeviceDescriptor
 {
 public:
-	uint8 bLength;                        // Total size of this descriptor: 18 bytes
+	uint8_t bLength;                        // Total size of this descriptor: 18 bytes
 	USBDescTypes bDescriptorType;          // Always USBDescTypes::Device
-	uint16 bcdUSB;                          // USB specification release number in BCD (see USB_VERSION_2_0)
+	uint16_t bcdUSB;                          // USB specification release number in BCD (see USB_VERSION_2_0)
 	USBSDeviceClasses bDeviceClass;         // Overall device class, or None/Misc if defined per-interface
 	USBDeviceSubClasses bDeviceSubClass;    // Overall device subclass (only meaningful alongside Misc)
 	USBDeviceProtocols bDeviceProtocol;     // Overall device protocol (only meaningful alongside Misc)
-	uint8 bMaxPacketSize0;                 // Max packet size for endpoint 0 (control), in bytes
-	uint16 idVendor;                        // USB Vendor ID (VID)
-	uint16 idProduct;                       // USB Product ID (PID)
-	uint16 bcdDevice;                       // Device release/version number in BCD
-	uint8 iManufacturer;                   // String descriptor index for the manufacturer name, or 0
-	uint8 iProduct;                        // String descriptor index for the product name, or 0
-	uint8 iSerialNumber;                   // String descriptor index for the serial number, or 0
-	uint8 bNumConfigurations;              // Number of possible configurations (always 1 here)
+	uint8_t bMaxPacketSize0;                 // Max packet size for endpoint 0 (control), in bytes
+	uint16_t idVendor;                        // USB Vendor ID (VID)
+	uint16_t idProduct;                       // USB Product ID (PID)
+	uint16_t bcdDevice;                       // Device release/version number in BCD
+	uint8_t iManufacturer;                   // String descriptor index for the manufacturer name, or 0
+	uint8_t iProduct;                        // String descriptor index for the product name, or 0
+	uint8_t iSerialNumber;                   // String descriptor index for the serial number, or 0
+	uint8_t bNumConfigurations;              // Number of possible configurations (always 1 here)
 };
 END_PACK();
 
@@ -155,9 +155,9 @@ BEGIN_PACK(1);
 struct USBStringDescriptor
 {
 public:
-	uint8 bLength;                   // Total size of this descriptor in bytes (2 + 2*character count)
+	uint8_t bLength;                   // Total size of this descriptor in bytes (2 + 2*character count)
 	USBDescTypes bDescriptorType;    // Always USBDescTypes::String
-	uint16 wData[USBMaxStringLength]; // UTF-16LE character data (or language ID list for index 0)
+	uint16_t wData[USBMaxStringLength]; // UTF-16LE character data (or language ID list for index 0)
 };
 END_PACK();
 
@@ -168,14 +168,14 @@ BEGIN_PACK(1);
 struct USBConfigurationDescriptor
 {
 public:
-	uint8 bLength;                   // Total size of this descriptor alone: 9 bytes
+	uint8_t bLength;                   // Total size of this descriptor alone: 9 bytes
 	USBDescTypes bDescriptorType;    // Always USBDescTypes::Configuration
-	uint16 wTotalLength;              // Total size of this descriptor plus every interface/endpoint descriptor that follows it
-	uint8 bNumInterfaces;             // Number of interfaces in this configuration
-	uint8 bConfigurationValue;        // Value the host uses in SET_CONFIGURATION to select this configuration
-	uint8 iConfiguration;             // String descriptor index naming this configuration, or 0 for none
+	uint16_t wTotalLength;              // Total size of this descriptor plus every interface/endpoint descriptor that follows it
+	uint8_t bNumInterfaces;             // Number of interfaces in this configuration
+	uint8_t bConfigurationValue;        // Value the host uses in SET_CONFIGURATION to select this configuration
+	uint8_t iConfiguration;             // String descriptor index naming this configuration, or 0 for none
 	USBConfigAttributes bmAttributes; // Power source bits (see USBConfigAttributes)
-	uint8 bMaxPower;                  // Max current draw from the bus, in units of 2mA
+	uint8_t bMaxPower;                  // Max current draw from the bus, in units of 2mA
 };
 END_PACK();
 
@@ -186,14 +186,14 @@ BEGIN_PACK(1);
 struct USBInterfaceAssociationDescriptor
 {
 public:
-	uint8  bLength;                    // Total size of this descriptor: 8 bytes
+	uint8_t  bLength;                    // Total size of this descriptor: 8 bytes
 	USBDescTypes  bDescriptorType;     // Always USBDescTypes::InterfaceAssociation
-	uint8  bFirstInterface;             // Interface number of the first interface in this function
-	uint8  bInterfaceCount;             // How many consecutive interfaces belong to this function
+	uint8_t  bFirstInterface;             // Interface number of the first interface in this function
+	uint8_t  bInterfaceCount;             // How many consecutive interfaces belong to this function
 	USBSDeviceClasses  bFunctionClass;  // Class code for the function as a whole
-	uint8  bFunctionSubClass;           // Subclass code for the function as a whole
-	uint8  bFunctionProtocol;           // Protocol code for the function as a whole
-	uint8  iFunction;                   // String descriptor index naming this function, or 0 for none
+	uint8_t  bFunctionSubClass;           // Subclass code for the function as a whole
+	uint8_t  bFunctionProtocol;           // Protocol code for the function as a whole
+	uint8_t  iFunction;                   // String descriptor index naming this function, or 0 for none
 };
 END_PACK();
 
@@ -203,15 +203,15 @@ BEGIN_PACK(1);
 struct USBInterfaceDescriptor
 {
 public:
-	uint8  bLength;                    // Total size of this descriptor: 9 bytes
+	uint8_t  bLength;                    // Total size of this descriptor: 9 bytes
 	USBDescTypes  bDescriptorType;     // Always USBDescTypes::Interface
-	uint8  bInterfaceNumber;            // Zero-based index of this interface within the configuration
-	uint8  bAlternateSetting;           // Which alternate setting of this interface number this describes
-	uint8  bNumEndpoints;               // Number of endpoints used by this alternate setting (excluding EP0)
+	uint8_t  bInterfaceNumber;            // Zero-based index of this interface within the configuration
+	uint8_t  bAlternateSetting;           // Which alternate setting of this interface number this describes
+	uint8_t  bNumEndpoints;               // Number of endpoints used by this alternate setting (excluding EP0)
 	USBSDeviceClasses  bInterfaceClass; // Class code for this interface
-	uint8  bInterfaceSubClass;          // Subclass code for this interface
-	uint8  bInterfaceProtocol;          // Protocol code for this interface
-	uint8  iInterface;                  // String descriptor index naming this interface, or 0 for none
+	uint8_t  bInterfaceSubClass;          // Subclass code for this interface
+	uint8_t  bInterfaceProtocol;          // Protocol code for this interface
+	uint8_t  iInterface;                  // String descriptor index naming this interface, or 0 for none
 };
 END_PACK();
 
@@ -221,12 +221,12 @@ BEGIN_PACK(1);
 struct USBEndpointDescriptor
 {
 public:
-	uint8  bLength;                 // Total size of this descriptor: 7 bytes
+	uint8_t  bLength;                 // Total size of this descriptor: 7 bytes
 	USBDescTypes  bDescriptorType;  // Always USBDescTypes::Endpoint
-	uint8  bEndpointAddress;         // Direction bit + endpoint number (see TO_IN_ENDPOINT/TO_OUT_ENDPOINT)
-	uint8  bmAttributes;        // Transfer type, plus sync/usage bits for isochronous endpoints
-	uint16 wMaxPacketSize;            // Maximum packet size this endpoint accepts/sends, in bytes
-	uint8  bInterval;                 // Polling interval (interrupt/isochronous) - see USB_EP_INTERVAL_*
+	uint8_t  bEndpointAddress;         // Direction bit + endpoint number (see TO_IN_ENDPOINT/TO_OUT_ENDPOINT)
+	uint8_t  bmAttributes;        // Transfer type, plus sync/usage bits for isochronous endpoints
+	uint16_t wMaxPacketSize;            // Maximum packet size this endpoint accepts/sends, in bytes
+	uint8_t  bInterval;                 // Polling interval (interrupt/isochronous) - see USB_EP_INTERVAL_*
 };
 END_PACK();
 
@@ -241,7 +241,7 @@ public:
 	{
 		USBDeviceDescriptor deviceDesc;   // Used while responding to GET_DESCRIPTOR(Device)
 		USBStringDescriptor stringDesc;   // Used while responding to GET_DESCRIPTOR(String)
-		uint8 configDescs[512];            // Used while building/responding to GET_DESCRIPTOR(Configuration) - raw bytes since its contents are variable-length and class-specific
+		uint8_t configDescs[512];            // Used while building/responding to GET_DESCRIPTOR(Configuration) - raw bytes since its contents are variable-length and class-specific
 	};
 };
 END_PACK();
@@ -254,14 +254,14 @@ class BufferTransmitHandler
 {
 public:
 	// ChunkSize should match the endpoint's wMaxPacketSize this handler feeds.
-	BufferTransmitHandler(uint16 ChunkSize)
+	BufferTransmitHandler(uint16_t ChunkSize)
 		:m_ChunkSize(ChunkSize)
 	{}
 
 	// Clears any in-progress transfer, leaving the handler idle (HasMore() == false).
 	void Reset(void)
 	{
-		Set<uint8>(nullptr, 0);
+		Set<uint8_t>(nullptr, 0);
 	}
 
 	// Starts a new transfer of exactly sizeof(T) bytes from Buffer.
@@ -273,9 +273,9 @@ public:
 
 	// Starts a new transfer of Length bytes from Buffer.
 	template<typename T>
-	void Set(const T* Buffer, uint16 Length)
+	void Set(const T* Buffer, uint16_t Length)
 	{
-		m_BufferStart = reinterpret_cast<const uint8*>(Buffer);
+		m_BufferStart = reinterpret_cast<const uint8_t*>(Buffer);
 		m_RemainingLength = Length;
 	}
 
@@ -296,13 +296,13 @@ public:
 	}
 
 	// Pointer to the start of the current (not-yet-sent) chunk.
-	const uint8* GetBuffer(void) const
+	const uint8_t* GetBuffer(void) const
 	{
 		return m_BufferStart;
 	}
 
 	// Size in bytes of the current chunk: ChunkSize, or less for the final short chunk.
-	uint16 GetLength(void) const
+	uint16_t GetLength(void) const
 	{
 		if (m_RemainingLength > m_ChunkSize)
 			return m_ChunkSize;
@@ -317,9 +317,9 @@ public:
 	}
 
 private:
-	uint16 m_ChunkSize;              // Max bytes sent per Transmit call, normally the endpoint's wMaxPacketSize
-	const uint8* m_BufferStart;      // Start of the not-yet-sent remainder of the buffer
-	uint16 m_RemainingLength;        // Bytes left to send, including the current chunk
+	uint16_t m_ChunkSize;              // Max bytes sent per Transmit call, normally the endpoint's wMaxPacketSize
+	const uint8_t* m_BufferStart;      // Start of the not-yet-sent remainder of the buffer
+	uint16_t m_RemainingLength;        // Bytes left to send, including the current chunk
 };
 
 enum class Peripherals

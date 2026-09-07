@@ -16,7 +16,7 @@ public:
 		m_ReceiveCallback = Callback;
 	}
 
-	void Transmit(const uint8* Buffer, uint16 Length) override;
+	void Transmit(const uint8_t* Buffer, uint16_t Length) override;
 
 	bool IsConnected(void) const override
 	{
@@ -28,18 +28,18 @@ public:
 	void OnDataInStage(void) override;
 	void OnDataOutStage(void) override;
 	
-	bool OnSetInterface(uint8 InterfaceIndex, uint8 AlternateSetting) override
+	bool OnSetInterface(uint8_t InterfaceIndex, uint8_t AlternateSetting) override
 	{
 		return (AlternateSetting == 0);
 	}
-	uint8 GetCurrentAltSetting(uint8 InterfaceIndex) const override
+	uint8_t GetCurrentAltSetting(uint8_t InterfaceIndex) const override
 	{
 		return 0;
 	}
-	void BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, uint16& BufferOffset, uint8 InterfaceIndex) const override;
+	void BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, uint16_t& BufferOffset, uint8_t InterfaceIndex) const override;
 
 public:
-	static uint8 CalculateRequiredInterfaceCount(const CDCClassConfig& Class)
+	static uint8_t CalculateRequiredInterfaceCount(const CDCClassConfig& Class)
 	{
 		return 2;
 	}
@@ -48,9 +48,9 @@ private:
 	CDCClassConfig m_Class;
 
 	USBCDCLineCoding m_CDCLineCoding;
-	uint8 m_LineState;
+	uint8_t m_LineState;
 	bool m_IsHostConnected;
-	uint8 m_ReceiveBuffer[(uint16)PacketSizes::Max];
+	uint8_t m_ReceiveBuffer[(uint16_t)PacketSizes::Max];
 	BufferTransmitHandler m_TransmitHandler;
 	ReceiveCallback m_ReceiveCallback;
 };

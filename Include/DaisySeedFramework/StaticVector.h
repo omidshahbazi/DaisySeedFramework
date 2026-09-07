@@ -12,7 +12,7 @@ public:
 	typedef T ItemType;
 
 public:
-	Vector(T* Buffer = nullptr, uint16 Capacity = 0)
+	Vector(T* Buffer = nullptr, uint16_t Capacity = 0)
 		: m_Buffer(Buffer),
 		m_Capacity(Capacity),
 		m_Count(0)
@@ -25,18 +25,18 @@ public:
 		m_Buffer[m_Count++] = Value;
 	}
 
-	void PushBack(const T* const Value, uint16 Count)
+	void PushBack(const T* const Value, uint16_t Count)
 	{
-		for (uint16 i = 0; i < Count; ++i)
+		for (uint16_t i = 0; i < Count; ++i)
 			PushBack(Value[i]);
 	}
 
-	void Insert(uint16 Index, const T& Value)
+	void Insert(uint16_t Index, const T& Value)
 	{
 		ASSERT(m_Count < m_Capacity, "Out of Size");
 		ASSERT(Index <= m_Count, "Index Out of Range");
 
-		for (uint16 i = m_Count; i > Index; --i)
+		for (uint16_t i = m_Count; i > Index; --i)
 			m_Buffer[i] = m_Buffer[i - 1];
 
 		m_Buffer[Index] = Value;
@@ -75,18 +75,18 @@ public:
 		return m_Buffer[m_Count - 1];
 	}
 
-	void RemoveAt(uint16 Index)
+	void RemoveAt(uint16_t Index)
 	{
 		ASSERT(Index < m_Count, "Index Out of Range");
 
-		for (uint16 i = Index; i < m_Count - 1; ++i)
+		for (uint16_t i = Index; i < m_Count - 1; ++i)
 			m_Buffer[i] = m_Buffer[i + 1];
 
 		--m_Count;
 		m_Buffer[m_Count] = {};
 	}
 
-	void RemoveRange(uint16 Index, uint16 Count)
+	void RemoveRange(uint16_t Index, uint16_t Count)
 	{
 		if (Count == 0)
 			return;
@@ -94,7 +94,7 @@ public:
 		ASSERT(Index < m_Count, "Index Out of Range");
 		ASSERT(Index + Count <= m_Count, "Range Out of Range");
 
-		uint16 elementsAfterRange = m_Count - (Index + Count);
+		uint16_t elementsAfterRange = m_Count - (Index + Count);
 
 		if (elementsAfterRange > 0)
 			Memory::Copy(m_Buffer + Index + Count, m_Buffer + Index, elementsAfterRange);
@@ -104,7 +104,7 @@ public:
 
 	void Clear(void)
 	{
-		for (uint16 i = 0; i < m_Count; ++i)
+		for (uint16_t i = 0; i < m_Count; ++i)
 		{
 			m_Buffer[i].~T();
 			m_Buffer[i] = {};
@@ -123,12 +123,12 @@ public:
 		return m_Buffer;
 	}
 
-	uint16 GetSize(void) const
+	uint16_t GetSize(void) const
 	{
 		return m_Count;
 	}
 
-	uint16 GetCapacity(void) const
+	uint16_t GetCapacity(void) const
 	{
 		return m_Capacity;
 	}
@@ -143,13 +143,13 @@ public:
 		return m_Count == 0;
 	}
 
-	T& operator[](uint16 Index)
+	T& operator[](uint16_t Index)
 	{
 		ASSERT(Index < m_Count, "Index Out of Range");
 		return m_Buffer[Index];
 	}
 
-	const T& operator[](uint16 Index) const
+	const T& operator[](uint16_t Index) const
 	{
 		ASSERT(Index < m_Count, "Index Out of Range");
 		return m_Buffer[Index];
@@ -157,11 +157,11 @@ public:
 
 private:
 	T* m_Buffer;
-	uint16 m_Capacity;
-	uint16 m_Count;
+	uint16_t m_Capacity;
+	uint16_t m_Count;
 };
 
-template <typename T, uint16 MaxSize>
+template <typename T, uint16_t MaxSize>
 struct StaticVector : public Vector<T>
 {
 public:

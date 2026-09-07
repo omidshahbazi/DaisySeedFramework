@@ -12,7 +12,7 @@ class WindowsUSBCDCInterface : public IUSBCDCInterface
 public:
 	WindowsUSBCDCInterface(void);
 
-	void Start(uint8 Index, const CDCClassConfig& Config);
+	void Start(uint8_t Index, const CDCClassConfig& Config);
 	void Stop(void);
 	void Update(void);
 
@@ -26,7 +26,7 @@ public:
 		m_Callback = Callback;
 	}
 
-	void Transmit(const uint8* Buffer, uint16 Length) override;
+	void Transmit(const uint8_t* Buffer, uint16_t Length) override;
 
 private:
 	void Disconnect(void);

@@ -13,20 +13,20 @@ class DaisyUSBAMCInterface : public IUSBAMCInterface, public DaisyUSBInterfaceCo
 public:
 	DaisyUSBAMCInterface(DaisyUSBDevice* Device, const Configs& Configs, const AMCClassConfig& Class);
 
-	virtual void Read(float* InterleavedBuffer, uint16 TotalSampleCount)
+	virtual void Read(float* InterleavedBuffer, uint16_t TotalSampleCount)
 	{
 		PopSamples(InterleavedBuffer, TotalSampleCount);
 	}
-	virtual void Read(double* InterleavedBuffer, uint16 TotalSampleCount)
+	virtual void Read(double* InterleavedBuffer, uint16_t TotalSampleCount)
 	{
 		PopSamples(InterleavedBuffer, TotalSampleCount);
 	}
 
-	void Write(const float* const InterleavedBuffer, uint16 TotalSampleCount) override
+	void Write(const float* const InterleavedBuffer, uint16_t TotalSampleCount) override
 	{
 		PushSamples(InterleavedBuffer, TotalSampleCount);
 	}
-	void Write(const double* const InterleavedBuffer, uint16 TotalSampleCount) override
+	void Write(const double* const InterleavedBuffer, uint16_t TotalSampleCount) override
 	{
 		PushSamples(InterleavedBuffer, TotalSampleCount);
 	}
@@ -36,22 +36,22 @@ public:
 		m_ControlChangedCallback = Callback;
 	}
 
-	uint32 GetCurrentOutSampleRate(void) const override
+	uint32_t GetCurrentOutSampleRate(void) const override
 	{
 		return m_CurrentOutSampleRate;
 	}
-	uint32 GetCurrentInSampleRate(void) const override
+	uint32_t GetCurrentInSampleRate(void) const override
 	{
 		return m_CurrentInSampleRate;
 	}
 
-	uint8 GetCurrentOutBitDepth(void) const override
+	uint8_t GetCurrentOutBitDepth(void) const override
 	{
-		return (uint8)m_CurrentOutBitDepth;
+		return (uint8_t)m_CurrentOutBitDepth;
 	}
-	uint8 GetCurrentInBitDepth(void) const override
+	uint8_t GetCurrentInBitDepth(void) const override
 	{
-		return (uint8)m_CurrentInBitDepth;
+		return (uint8_t)m_CurrentInBitDepth;
 	}
 
 	dBGain GetCurrentOutVolume(void) const override
@@ -80,55 +80,55 @@ public:
 	void OnIsoOutIncomplete(void) override;
 	void OnIsoInIncomplete(void) override;
 
-	bool OnSetInterface(uint8 InterfaceIndex, uint8 AlternateSetting) override;
-	uint8 GetCurrentAltSetting(uint8 InterfaceIndex) const override;
-	void BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, uint16& BufferOffset, uint8 InterfaceIndex) const override;
-	cstr GetDescriptorString(uint8 StringIndex) const override;
+	bool OnSetInterface(uint8_t InterfaceIndex, uint8_t AlternateSetting) override;
+	uint8_t GetCurrentAltSetting(uint8_t InterfaceIndex) const override;
+	void BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, uint16_t& BufferOffset, uint8_t InterfaceIndex) const override;
+	cstr GetDescriptorString(uint8_t StringIndex) const override;
 
 	void TransmitBuffer(void);
 
-	bool IsSampleRateSupported(uint32 Rate) const;
+	bool IsSampleRateSupported(uint32_t Rate) const;
 
 private:
 	template <typename T>
-	uint16 PopSamples(T* InterleavedBuffer, uint16 TotalSampleCount);
+	uint16_t PopSamples(T* InterleavedBuffer, uint16_t TotalSampleCount);
 	template <typename T>
-	void PushSamples(const T* const InterleavedBuffer, uint16 TotalSampleCount);
+	void PushSamples(const T* const InterleavedBuffer, uint16_t TotalSampleCount);
 
 	void UpdatePacketSize(void);
 
 public:
-	static void BuildStreamingInterface(EP0Buffer& EP0Buffer, uint16& BufferOffset, uint8 InterfaceIndex, uint8 ChannelCount, uint8 Endpoint, uint8 TerminalLinkID, const AMCClassConfig& Config);
+	static void BuildStreamingInterface(EP0Buffer& EP0Buffer, uint16_t& BufferOffset, uint8_t InterfaceIndex, uint8_t ChannelCount, uint8_t Endpoint, uint8_t TerminalLinkID, const AMCClassConfig& Config);
 
-	static void CalculateStreamingInterfaceIndices(const Configs& Configs, const AMCClassConfig& Class, uint8& OutInterfaceIndex, uint8& InInterfaceIndex);
-	static uint8 CalculateRequiredInterfaceCount(const AMCClassConfig& Class);
+	static void CalculateStreamingInterfaceIndices(const Configs& Configs, const AMCClassConfig& Class, uint8_t& OutInterfaceIndex, uint8_t& InInterfaceIndex);
+	static uint8_t CalculateRequiredInterfaceCount(const AMCClassConfig& Class);
 
-	static uint16 CalculateMaxPacketSize(uint8 ChannelCount, const AMCClassConfig& Class);
+	static uint16_t CalculateMaxPacketSize(uint8_t ChannelCount, const AMCClassConfig& Class);
 
 private:
-	static uint16 CalculatePacketSize(uint8 ChannelCount, uint32 SampleRate, BitDepths BitDepth);
+	static uint16_t CalculatePacketSize(uint8_t ChannelCount, uint32_t SampleRate, BitDepths BitDepth);
 
 private:
 	AMCClassConfig m_Class;
 
-	uint8 m_OutAltSetting;
-	uint8 m_InAltSetting;
+	uint8_t m_OutAltSetting;
+	uint8_t m_InAltSetting;
 
-	uint8 m_OutInterfaceIndex;
-	uint8 m_InInterfaceIndex;
+	uint8_t m_OutInterfaceIndex;
+	uint8_t m_InInterfaceIndex;
 
-	uint8* m_ReceiveBuffer;
-	StaticRingBuffer<uint8, sizeof(int32) * 1024, false> m_ReceiveFIFO;
-	uint32 m_CurrentReceivePacketSize;
+	uint8_t* m_ReceiveBuffer;
+	StaticRingBuffer<uint8_t, sizeof(int32_t) * 1024, false> m_ReceiveFIFO;
+	uint32_t m_CurrentReceivePacketSize;
 
-	uint8* m_TransmitBuffer;
-	StaticRingBuffer<uint8, sizeof(int32) * 1024, false> m_TransmitFIFO;
-	uint32 m_CurrentTransmitPacketSize;
+	uint8_t* m_TransmitBuffer;
+	StaticRingBuffer<uint8_t, sizeof(int32_t) * 1024, false> m_TransmitFIFO;
+	uint32_t m_CurrentTransmitPacketSize;
 
 	ControlChangedCallback m_ControlChangedCallback;
 
-	uint32 m_CurrentOutSampleRate;
-	uint32 m_CurrentInSampleRate;
+	uint32_t m_CurrentOutSampleRate;
+	uint32_t m_CurrentInSampleRate;
 	BitDepths m_CurrentOutBitDepth;
 	BitDepths m_CurrentInBitDepth;
 	LinearGain m_CurrentOutVolume;
@@ -138,17 +138,17 @@ private:
 };
 
 template <typename T>
-uint16 DaisyUSBAMCInterface::PopSamples(T* InterleavedBuffer, uint16 TotalSampleCount)
+uint16_t DaisyUSBAMCInterface::PopSamples(T* InterleavedBuffer, uint16_t TotalSampleCount)
 {
 	ASSERT_ON_FLOATING_TYPE(T);
 
 	ASSERT(InterleavedBuffer != nullptr, "InterleavedBuffer is null");
 	ASSERT(TotalSampleCount != 0, "TotalSampleCount is zero");
 
-	const uint8 bytesPerSample = ((uint8)m_CurrentOutBitDepth / 8);
+	const uint8_t bytesPerSample = ((uint8_t)m_CurrentOutBitDepth / 8);
 	const size_t bytesToRead = TotalSampleCount * bytesPerSample;
 
-	uint16 samplesPopped = 0;
+	uint16_t samplesPopped = 0;
 	if (m_ReceiveFIFO.GetSize() >= bytesToRead)
 		samplesPopped = TotalSampleCount;
 
@@ -156,16 +156,31 @@ uint16 DaisyUSBAMCInterface::PopSamples(T* InterleavedBuffer, uint16 TotalSample
 
 	switch (m_CurrentOutBitDepth)
 	{
+	case BitDepths::BitDepths8:
+	{
+		if (m_ReceiveFIFO.GetSize() >= bytesToRead)
+		{
+			for (uint16_t i = 0; i < TotalSampleCount; ++i)
+			{
+				int8_t pcm8;
+				m_ReceiveFIFO.Pop(reinterpret_cast<uint8_t*>(&pcm8), sizeof(int8_t));
+
+				InterleavedBuffer[i] = ((T)pcm8 / INT8_MAX) * Gain;
+			}
+		}
+		break;
+	}
+
 	case BitDepths::BitDepths16:
 	{
 		if (m_ReceiveFIFO.GetSize() >= bytesToRead)
 		{
-			for (uint16 i = 0; i < TotalSampleCount; ++i)
+			for (uint16_t i = 0; i < TotalSampleCount; ++i)
 			{
 				int16_t pcm16;
-				m_ReceiveFIFO.Pop(reinterpret_cast<uint8*>(&pcm16), sizeof(int16));
+				m_ReceiveFIFO.Pop(reinterpret_cast<uint8_t*>(&pcm16), sizeof(int16_t));
 
-				InterleavedBuffer[i] = (T)(pcm16 / 32768.0) * Gain;
+				InterleavedBuffer[i] = ((T)pcm16 / INT16_MAX) * Gain;
 			}
 		}
 		break;
@@ -175,12 +190,12 @@ uint16 DaisyUSBAMCInterface::PopSamples(T* InterleavedBuffer, uint16 TotalSample
 	{
 		if (m_ReceiveFIFO.GetSize() >= bytesToRead)
 		{
-			for (uint16 i = 0; i < TotalSampleCount; ++i)
+			for (uint16_t i = 0; i < TotalSampleCount; ++i)
 			{
 				int24_t pcm24;
-				m_ReceiveFIFO.Pop(reinterpret_cast<uint8*>(&pcm24), sizeof(int24_t));
+				m_ReceiveFIFO.Pop(reinterpret_cast<uint8_t*>(&pcm24), sizeof(int24_t));
 
-				InterleavedBuffer[i] = (T)(pcm24 / 8388608.0) * Gain;;
+				InterleavedBuffer[i] = ((T)pcm24 / INT24_MAX) * Gain;;
 			}
 		}
 		break;
@@ -190,26 +205,26 @@ uint16 DaisyUSBAMCInterface::PopSamples(T* InterleavedBuffer, uint16 TotalSample
 	{
 		if (m_ReceiveFIFO.GetSize() >= bytesToRead)
 		{
-			for (uint16 i = 0; i < TotalSampleCount; ++i)
+			for (uint16_t i = 0; i < TotalSampleCount; ++i)
 			{
 				int32_t pcm32;
-				m_ReceiveFIFO.Pop(reinterpret_cast<uint8*>(&pcm32), sizeof(int32_t));
+				m_ReceiveFIFO.Pop(reinterpret_cast<uint8_t*>(&pcm32), sizeof(int32_t));
 
-				InterleavedBuffer[i] = (T)(pcm32 / 2147483648.0) * Gain;;
+				InterleavedBuffer[i] = ((T)pcm32 / INT32_MAX) * Gain;;
 			}
 		}
 		break;
 	}
 	}
 
-	for (uint16 i = samplesPopped; i < TotalSampleCount; ++i)
+	for (uint16_t i = samplesPopped; i < TotalSampleCount; ++i)
 		InterleavedBuffer[i] = 0;
 
 	return samplesPopped;
 }
 
 template <typename T>
-void DaisyUSBAMCInterface::PushSamples(const T* const InterleavedBuffer, uint16 TotalSampleCount)
+void DaisyUSBAMCInterface::PushSamples(const T* const InterleavedBuffer, uint16_t TotalSampleCount)
 {
 	ASSERT_ON_FLOATING_TYPE(T);
 
@@ -220,41 +235,54 @@ void DaisyUSBAMCInterface::PushSamples(const T* const InterleavedBuffer, uint16 
 
 	switch (m_CurrentInBitDepth)
 	{
-	case BitDepths::BitDepths16:
+	case BitDepths::BitDepths8:
 	{
-		for (uint16 i = 0; i < TotalSampleCount; ++i)
+		for (uint16_t i = 0; i < TotalSampleCount; ++i)
 		{
 			T sample = Math::ClampSignal(InterleavedBuffer[i]);
 
-			int16 pcm16 = static_cast<int16>(sample * static_cast<T>(32767.0) * Gain);
+			int8_t pcm8 = (int8_t)(sample * INT8_MAX * Gain);
 
-			m_TransmitFIFO.Push(reinterpret_cast<const uint8*>(&pcm16), sizeof(int16));
+			m_TransmitFIFO.Push(reinterpret_cast<const uint8_t*>(&pcm8), sizeof(int8_t));
+		}
+		break;
+	}
+
+	case BitDepths::BitDepths16:
+	{
+		for (uint16_t i = 0; i < TotalSampleCount; ++i)
+		{
+			T sample = Math::ClampSignal(InterleavedBuffer[i]);
+
+			int16_t pcm16 = (int16_t)(sample * INT16_MAX * Gain);
+
+			m_TransmitFIFO.Push(reinterpret_cast<const uint8_t*>(&pcm16), sizeof(int16_t));
 		}
 		break;
 	}
 
 	case BitDepths::BitDepths24:
 	{
-		for (uint16 i = 0; i < TotalSampleCount; ++i)
+		for (uint16_t i = 0; i < TotalSampleCount; ++i)
 		{
 			T sample = Math::ClampSignal(InterleavedBuffer[i]);
 
-			int24_t pcm24 = static_cast<int24_t>(sample * static_cast<T>(8388607.0) * Gain);
+			int24_t pcm24 = (int24_t)(sample * INT24_MAX * Gain);
 
-			m_TransmitFIFO.Push(reinterpret_cast<const uint8*>(&pcm24), sizeof(int24_t));
+			m_TransmitFIFO.Push(reinterpret_cast<const uint8_t*>(&pcm24), sizeof(int24_t));
 		}
 		break;
 	}
 
 	case BitDepths::BitDepths32:
 	{
-		for (uint16 i = 0; i < TotalSampleCount; ++i)
+		for (uint16_t i = 0; i < TotalSampleCount; ++i)
 		{
 			T sample = Math::ClampSignal(InterleavedBuffer[i]);
 
-			int32 pcm32 = static_cast<int32>(sample * static_cast<T>(2147483647.0) * Gain);
+			int32_t pcm32 = (int32_t)(sample * INT32_MAX * Gain);
 
-			m_TransmitFIFO.Push(reinterpret_cast<const uint8*>(&pcm32), sizeof(int32));
+			m_TransmitFIFO.Push(reinterpret_cast<const uint8_t*>(&pcm32), sizeof(int32_t));
 		}
 		break;
 	}

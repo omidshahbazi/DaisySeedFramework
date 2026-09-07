@@ -15,7 +15,7 @@ public:
 		Dimension(Dimension)
 	{}
 
-	Rect(int16 X, int16 Y, int16 Width, int16 Height)
+	Rect(int16_t X, int16_t Y, int16_t Width, int16_t Height)
 		: Position(X, Y),
 		Dimension(Width, Height)
 	{}

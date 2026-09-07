@@ -10,7 +10,7 @@ DaisyUSBCDCInterface::DaisyUSBCDCInterface(DaisyUSBDevice* Device, const Configs
 	m_TransmitHandler(Configs.MaxTransmitPacketSize)
 {}
 
-void DaisyUSBCDCInterface::Transmit(const uint8* Buffer, uint16 Length)
+void DaisyUSBCDCInterface::Transmit(const uint8_t* Buffer, uint16_t Length)
 {
 	ASSERT(m_IsHostConnected, "Host is not connected");
 
@@ -45,7 +45,7 @@ bool DaisyUSBCDCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 
 	case USB_CDC_REQ_SET_CONTROL_LINE_STATE:
 	{
-		m_LineState = (uint8)(Setup->wValue & 0xFF);
+		m_LineState = (uint8_t)(Setup->wValue & 0xFF);
 
 		bool dtr = ((m_LineState & 0x01) != 0);
 		//bool rts = ((m_LineState & 0x02) != 0);
@@ -74,7 +74,7 @@ void DaisyUSBCDCInterface::OnSetupCompleted(void)
 	//Order matters here, it must be ordered by the actual number of Command and In
 	{
 		if (TO_ENDPOINT_NUMBER(configs.EndpointCommand) != 0)
-			AllocateTransmitBuffer(configs.EndpointCommand, (uint16)PacketSizes::Max);
+			AllocateTransmitBuffer(configs.EndpointCommand, (uint16_t)PacketSizes::Max);
 
 		if (TO_ENDPOINT_NUMBER(configs.EndpointIn) != 0)
 			AllocateTransmitBuffer(configs.EndpointIn, configs.MaxTransmitPacketSize);
@@ -104,7 +104,7 @@ void DaisyUSBCDCInterface::OnDataInStage(void)
 
 void DaisyUSBCDCInterface::OnDataOutStage(void)
 {
-	uint16 len = EndpointReceiveCount();
+	uint16_t len = EndpointReceiveCount();
 	if (len > 0)
 	{
 		m_IsHostConnected = true;
@@ -117,11 +117,11 @@ void DaisyUSBCDCInterface::OnDataOutStage(void)
 	EndpointPrepareReceive(m_ReceiveBuffer, GetConfigs().MaxReceivePacketSize);
 }
 
-void DaisyUSBCDCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, uint16& BufferOffset, uint8 InterfaceIndex) const
+void DaisyUSBCDCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, uint16_t& BufferOffset, uint8_t InterfaceIndex) const
 {
 	const Configs& configs = GetConfigs();
 
-	uint8* buffer = EP0Buffer.configDescs;
+	uint8_t* buffer = EP0Buffer.configDescs;
 
 	USBInterfaceAssociationDescriptor* iad = reinterpret_cast<USBInterfaceAssociationDescriptor*>(buffer + BufferOffset);
 	iad->bLength = sizeof(USBInterfaceAssociationDescriptor);
@@ -129,8 +129,8 @@ void DaisyUSBCDCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, ui
 	iad->bFirstInterface = InterfaceIndex;
 	iad->bInterfaceCount = CalculateRequiredInterfaceCount(m_Class);
 	iad->bFunctionClass = USBSDeviceClasses::CDC;
-	iad->bFunctionSubClass = (uint8)CDCSubClasses::ACM;
-	iad->bFunctionProtocol = (uint8)CDCProtocols::AT;
+	iad->bFunctionSubClass = (uint8_t)CDCSubClasses::ACM;
+	iad->bFunctionProtocol = (uint8_t)CDCProtocols::AT;
 	iad->iFunction = 0;
 	BufferOffset += sizeof(USBInterfaceAssociationDescriptor);
 
@@ -141,8 +141,8 @@ void DaisyUSBCDCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, ui
 	ctrlIf->bAlternateSetting = 0;
 	ctrlIf->bNumEndpoints = 1;
 	ctrlIf->bInterfaceClass = USBSDeviceClasses::CDC;
-	ctrlIf->bInterfaceSubClass = (uint8)CDCSubClasses::ACM;
-	ctrlIf->bInterfaceProtocol = (uint8)CDCProtocols::AT;
+	ctrlIf->bInterfaceSubClass = (uint8_t)CDCSubClasses::ACM;
+	ctrlIf->bInterfaceProtocol = (uint8_t)CDCProtocols::AT;
 	ctrlIf->iInterface = 0;
 	BufferOffset += sizeof(USBInterfaceDescriptor);
 
@@ -172,7 +172,7 @@ void DaisyUSBCDCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, ui
 	ctrlEp->bLength = sizeof(USBEndpointDescriptor);
 	ctrlEp->bDescriptorType = USBDescTypes::Endpoint;
 	ctrlEp->bEndpointAddress = configs.EndpointCommand;
-	ctrlEp->bmAttributes = (uint8)USBEndpointAttributes::Interrupt;
+	ctrlEp->bmAttributes = (uint8_t)USBEndpointAttributes::Interrupt;
 	ctrlEp->wMaxPacketSize = USB_EP_MAX_PACKET_INTR;
 	ctrlEp->bInterval = USB_EP_INTERVAL_FS;
 	BufferOffset += sizeof(USBEndpointDescriptor);
@@ -184,8 +184,8 @@ void DaisyUSBCDCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, ui
 	dataIf->bAlternateSetting = 0;
 	dataIf->bNumEndpoints = 2;
 	dataIf->bInterfaceClass = USBSDeviceClasses::Data;
-	dataIf->bInterfaceSubClass = (uint8)CDCSubClasses::None;
-	dataIf->bInterfaceProtocol = (uint8)CDCProtocols::None;
+	dataIf->bInterfaceSubClass = (uint8_t)CDCSubClasses::None;
+	dataIf->bInterfaceProtocol = (uint8_t)CDCProtocols::None;
 	dataIf->iInterface = 0;
 	BufferOffset += sizeof(USBInterfaceDescriptor);
 
@@ -193,8 +193,8 @@ void DaisyUSBCDCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, ui
 	outEp->bLength = sizeof(USBEndpointDescriptor);
 	outEp->bDescriptorType = USBDescTypes::Endpoint;
 	outEp->bEndpointAddress = configs.EndpointOut;
-	outEp->bmAttributes = (uint8)USBEndpointAttributes::Bulk;
-	outEp->wMaxPacketSize = (uint16)m_Class.ReceiveBufferSize;
+	outEp->bmAttributes = (uint8_t)USBEndpointAttributes::Bulk;
+	outEp->wMaxPacketSize = (uint16_t)m_Class.ReceiveBufferSize;
 	outEp->bInterval = 0;
 	BufferOffset += sizeof(USBEndpointDescriptor);
 
@@ -202,8 +202,8 @@ void DaisyUSBCDCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, ui
 	inEp->bLength = sizeof(USBEndpointDescriptor);
 	inEp->bDescriptorType = USBDescTypes::Endpoint;
 	inEp->bEndpointAddress = configs.EndpointIn;
-	inEp->bmAttributes = (uint8)USBEndpointAttributes::Bulk;
-	inEp->wMaxPacketSize = (uint16)m_Class.SendBufferSize;
+	inEp->bmAttributes = (uint8_t)USBEndpointAttributes::Bulk;
+	inEp->wMaxPacketSize = (uint16_t)m_Class.SendBufferSize;
 	inEp->bInterval = 0;
 	BufferOffset += sizeof(USBEndpointDescriptor);
 }

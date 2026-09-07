@@ -15,93 +15,93 @@ public:
 	typedef void (*CrashHandler)(const IHAL* HAL);
 
 public:
-	static constexpr uint8 CHANNEL_LEFT = 0;
-	static constexpr uint8 CHANNEL_RIGHT = 1;
+	static constexpr uint8_t CHANNEL_LEFT = 0;
+	static constexpr uint8_t CHANNEL_RIGHT = 1;
 
 public:
-	WindowsHAL(void* SDRAMAddress = nullptr, uint32 SDRAMSize = 0, CrashHandler CrashHandler = nullptr);
+	WindowsHAL(void* SDRAMAddress = nullptr, uint32_t SDRAMSize = 0, CrashHandler CrashHandler = nullptr);
 
-	void Setup(uint8 FrameLength, uint32 SampleRate, bool Boost) override;
+	void Setup(uint8_t FrameLength, uint32_t SampleRate, bool Boost) override;
 
 	void StartAudio(AudioPassthrough Callback) override
 	{
 		m_AudioCallback = Callback;
 	}
 
-	void* Allocate(uint32 Size, bool OnSDRAM = false) override;
+	void* Allocate(uint32_t Size, bool OnSDRAM = false) override;
 
 	void Deallocate(void* Memory) override;
 
-	bool IsAnAnalogPin(uint8 Pin) const override
+	bool IsAnAnalogPin(uint8_t Pin) const override
 	{
 		return true;
 	}
 
-	bool IsADigitalPin(uint8 Pin) const override
+	bool IsADigitalPin(uint8_t Pin) const override
 	{
 		return true;
 	}
 
-	bool IsAnInputPin(uint8 Pin) const override
+	bool IsAnInputPin(uint8_t Pin) const override
 	{
 		return true;
 	}
 
-	bool IsAnOutputPin(uint8 Pin) const override
+	bool IsAnOutputPin(uint8_t Pin) const override
 	{
 		return true;
 	}
 
-	bool IsInInputMode(uint8 Pin) const override
+	bool IsInInputMode(uint8_t Pin) const override
 	{
 		return !IsInOutputMode(Pin);
 	}
 
-	bool IsInOutputMode(uint8 Pin) const override
+	bool IsInOutputMode(uint8_t Pin) const override
 	{
 		return true;
 	}
 
-	bool IsAPWMPin(uint8 Pin) const override
+	bool IsAPWMPin(uint8_t Pin) const override
 	{
 		return true;
 	}
 
-	void SetPWMResolution(uint8 Value) override
+	void SetPWMResolution(uint8_t Value) override
 	{}
 
-	uint8 GetPWMResolution(void) const override
+	uint8_t GetPWMResolution(void) const override
 	{
 		return 0;
 	}
 
-	void SetPinMode(uint8 Pin, PinModes Mode) override
+	void SetPinMode(uint8_t Pin, PinModes Mode) override
 	{}
 
-	float AnalogRead(uint8 Pin) const override
+	float AnalogRead(uint8_t Pin) const override
 	{
 		return 0;
 	}
 
-	bool DigitalRead(uint8 Pin) const override
+	bool DigitalRead(uint8_t Pin) const override
 	{
 		return false;
 	}
 
-	void DigitalWrite(uint8 Pin, bool Value) override
+	void DigitalWrite(uint8_t Pin, bool Value) override
 	{}
 
-	void PWMWrite(uint8 Pin, float Value) override
+	void PWMWrite(uint8_t Pin, float Value) override
 	{}
 
-	uint32 GetTimeFrequency(void) const override
+	uint32_t GetTimeFrequency(void) const override
 	{
 		return 0;
 	}
 
-	uint32 GetTimeSinceStartupTicks(void) const override;
+	uint32_t GetTimeSinceStartupTicks(void) const override;
 
-	uint32 GetTimeSinceStartupMs(void) const override;
+	uint32_t GetTimeSinceStartupMs(void) const override;
 
 	float GetTimeSinceStartup(void) const override
 	{
@@ -118,9 +118,9 @@ public:
 
 	void Reset(bool InfiniteTime = true) const override;
 
-	void Delay(uint16 Ms) const override;
+	void Delay(uint16_t Ms) const override;
 
-	IUSB* GetUSB(uint8 Index) override
+	IUSB* GetUSB(uint8_t Index) override
 	{
 		return &m_USB;
 	}
@@ -135,7 +135,7 @@ protected:
 	virtual void Update(void);
 
 private:
-	static int AudioCallback(const void* InputBuffer, void* OutputBuffer, uint32 FramesPerBuffer, const PaStreamCallbackTimeInfo* TimeInfo, uint32 StatusFlags, void* UserData);
+	static int AudioCallback(const void* InputBuffer, void* OutputBuffer, uint32_t FramesPerBuffer, const PaStreamCallbackTimeInfo* TimeInfo, uint32_t StatusFlags, void* UserData);
 
 private:
 	std::chrono::steady_clock::time_point m_StartupTime;
@@ -144,9 +144,9 @@ private:
 
 	WindowsUSB m_USB;
 
-	uint8* m_SDRAMAddress;
-	uint32 m_SDRAMSize;
-	uint32 m_LastFreeSDRAMIndex;
+	uint8_t* m_SDRAMAddress;
+	uint32_t m_SDRAMSize;
+	uint32_t m_LastFreeSDRAMIndex;
 
 	AudioPassthrough m_AudioCallback;
 };

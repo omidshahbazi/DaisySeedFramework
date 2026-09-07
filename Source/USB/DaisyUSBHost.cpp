@@ -6,7 +6,7 @@
 #include <DigitalSignalProcessing/Math.h>
 #include <DigitalSignalProcessing/Memory.h>
 
-static DaisyUSBHost* s_Instance[(uint8)Peripherals::COUNT] = {};
+static DaisyUSBHost* s_Instance[(uint8_t)Peripherals::COUNT] = {};
 
 extern "C"
 {
@@ -18,7 +18,7 @@ DaisyUSBHost::DaisyUSBHost(Peripherals Peripheral)
 	: m_Peripheral(Peripheral),
 	m_IsRunning(false)
 {
-	s_Instance[(uint8)Peripheral] = this;
+	s_Instance[(uint8_t)Peripheral] = this;
 }
 
 void DaisyUSBHost::Start(const USBHostProfile& Profile)

@@ -22,7 +22,7 @@
 // bInterfaceSubClass values for the CDC Communications interface, defining
 // which specific CDC model the device implements (ACM = the common "virtual
 // COM port" model used here; the rest are listed for completeness).
-enum class CDCSubClasses : uint8
+enum class CDCSubClasses : uint8_t
 {
 	None = 0x00,  // No subclass specified
 	DLCM = 0x01,  // Direct Line Control Model
@@ -46,7 +46,7 @@ enum class CDCSubClasses : uint8
 // bInterfaceProtocol values for the CDC Communications interface, describing
 // the command-set/protocol spoken over the control channel (AT = the classic
 // "AT command" style used by ACM devices, as implemented here).
-enum class CDCProtocols : uint8
+enum class CDCProtocols : uint8_t
 {
 	None = 0x00,      // No protocol specified
 	AT = 0x01,         // AT commands (ITU-T V.250 etc.) - what a virtual COM port uses
@@ -72,10 +72,10 @@ BEGIN_PACK(1);
 struct USBCDCHeaderFunctionalDescriptor
 {
 public:
-	uint8 bFunctionLength;         // Total size of this descriptor: 5 bytes
+	uint8_t bFunctionLength;         // Total size of this descriptor: 5 bytes
 	USBDescTypes bDescriptorType;   // Always CDCFunc (0x24), the class-specific interface descriptor type
-	uint8 bDescriptorSubtype;      // CDC_SCS_HEADER
-	uint16 bcdCDC;                  // CDC specification release number in BCD (see USB_CDC_BCD_VERSION)
+	uint8_t bDescriptorSubtype;      // CDC_SCS_HEADER
+	uint16_t bcdCDC;                  // CDC specification release number in BCD (see USB_CDC_BCD_VERSION)
 };
 END_PACK();
 
@@ -85,10 +85,10 @@ BEGIN_PACK(1);
 struct USBCDCACMFunctionalDescriptor
 {
 public:
-	uint8 bFunctionLength;         // Total size of this descriptor: 4 bytes
+	uint8_t bFunctionLength;         // Total size of this descriptor: 4 bytes
 	USBDescTypes bDescriptorType;   // Always CDCFunc (0x24)
-	uint8 bDescriptorSubtype;      // CDC_SCS_ACM
-	uint8 bmCapabilities;           // Bitmap of supported ACM features (see USB_CDC_CAP_FEATURE)
+	uint8_t bDescriptorSubtype;      // CDC_SCS_ACM
+	uint8_t bmCapabilities;           // Bitmap of supported ACM features (see USB_CDC_CAP_FEATURE)
 };
 END_PACK();
 
@@ -99,11 +99,11 @@ BEGIN_PACK(1);
 struct USBCDCUnionFunctionalDescriptor
 {
 public:
-	uint8 bFunctionLength;         // Total size of this descriptor: 5 bytes
+	uint8_t bFunctionLength;         // Total size of this descriptor: 5 bytes
 	USBDescTypes bDescriptorType;   // Always CDCFunc (0x24)
-	uint8 bDescriptorSubtype;      // CDC_SCS_UNION
-	uint8 bMasterInterface;         // Interface number of the Communications (control) interface
-	uint8 bSlaveInterface0;         // Interface number of the associated Data interface
+	uint8_t bDescriptorSubtype;      // CDC_SCS_UNION
+	uint8_t bMasterInterface;         // Interface number of the Communications (control) interface
+	uint8_t bSlaveInterface0;         // Interface number of the associated Data interface
 };
 END_PACK();
 
@@ -115,10 +115,10 @@ BEGIN_PACK(1);
 struct USBCDCLineCoding
 {
 public:
-	uint32 dwDTERate;    // Baud rate in bits per second, e.g. 115200
-	uint8  bCharFormat;   // Stop bits: 0=1 stop bit, 1=1.5 stop bits, 2=2 stop bits
-	uint8  bParityType;   // Parity: 0=None, 1=Odd, 2=Even, 3=Mark, 4=Space
-	uint8  bDataBits;     // Data bits per character: 5, 6, 7, 8, or 16
+	uint32_t dwDTERate;    // Baud rate in bits per second, e.g. 115200
+	uint8_t  bCharFormat;   // Stop bits: 0=1 stop bit, 1=1.5 stop bits, 2=2 stop bits
+	uint8_t  bParityType;   // Parity: 0=None, 1=Odd, 2=Even, 3=Mark, 4=Space
+	uint8_t  bDataBits;     // Data bits per character: 5, 6, 7, 8, or 16
 };
 END_PACK();
 

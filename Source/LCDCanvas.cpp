@@ -4,22 +4,22 @@
 #include <DigitalSignalProcessing/StringUtils.h>
 
 #define DEFINE_GLYPH_VALUES()                                                                                                 \
-	const uint8 BitsInDataType = sizeof(Font::DataType) * 8;                                                                  \
-	const uint8 Pitch = Math::Max(1, Math::Ceil((Font.Height * Font.BitsPerPixel) / (float)BitsInDataType));                  \
-	const uint8 CharIndex = GetGlyphIndex(Character, Font);                                                                   \
-	const uint8 GlyphDataElementOffset = (Font.HasGlyphData ? 1 : 0);                                                         \
+	const uint8_t BitsInDataType = sizeof(Font::DataType) * 8;                                                                  \
+	const uint8_t Pitch = Math::Max(1, Math::Ceil((Font.Height * Font.BitsPerPixel) / (float)BitsInDataType));                  \
+	const uint8_t CharIndex = GetGlyphIndex(Character, Font);                                                                   \
+	const uint8_t GlyphDataElementOffset = (Font.HasGlyphData ? 1 : 0);                                                         \
 	const Font::DataType *CharData = Font.Data + (CharIndex * (GlyphDataElementOffset + (Font.Height * Pitch)));              \
-	uint16 __bitOffset = 0;                                                                                                   \
-	const uint8 GlyphAdvance = (Font.HasGlyphData ? uint8((CharData[0] >> __bitOffset) & 0xFF) : Font.MaxWidth) * Font.Scale; \
-	__bitOffset += sizeof(uint8) * 8;                                                                                         \
-	const int8 GlyphXOffset = (Font.HasGlyphData ? int8((CharData[0] >> __bitOffset) & 0xFF) * Font.Scale : 0);               \
-	__bitOffset += sizeof(uint8) * 8;                                                                                         \
-	const int8 GlyphYOffset = (Font.HasGlyphData ? int8((CharData[0] >> __bitOffset) & 0xFF) * Font.Scale : 0);               \
-	__bitOffset += sizeof(uint8) * 8;                                                                                         \
-	const int8 GlyphWidth = (Font.HasGlyphData ? int8((CharData[0] >> __bitOffset) & 0xFF) : Font.MaxWidth) * Font.Scale;     \
-	__bitOffset += sizeof(uint8) * 8;                                                                                         \
-	const int8 GlyphHeight = (Font.HasGlyphData ? int8((CharData[0] >> __bitOffset) & 0xFF) : Font.Height) * Font.Scale;      \
-	__bitOffset += sizeof(uint8) * 8;                                                                                         \
+	uint16_t __bitOffset = 0;                                                                                                   \
+	const uint8_t GlyphAdvance = (Font.HasGlyphData ? uint8_t((CharData[0] >> __bitOffset) & 0xFF) : Font.MaxWidth) * Font.Scale; \
+	__bitOffset += sizeof(uint8_t) * 8;                                                                                         \
+	const int8_t GlyphXOffset = (Font.HasGlyphData ? int8_t((CharData[0] >> __bitOffset) & 0xFF) * Font.Scale : 0);               \
+	__bitOffset += sizeof(uint8_t) * 8;                                                                                         \
+	const int8_t GlyphYOffset = (Font.HasGlyphData ? int8_t((CharData[0] >> __bitOffset) & 0xFF) * Font.Scale : 0);               \
+	__bitOffset += sizeof(uint8_t) * 8;                                                                                         \
+	const int8_t GlyphWidth = (Font.HasGlyphData ? int8_t((CharData[0] >> __bitOffset) & 0xFF) : Font.MaxWidth) * Font.Scale;     \
+	__bitOffset += sizeof(uint8_t) * 8;                                                                                         \
+	const int8_t GlyphHeight = (Font.HasGlyphData ? int8_t((CharData[0] >> __bitOffset) & 0xFF) : Font.Height) * Font.Scale;      \
+	__bitOffset += sizeof(uint8_t) * 8;                                                                                         \
 	((void)GlyphAdvance);                                                                                                     \
 	((void)GlyphXOffset);                                                                                                     \
 	((void)GlyphYOffset);                                                                                                     \
@@ -46,14 +46,14 @@ void LCDCanvas::Clear(Color Color)
 	m_HAL->Clear(Color);
 }
 
-void LCDCanvas::DrawPixel(int16 X, int16 Y, Color Color)
+void LCDCanvas::DrawPixel(int16_t X, int16_t Y, Color Color)
 {
 	ASSERT(m_HAL != nullptr, "m_HAL cannot be null");
 
 	m_HAL->DrawPixel({ X, Y }, Color);
 }
 
-void LCDCanvas::DrawLine(int16 X0, int16 Y0, int16 X1, int16 Y1, Color Color, uint8 Thickness)
+void LCDCanvas::DrawLine(int16_t X0, int16_t Y0, int16_t X1, int16_t Y1, Color Color, uint8_t Thickness)
 {
 	if (X0 == X1)
 	{
@@ -69,17 +69,17 @@ void LCDCanvas::DrawLine(int16 X0, int16 Y0, int16 X1, int16 Y1, Color Color, ui
 		return;
 	}
 
-	for (uint8 t = 0; t < Thickness; ++t)
+	for (uint8_t t = 0; t < Thickness; ++t)
 	{
-		int16 x0 = (X0 - Thickness / 2) + t;
-		int16 x1 = (X1 - Thickness / 2) + t;
-		int16 y0 = Y0;
+		int16_t x0 = (X0 - Thickness / 2) + t;
+		int16_t x1 = (X1 - Thickness / 2) + t;
+		int16_t y0 = Y0;
 
-		int32 deltaX = Math::Absolute((int16)x1 - (int16)x0);
-		int32 deltaY = Math::Absolute((int16)Y1 - (int16)Y0);
-		int32 signX = Math::Sign((int16)x1 - (int16)x0);
-		int32 signY = Math::Sign((int16)Y1 - (int16)Y0);
-		int32 error = deltaX - deltaY;
+		int32_t deltaX = Math::Absolute((int16_t)x1 - (int16_t)x0);
+		int32_t deltaY = Math::Absolute((int16_t)Y1 - (int16_t)Y0);
+		int32_t signX = Math::Sign((int16_t)x1 - (int16_t)x0);
+		int32_t signY = Math::Sign((int16_t)Y1 - (int16_t)Y0);
+		int32_t error = deltaX - deltaY;
 
 		DrawPixel(x1, Y1, Color);
 
@@ -87,7 +87,7 @@ void LCDCanvas::DrawLine(int16 X0, int16 Y0, int16 X1, int16 Y1, Color Color, ui
 		{
 			DrawPixel(x0, y0, Color);
 
-			int32 error2 = error * 2;
+			int32_t error2 = error * 2;
 
 			if (error2 > -deltaY)
 			{
@@ -104,10 +104,10 @@ void LCDCanvas::DrawLine(int16 X0, int16 Y0, int16 X1, int16 Y1, Color Color, ui
 	}
 }
 
-void LCDCanvas::DrawRectangle(int16 X, int16 Y, uint16 Width, uint16 Height, Color Color, uint8 Thickness)
+void LCDCanvas::DrawRectangle(int16_t X, int16_t Y, uint16_t Width, uint16_t Height, Color Color, uint8_t Thickness)
 {
-	int16 x2 = X + Width;
-	int16 y2 = Y + Height;
+	int16_t x2 = X + Width;
+	int16_t y2 = Y + Height;
 
 	DrawLine(X, Y, X, y2, Color, Thickness);
 	DrawLine(X, Y, x2, Y, Color, Thickness);
@@ -115,20 +115,20 @@ void LCDCanvas::DrawRectangle(int16 X, int16 Y, uint16 Width, uint16 Height, Col
 	DrawLine(x2, Y, x2, y2, Color, Thickness);
 }
 
-void LCDCanvas::DrawFilledRectangle(int16 X, int16 Y, uint16 Width, uint16 Height, Color Color)
+void LCDCanvas::DrawFilledRectangle(int16_t X, int16_t Y, uint16_t Width, uint16_t Height, Color Color)
 {
-	for (uint32 j = 0; j < Height; ++j)
-		for (uint32 i = 0; i < Width; ++i)
+	for (uint32_t j = 0; j < Height; ++j)
+		for (uint32_t i = 0; i < Width; ++i)
 			DrawPixel(X + i, Y + j, Color);
 }
 
-void LCDCanvas::DrawFilledParallelogram(uint16 LeftTopX, uint16 LeftTopY, uint16 LeftBottomX, uint16 LeftBottomY, uint16 RightTopX, uint16 RightTopY, uint16 RightBottomX, uint16 RightBottomY, Color Color)
+void LCDCanvas::DrawFilledParallelogram(uint16_t LeftTopX, uint16_t LeftTopY, uint16_t LeftBottomX, uint16_t LeftBottomY, uint16_t RightTopX, uint16_t RightTopY, uint16_t RightBottomX, uint16_t RightBottomY, Color Color)
 {
-	uint16 minX = LeftTopX;
-	uint16 minY = LeftTopY;
+	uint16_t minX = LeftTopX;
+	uint16_t minY = LeftTopY;
 
-	uint16 maxX = RightBottomX;
-	uint16 maxY = RightBottomY;
+	uint16_t maxX = RightBottomX;
+	uint16_t maxY = RightBottomY;
 
 	// TODO: Handle the middle point
 	if (LeftTopX != LeftBottomX)
@@ -150,7 +150,7 @@ void LCDCanvas::DrawFilledParallelogram(uint16 LeftTopX, uint16 LeftTopY, uint16
 	{
 		maxX = Math::Min(RightTopX, RightBottomX);
 
-		uint16 y2 = RightBottomY;
+		uint16_t y2 = RightBottomY;
 		if (RightTopX > RightBottomX)
 			y2 = RightTopY;
 
@@ -168,9 +168,9 @@ void LCDCanvas::DrawFilledParallelogram(uint16 LeftTopX, uint16 LeftTopY, uint16
 	DrawFilledRectangle(minX, minY, maxX - minX, maxY - minY, Color);
 }
 
-void LCDCanvas::DrawFilledTriangle(int16 X0, int16 Y0, int16 X1, int16 Y1, int16 X2, int16 Y2, Color Color)
+void LCDCanvas::DrawFilledTriangle(int16_t X0, int16_t Y0, int16_t X1, int16_t Y1, int16_t X2, int16_t Y2, Color Color)
 {
-	int16 a, b, y, last;
+	int16_t a, b, y, last;
 
 	// Sort coordinates by Y order (y2 >= y1 >= y0)
 	if (Y0 > Y1)
@@ -209,9 +209,9 @@ void LCDCanvas::DrawFilledTriangle(int16 X0, int16 Y0, int16 X1, int16 Y1, int16
 		return;
 	}
 
-	int16 dx01 = X1 - X0, dy01 = Y1 - Y0, dx02 = X2 - X0, dy02 = Y2 - Y0,
+	int16_t dx01 = X1 - X0, dy01 = Y1 - Y0, dx02 = X2 - X0, dy02 = Y2 - Y0,
 		dx12 = X2 - X1, dy12 = Y2 - Y1;
-	int32 sa = 0, sb = 0;
+	int32_t sa = 0, sb = 0;
 
 	// For upper part of triangle, find scanline crossings for segments
 	// 0-1 and 0-2.  If y1=y2 (flat-bottomed triangle), the scanline y1
@@ -248,8 +248,8 @@ void LCDCanvas::DrawFilledTriangle(int16 X0, int16 Y0, int16 X1, int16 Y1, int16
 
 	// For lower part of triangle, find scanline crossings for segments
 	// 0-2 and 1-2.  This loop is skipped if y1=y2.
-	sa = (int32)dx12 * (y - Y1);
-	sb = (int32)dx02 * (y - Y0);
+	sa = (int32_t)dx12 * (y - Y1);
+	sb = (int32_t)dx02 * (y - Y0);
 	for (; y < Y2; ++y)
 	{
 		a = X1 + sa / dy12;
@@ -269,19 +269,19 @@ void LCDCanvas::DrawFilledTriangle(int16 X0, int16 Y0, int16 X1, int16 Y1, int16
 	}
 }
 
-void LCDCanvas::DrawCircle(int16 X0, int16 Y0, int16 Radius, Color Color, uint8 Thickness)
+void LCDCanvas::DrawCircle(int16_t X0, int16_t Y0, int16_t Radius, Color Color, uint8_t Thickness)
 {
 	--Radius;
 
-	for (int16 r = -Thickness / 2; r < Thickness; ++r)
+	for (int16_t r = -Thickness / 2; r < Thickness; ++r)
 	{
-		int16 radius = Radius + r;
+		int16_t radius = Radius + r;
 
-		int16 f = 1 - radius;
-		int16 ddF_x = 1;
-		int16 ddF_y = -2 * radius;
-		int16 x = 0;
-		int16 y = radius;
+		int16_t f = 1 - radius;
+		int16_t ddF_x = 1;
+		int16_t ddF_y = -2 * radius;
+		int16_t x = 0;
+		int16_t y = radius;
 
 		DrawPixel(X0, Y0 + radius, Color);
 		DrawPixel(X0, Y0 - radius, Color);
@@ -312,21 +312,21 @@ void LCDCanvas::DrawCircle(int16 X0, int16 Y0, int16 Radius, Color Color, uint8 
 	}
 }
 
-void LCDCanvas::DrawFilledCircle(int16 X0, int16 Y0, int16 Radius, Color Color)
+void LCDCanvas::DrawFilledCircle(int16_t X0, int16_t Y0, int16_t Radius, Color Color)
 {
 	--Radius;
 
 	DrawLine(X0, Y0 - Radius, X0, Y0 + Radius + 1, Color);
 
-	const uint8 CORNER_NAME = 3;
+	const uint8_t CORNER_NAME = 3;
 
-	int16 f = 1 - Radius;
-	int16 ddF_x = 1;
-	int16 ddF_y = -2 * Radius;
-	int16 x = 0;
-	int16 y = Radius;
+	int16_t f = 1 - Radius;
+	int16_t ddF_x = 1;
+	int16_t ddF_y = -2 * Radius;
+	int16_t x = 0;
+	int16_t y = Radius;
 
-	uint16 delta = 0;
+	uint16_t delta = 0;
 
 	delta++;
 
@@ -356,36 +356,36 @@ void LCDCanvas::DrawFilledCircle(int16 X0, int16 Y0, int16 Radius, Color Color)
 	}
 }
 
-uint8 LCDCanvas::DrawCharacter(int16 X, int16 Y, char Character, const Font& Font, Color Color, bool IgnoreOffset)
+uint8_t LCDCanvas::DrawCharacter(int16_t X, int16_t Y, char Character, const Font& Font, Color Color, bool IgnoreOffset)
 {
 	if (!HasGlyph(Character, Font))
 		return 0;
 
-	const uint8 PIXEL_ALPHA_VALUES[] = { 0, 255, 85, 170 };
+	const uint8_t PIXEL_ALPHA_VALUES[] = { 0, 255, 85, 170 };
 
 	DEFINE_GLYPH_VALUES()
 
-		const uint8 Mask = (1 << Font.BitsPerPixel) - 1;
-	const uint16 TargetWidth = GlyphWidth;
-	const uint16 TargetHeight = GlyphHeight;
+		const uint8_t Mask = (1 << Font.BitsPerPixel) - 1;
+	const uint16_t TargetWidth = GlyphWidth;
+	const uint16_t TargetHeight = GlyphHeight;
 	CharData += GlyphDataElementOffset;
 
 	::Color color = { Color.R, Color.G, Color.B };
 
-	int16 originX = X + (IgnoreOffset ? 0 : GlyphXOffset);
-	int16 originY = Y + (IgnoreOffset ? 0 : GlyphYOffset);
+	int16_t originX = X + (IgnoreOffset ? 0 : GlyphXOffset);
+	int16_t originY = Y + (IgnoreOffset ? 0 : GlyphYOffset);
 
-	for (uint16 ty = 0; ty < TargetHeight; ++ty)
-		for (uint16 tx = 0; tx < TargetWidth; ++tx)
+	for (uint16_t ty = 0; ty < TargetHeight; ++ty)
+		for (uint16_t tx = 0; tx < TargetWidth; ++tx)
 		{
-			uint8 x = tx / Font.Scale;
-			uint8 y = ty / Font.Scale;
+			uint8_t x = tx / Font.Scale;
+			uint8_t y = ty / Font.Scale;
 
-			uint8 dataOffset = (x * Font.BitsPerPixel) / BitsInDataType;
+			uint8_t dataOffset = (x * Font.BitsPerPixel) / BitsInDataType;
 			Font::DataType data = CharData[dataOffset + (y * Pitch)];
 
-			uint8 bitIndex = (x * Font.BitsPerPixel) % BitsInDataType;
-			uint8 value = PIXEL_ALPHA_VALUES[(data >> bitIndex) & Mask];
+			uint8_t bitIndex = (x * Font.BitsPerPixel) % BitsInDataType;
+			uint8_t value = PIXEL_ALPHA_VALUES[(data >> bitIndex) & Mask];
 			if (value == 0)
 				continue;
 
@@ -397,21 +397,21 @@ uint8 LCDCanvas::DrawCharacter(int16 X, int16 Y, char Character, const Font& Fon
 	return GlyphAdvance;
 }
 
-void LCDCanvas::DrawString(int16 X, int16 Y, cstr const String, const Font& Font, Color Color)
+void LCDCanvas::DrawString(int16_t X, int16_t Y, cstr const String, const Font& Font, Color Color)
 {
 	DrawString(X, Y, String, GetStringLength(String), Font, Color);
 }
 
-void LCDCanvas::DrawString(int16 X, int16 Y, cstr String, uint16 Length, const Font& Font, Color Color)
+void LCDCanvas::DrawString(int16_t X, int16_t Y, cstr String, uint16_t Length, const Font& Font, Color Color)
 {
 	ASSERT(String != nullptr, "String cannot be null");
 
 	if (Length == 0)
 		return;
 
-	uint16 x = X;
+	uint16_t x = X;
 
-	for (uint16 i = 0; i < Length; ++i)
+	for (uint16_t i = 0; i < Length; ++i)
 	{
 		char ch = String[i];
 
@@ -422,7 +422,7 @@ void LCDCanvas::DrawString(int16 X, int16 Y, cstr String, uint16 Length, const F
 			continue;
 		}
 
-		uint8 advance = DrawCharacter(x, Y, ch, Font, Color);
+		uint8_t advance = DrawCharacter(x, Y, ch, Font, Color);
 
 		x += advance + (m_CharacterSpacing * Font.Scale);
 	}
@@ -443,7 +443,7 @@ Point LCDCanvas::MeasureStringDimension(cstr String, const Font& Font)
 	return MeasureStringDimension(String, GetStringLength(String), Font);
 }
 
-Point LCDCanvas::MeasureStringDimension(cstr String, uint16 Length, const Font& Font)
+Point LCDCanvas::MeasureStringDimension(cstr String, uint16_t Length, const Font& Font)
 {
 	ASSERT(String != nullptr, "String cannot be null");
 
@@ -452,7 +452,7 @@ Point LCDCanvas::MeasureStringDimension(cstr String, uint16 Length, const Font& 
 
 	Point totalDimensions = {};
 	Point lineDimensions = {};
-	for (uint16 i = 0; i < Length; ++i)
+	for (uint16_t i = 0; i < Length; ++i)
 	{
 		char ch = String[i];
 
@@ -460,7 +460,7 @@ Point LCDCanvas::MeasureStringDimension(cstr String, uint16 Length, const Font& 
 
 		lineDimensions.X += dimensions.X + m_CharacterSpacing;
 
-		uint16 height = dimensions.Y + m_LineSpacing;
+		uint16_t height = dimensions.Y + m_LineSpacing;
 		if (lineDimensions.Y < height)
 			lineDimensions.Y = height;
 
@@ -481,29 +481,29 @@ Point LCDCanvas::MeasureStringDimension(cstr String, uint16 Length, const Font& 
 	return totalDimensions;
 }
 
-void LCDCanvas::DrawBitmap(int16 X, int16 Y, const Bitmap& Bitmap, Color Color, float Scale)
+void LCDCanvas::DrawBitmap(int16_t X, int16_t Y, const Bitmap& Bitmap, Color Color, float Scale)
 {
-	const uint8 CHANNEL_VALUES[] = { 0, 255, 85, 170 };
+	const uint8_t CHANNEL_VALUES[] = { 0, 255, 85, 170 };
 
-	const uint8 BitsInDataType = sizeof(Bitmap::DataType) * 8;
-	const uint8 Pitch = Math::Max(1, Math::Ceil(((float)Bitmap.Width * Bitmap.BitsPerPixel) / BitsInDataType));
+	const uint8_t BitsInDataType = sizeof(Bitmap::DataType) * 8;
+	const uint8_t Pitch = Math::Max(1, Math::Ceil(((float)Bitmap.Width * Bitmap.BitsPerPixel) / BitsInDataType));
 
-	const uint8 BitsPerValue = Math::Min(2, Bitmap.BitsPerPixel);
-	const uint8 Mask = (1 << BitsPerValue) - 1;
-	const uint16 TargetWidth = Bitmap.Width * Scale;
-	const uint16 TargetHeight = Bitmap.Height * Scale;
+	const uint8_t BitsPerValue = Math::Min(2, Bitmap.BitsPerPixel);
+	const uint8_t Mask = (1 << BitsPerValue) - 1;
+	const uint16_t TargetWidth = Bitmap.Width * Scale;
+	const uint16_t TargetHeight = Bitmap.Height * Scale;
 
-	for (uint16 ty = 0; ty < TargetHeight; ++ty)
-		for (uint16 tx = 0; tx < TargetWidth; ++tx)
+	for (uint16_t ty = 0; ty < TargetHeight; ++ty)
+		for (uint16_t tx = 0; tx < TargetWidth; ++tx)
 		{
-			uint8 x = tx / Scale;
-			uint8 y = ty / Scale;
+			uint8_t x = tx / Scale;
+			uint8_t y = ty / Scale;
 
-			uint8 dataOffset = (x * Bitmap.BitsPerPixel) / BitsInDataType;
+			uint8_t dataOffset = (x * Bitmap.BitsPerPixel) / BitsInDataType;
 			Font::DataType data = Bitmap.Data[dataOffset + (y * Pitch)];
 
-			uint8 bitIndex = (x * Bitmap.BitsPerPixel) % BitsInDataType;
-			uint8 value = CHANNEL_VALUES[(data >> bitIndex) & Mask];
+			uint8_t bitIndex = (x * Bitmap.BitsPerPixel) % BitsInDataType;
+			uint8_t value = CHANNEL_VALUES[(data >> bitIndex) & Mask];
 			if (value == 0)
 				continue;
 
@@ -523,9 +523,9 @@ void LCDCanvas::DrawBitmap(int16 X, int16 Y, const Bitmap& Bitmap, Color Color, 
 		}
 }
 
-int8 LCDCanvas::GetGlyphIndex(char Character, const Font& Font)
+int8_t LCDCanvas::GetGlyphIndex(char Character, const Font& Font)
 {
-	for (int8 i = 0;; ++i)
+	for (int8_t i = 0;; ++i)
 	{
 		char c = Font.Glyphs[i];
 		if (c == '\0')
@@ -577,9 +577,9 @@ Point LCDCanvas::GetCharacterOffset(char Character, const Font& Font)
 	return {};
 }
 
-void LCDCanvas::DrawVerticalLine(int16 X, int16 Y, int16 Height, Color Color, uint8 Thickness)
+void LCDCanvas::DrawVerticalLine(int16_t X, int16_t Y, int16_t Height, Color Color, uint8_t Thickness)
 {
-	int16 x = X - (Thickness / 2);
+	int16_t x = X - (Thickness / 2);
 
 	if (Height < 0)
 	{
@@ -587,14 +587,14 @@ void LCDCanvas::DrawVerticalLine(int16 X, int16 Y, int16 Height, Color Color, ui
 		Height *= -1;
 	}
 
-	for (uint8 tX = 0; tX < Thickness; ++tX)
-		for (uint16 i = Y; i < Y + Height; ++i)
+	for (uint8_t tX = 0; tX < Thickness; ++tX)
+		for (uint16_t i = Y; i < Y + Height; ++i)
 			DrawPixel(x + tX, i, Color);
 }
 
-void LCDCanvas::DrawHorizontalLine(int16 X, int16 Y, int16 Width, Color Color, uint8 Thickness)
+void LCDCanvas::DrawHorizontalLine(int16_t X, int16_t Y, int16_t Width, Color Color, uint8_t Thickness)
 {
-	int16 y = Y - (Thickness / 2);
+	int16_t y = Y - (Thickness / 2);
 
 	if (Width < 0)
 	{
@@ -602,8 +602,8 @@ void LCDCanvas::DrawHorizontalLine(int16 X, int16 Y, int16 Width, Color Color, u
 		Width *= -1;
 	}
 
-	for (uint8 tY = 0; tY < Thickness; ++tY)
-		for (uint16 i = X; i < X + Width; ++i)
+	for (uint8_t tY = 0; tY < Thickness; ++tY)
+		for (uint16_t i = X; i < X + Width; ++i)
 			DrawPixel(i, y + tY, Color);
 }
 

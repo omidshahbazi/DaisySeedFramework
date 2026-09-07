@@ -16,15 +16,15 @@ public:
 
 	void Clear(Color Color);
 
-	void DrawPixel(int16 X, int16 Y, Color Color);
+	void DrawPixel(int16_t X, int16_t Y, Color Color);
 
-	void DrawLine(int16 X0, int16 Y0, int16 X1, int16 Y1, Color Color, uint8 Thickness = 1);
+	void DrawLine(int16_t X0, int16_t Y0, int16_t X1, int16_t Y1, Color Color, uint8_t Thickness = 1);
 
-	void DrawRectangle(int16 X, int16 Y, uint16 Width, uint16 Height, Color Color, uint8 Thickness = 1);
+	void DrawRectangle(int16_t X, int16_t Y, uint16_t Width, uint16_t Height, Color Color, uint8_t Thickness = 1);
 
-	void DrawFilledRectangle(int16 X, int16 Y, uint16 Width, uint16 Height, Color Color);
+	void DrawFilledRectangle(int16_t X, int16_t Y, uint16_t Width, uint16_t Height, Color Color);
 
-	void DrawParallelogram(uint16 LeftTopX, uint16 LeftTopY, uint16 LeftBottomX, uint16 LeftBottomY, uint16 RightTopX, uint16 RightTopY, uint16 RightBottomX, uint16 RightBottomY, Color Color, uint8 Thickness = 1)
+	void DrawParallelogram(uint16_t LeftTopX, uint16_t LeftTopY, uint16_t LeftBottomX, uint16_t LeftBottomY, uint16_t RightTopX, uint16_t RightTopY, uint16_t RightBottomX, uint16_t RightBottomY, Color Color, uint8_t Thickness = 1)
 	{
 		DrawLine(LeftTopX, LeftTopY, LeftBottomX, LeftBottomY, Color, Thickness);
 		DrawLine(LeftTopX, LeftTopY, RightTopX, RightTopY, Color, Thickness);
@@ -32,26 +32,26 @@ public:
 		DrawLine(LeftBottomX, LeftBottomY, RightBottomX, RightBottomY, Color, Thickness);
 	}
 
-	void DrawFilledParallelogram(uint16 LeftTopX, uint16 LeftTopY, uint16 LeftBottomX, uint16 LeftBottomY, uint16 RightTopX, uint16 RightTopY, uint16 RightBottomX, uint16 RightBottomY, Color Color);
+	void DrawFilledParallelogram(uint16_t LeftTopX, uint16_t LeftTopY, uint16_t LeftBottomX, uint16_t LeftBottomY, uint16_t RightTopX, uint16_t RightTopY, uint16_t RightBottomX, uint16_t RightBottomY, Color Color);
 
-	void DrawTriangle(int16 X0, int16 Y0, int16 X1, int16 Y1, int16 X2, int16 Y2, Color Color, uint8 Thickness = 1)
+	void DrawTriangle(int16_t X0, int16_t Y0, int16_t X1, int16_t Y1, int16_t X2, int16_t Y2, Color Color, uint8_t Thickness = 1)
 	{
 		DrawLine(X0, Y0, X1, Y1, Color, Thickness);
 		DrawLine(X1, Y1, X2, Y2, Color, Thickness);
 		DrawLine(X2, Y2, X0, Y0, Color, Thickness);
 	}
 
-	void DrawFilledTriangle(int16 X0, int16 Y0, int16 X1, int16 Y1, int16 X2, int16 Y2, Color Color);
+	void DrawFilledTriangle(int16_t X0, int16_t Y0, int16_t X1, int16_t Y1, int16_t X2, int16_t Y2, Color Color);
 
-	void DrawCircle(int16 X0, int16 Y0, int16 Radius, Color Color, uint8 Thickness = 1);
+	void DrawCircle(int16_t X0, int16_t Y0, int16_t Radius, Color Color, uint8_t Thickness = 1);
 
-	void DrawFilledCircle(int16 X0, int16 Y0, int16 Radius, Color Color);
+	void DrawFilledCircle(int16_t X0, int16_t Y0, int16_t Radius, Color Color);
 
-	uint8 DrawCharacter(int16 X, int16 Y, char Character, const Font& Font, Color Color, bool IgnoreOffset = false);
+	uint8_t DrawCharacter(int16_t X, int16_t Y, char Character, const Font& Font, Color Color, bool IgnoreOffset = false);
 
-	void DrawString(int16 X, int16 Y, cstr const String, const Font& Font, Color Color);
+	void DrawString(int16_t X, int16_t Y, cstr const String, const Font& Font, Color Color);
 
-	void DrawString(int16 X, int16 Y, cstr String, uint16 Length, const Font& Font, Color Color);
+	void DrawString(int16_t X, int16_t Y, cstr String, uint16_t Length, const Font& Font, Color Color);
 
 	Point MeasureCharacterDimension(char Character, const Font& Font);
 
@@ -65,16 +65,16 @@ public:
 
 	Point MeasureStringDimension(cstr String, const Font& Font);
 
-	Point MeasureStringDimension(cstr String, uint16 Length, const Font& Font);
+	Point MeasureStringDimension(cstr String, uint16_t Length, const Font& Font);
 
-	void DrawBitmap(int16 X, int16 Y, const Bitmap& Bitmap, Color Color, float Scale = 1);
+	void DrawBitmap(int16_t X, int16_t Y, const Bitmap& Bitmap, Color Color, float Scale = 1);
 
-	void DrawFontBitmap(int16 X, int16 Y, uint8 ID, const Font& Font, Color Color, bool IgnoreOffsets = true)
+	void DrawFontBitmap(int16_t X, int16_t Y, uint8_t ID, const Font& Font, Color Color, bool IgnoreOffsets = true)
 	{
 		DrawCharacter(X, Y, ID, Font, Color, IgnoreOffsets);
 	}
 
-	Point MeasureFontBitmapDimension(uint8 ID, const Font& Font)
+	Point MeasureFontBitmapDimension(uint8_t ID, const Font& Font)
 	{
 		return GetCharacterDimension(ID, Font, false);
 	}
@@ -84,12 +84,12 @@ public:
 		DrawPixel(Position.X, Position.Y, Color);
 	}
 
-	void DrawLine(Point Position0, Point Position1, Color Color, uint8 Thickness = 1)
+	void DrawLine(Point Position0, Point Position1, Color Color, uint8_t Thickness = 1)
 	{
 		DrawLine(Position0.X, Position0.Y, Position1.X, Position1.Y, Color, Thickness);
 	}
 
-	void DrawRectangle(Rect Rect, Color Color, uint8 Thickness = 1)
+	void DrawRectangle(Rect Rect, Color Color, uint8_t Thickness = 1)
 	{
 		DrawRectangle(Rect.Position.X, Rect.Position.Y, Rect.Dimension.X, Rect.Dimension.Y, Color, Thickness);
 	}
@@ -99,7 +99,7 @@ public:
 		DrawFilledRectangle(Rect.Position.X, Rect.Position.Y, Rect.Dimension.X, Rect.Dimension.Y, Color);
 	}
 
-	void DrawParallelogram(Point LeftTop, Point LeftBottom, Point RightTop, Point RightBottom, Color Color, uint8 Thickness = 1)
+	void DrawParallelogram(Point LeftTop, Point LeftBottom, Point RightTop, Point RightBottom, Color Color, uint8_t Thickness = 1)
 	{
 		DrawParallelogram(LeftTop.X, LeftTop.Y, LeftBottom.X, LeftBottom.Y, RightTop.X, RightTop.Y, RightBottom.X, RightBottom.Y, Color, Thickness);
 	}
@@ -109,7 +109,7 @@ public:
 		DrawFilledParallelogram(LeftTop.X, LeftTop.Y, LeftBottom.X, LeftBottom.Y, RightTop.X, RightTop.Y, RightBottom.X, RightBottom.Y, Color);
 	}
 
-	void DrawTriangle(Point Position0, Point Position1, Point Position2, Color Color, uint8 Thickness = 1)
+	void DrawTriangle(Point Position0, Point Position1, Point Position2, Color Color, uint8_t Thickness = 1)
 	{
 		DrawTriangle(Position0.X, Position0.Y, Position1.X, Position1.Y, Position2.X, Position2.Y, Color, Thickness);
 	}
@@ -119,12 +119,12 @@ public:
 		DrawFilledTriangle(Position0.X, Position0.Y, Position1.X, Position1.Y, Position2.X, Position2.Y, Color);
 	}
 
-	void DrawCircle(Point Position, int16 Radius, Color Color, uint8 Thickness = 1)
+	void DrawCircle(Point Position, int16_t Radius, Color Color, uint8_t Thickness = 1)
 	{
 		DrawCircle(Position.X, Position.Y, Radius, Color, Thickness);
 	}
 
-	void DrawFilledCircle(Point Position, int16 Radius, Color Color)
+	void DrawFilledCircle(Point Position, int16_t Radius, Color Color)
 	{
 		DrawFilledCircle(Position.X, Position.Y, Radius, Color);
 	}
@@ -139,7 +139,7 @@ public:
 		DrawString(Position.X, Position.Y, String, Font, Color);
 	}
 
-	void DrawString(Point Position, cstr String, uint16 Length, const Font& Font, Color Color)
+	void DrawString(Point Position, cstr String, uint16_t Length, const Font& Font, Color Color)
 	{
 		DrawString(Position.X, Position.Y, String, Length, Font, Color);
 	}
@@ -149,12 +149,12 @@ public:
 		DrawBitmap(Position.X, Position.Y, Bitmap, Color, Scale);
 	}
 
-	void DrawFontBitmap(Point Position, uint8 ID, const Font& Font, Color Color, bool IgnoreOffsets = true)
+	void DrawFontBitmap(Point Position, uint8_t ID, const Font& Font, Color Color, bool IgnoreOffsets = true)
 	{
 		DrawFontBitmap(Position.X, Position.Y, ID, Font, Color, IgnoreOffsets);
 	}
 
-	void SetStringSpacing(int8 Character, int8 Line)
+	void SetStringSpacing(int8_t Character, int8_t Line)
 	{
 		m_CharacterSpacing = Character;
 		m_LineSpacing = Line;
@@ -171,20 +171,20 @@ private:
 		return (GetGlyphIndex(Character, Font) != -1);
 	}
 
-	int8 GetGlyphIndex(char Character, const Font& Font);
+	int8_t GetGlyphIndex(char Character, const Font& Font);
 
 	Point GetCharacterDimension(char Character, const Font& Font, bool IncludeOffset, bool AdvanceInsteadOfWidth = false);
 
 	Point GetCharacterOffset(char Character, const Font& Font);
 
-	void DrawVerticalLine(int16 X, int16 Y, int16 Height, Color Color, uint8 Thickness = 1);
+	void DrawVerticalLine(int16_t X, int16_t Y, int16_t Height, Color Color, uint8_t Thickness = 1);
 
-	void DrawHorizontalLine(int16 X, int16 Y, int16 Width, Color Color, uint8 Thickness = 1);
+	void DrawHorizontalLine(int16_t X, int16_t Y, int16_t Width, Color Color, uint8_t Thickness = 1);
 
 private:
 	I_LCD_HAL* m_HAL;
-	int8 m_CharacterSpacing;
-	int8 m_LineSpacing;
+	int8_t m_CharacterSpacing;
+	int8_t m_LineSpacing;
 };
 
 #endif

@@ -3,18 +3,18 @@
 #include "DaisySeedFramework/USB/DaisyUSB.h"
 #include <DigitalSignalProcessing/Debug.h>
 
-static DaisyUSB* s_Instance[(uint8)Peripherals::COUNT] = {};
+static DaisyUSB* s_Instance[(uint8_t)Peripherals::COUNT] = {};
 
 extern "C"
 {
 	void OTG_FS_IRQHandler(void)
 	{
-		s_Instance[(uint8)Peripherals::FullSpeed]->OnHALHandleRequest();
+		s_Instance[(uint8_t)Peripherals::FullSpeed]->OnHALHandleRequest();
 	}
 
 	void OTG_HS_IRQHandler(void)
 	{
-		s_Instance[(uint8)Peripherals::HighSpeed]->OnHALHandleRequest();
+		s_Instance[(uint8_t)Peripherals::HighSpeed]->OnHALHandleRequest();
 	}
 }
 
@@ -22,7 +22,7 @@ DaisyUSB::DaisyUSB(Peripherals Peripheral)
 	: m_Peripheral(Peripheral),
 	m_IsRunning(false)
 {
-	s_Instance[(uint8)Peripheral] = this;
+	s_Instance[(uint8_t)Peripheral] = this;
 }
 
 void DaisyUSB::Start(const USBProfile& Profile)

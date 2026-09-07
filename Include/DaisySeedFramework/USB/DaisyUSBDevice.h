@@ -48,7 +48,7 @@ public:
 	void Start(const USBDeviceProfile& Profile);
 	void Stop(void);
 
-	IUSBInterface* GetInterface(uint8 Index) override
+	IUSBInterface* GetInterface(uint8_t Index) override
 	{
 		ASSERT(Index < m_DeviceCount, "Index out of range");
 
@@ -69,26 +69,26 @@ public:
 private:
 	void OnHALHandleRequest(void);
 	void OnSetupStage(void);
-	void OnDataOutStage(uint8 EPNum);
-	void OnDataInStage(uint8 EPNum);
-	void OnIsoOutIncomplete(uint8 EPNum);
-	void OnIsoInIncomplete(uint8 EPNum);
+	void OnDataOutStage(uint8_t EPNum);
+	void OnDataInStage(uint8_t EPNum);
+	void OnIsoOutIncomplete(uint8_t EPNum);
+	void OnIsoInIncomplete(uint8_t EPNum);
 	void OnStartOfFrame(void);
 
 	void HandleGetDescriptor(void);
 
-	void AllocateReceiveBuffer(uint16 Size);
-	void AllocateTransmitBuffer(uint8 Endpoint, uint16 Size);
+	void AllocateReceiveBuffer(uint16_t Size);
+	void AllocateTransmitBuffer(uint8_t Endpoint, uint16_t Size);
 
-	void OpenEndpoint(uint8 Endpoint, uint16 Length, USBEndpointAttributes Type);
-	void CloseEndpoint(uint8 Endpoint);
+	void OpenEndpoint(uint8_t Endpoint, uint16_t Length, USBEndpointAttributes Type);
+	void CloseEndpoint(uint8_t Endpoint);
 
-	uint16 DeviceReceiveCount(uint8 Endpoint = USB_EP0_OUT);
-	void DeviceReceive(uint8* Buffer, uint16 Length, uint8 Endpoint = USB_EP0_OUT);
+	uint16_t DeviceReceiveCount(uint8_t Endpoint = USB_EP0_OUT);
+	void DeviceReceive(uint8_t* Buffer, uint16_t Length, uint8_t Endpoint = USB_EP0_OUT);
 	template<typename T>
 	void DeviceReceive(T* Buffer)
 	{
-		DeviceReceive(reinterpret_cast<uint8*>(Buffer), sizeof(T));
+		DeviceReceive(reinterpret_cast<uint8_t*>(Buffer), sizeof(T));
 	}
 
 	void DeviceReceiveAck(void)
@@ -96,11 +96,11 @@ private:
 		DeviceReceive(nullptr, 0);
 	}
 
-	void DeviceTransmit(const uint8* Buffer, uint16 Length, uint8 Endpoint = USB_EP0_IN, bool ClearDCache = false);
+	void DeviceTransmit(const uint8_t* Buffer, uint16_t Length, uint8_t Endpoint = USB_EP0_IN, bool ClearDCache = false);
 	template<typename T>
 	void DeviceTransmit(T* Buffer)
 	{
-		DeviceTransmit(reinterpret_cast<uint8*>(Buffer), sizeof(T));
+		DeviceTransmit(reinterpret_cast<uint8_t*>(Buffer), sizeof(T));
 	}
 
 	void DeviceTransmitAck(void)
@@ -108,17 +108,17 @@ private:
 		DeviceTransmit(nullptr, 0);
 	}
 
-	void FlushEndpoint(uint8 Endpoint = USB_EP0_IN);
+	void FlushEndpoint(uint8_t Endpoint = USB_EP0_IN);
 
 	void SetStall(void);
 
-	DeviceInstanceInfo& GetDeviceInstanceByInterfaceIndex(uint8 InterfaceIndex);
-	DeviceInstanceInfo& GetDeviceInstanceByEndpoint(uint8 Endpoint);
+	DeviceInstanceInfo& GetDeviceInstanceByInterfaceIndex(uint8_t InterfaceIndex);
+	DeviceInstanceInfo& GetDeviceInstanceByEndpoint(uint8_t Endpoint);
 
-	uint16 BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, const USBDeviceProfile& profile);
+	uint16_t BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, const USBDeviceProfile& profile);
 
-	static uint16 BuildDeviceDescriptor(EP0Buffer& EP0Buffer, const USBDeviceProfile& Profile);
-	static uint16 BuildStringDescriptor(EP0Buffer& EP0Buffer, cstr Value);
+	static uint16_t BuildDeviceDescriptor(EP0Buffer& EP0Buffer, const USBDeviceProfile& Profile);
+	static uint16_t BuildStringDescriptor(EP0Buffer& EP0Buffer, cstr Value);
 
 private:
 	Peripherals m_Peripheral;
@@ -130,7 +130,7 @@ private:
 	BufferTransmitHandler m_EP0TransmitHandler;
 
 	DeviceInstanceInfo m_Devices[MaxClassCount];
-	uint8 m_DeviceCount;
+	uint8_t m_DeviceCount;
 };
 
 #endif

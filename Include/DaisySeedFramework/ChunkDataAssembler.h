@@ -5,40 +5,40 @@
 #include "Common.h"
 #include "StaticVector.h"
 
-template<uint16 BufferSize>
+template<uint16_t BufferSize>
 class ChunkDataAssembler
 {
 private:
-	typedef StaticVector<uint8, BufferSize> BufferType;
+	typedef StaticVector<uint8_t, BufferSize> BufferType;
 
 protected:
 	ChunkDataAssembler(void)
 		: m_ExpectedBytesSize(0)
 	{}
 
-	void Transmit(const uint8* Buffer, uint16 Length)
+	void Transmit(const uint8_t* Buffer, uint16_t Length)
 	{
-		HandleRawTransmit(reinterpret_cast<const uint8*>(&Length), sizeof(Length));
+		HandleRawTransmit(reinterpret_cast<const uint8_t*>(&Length), sizeof(Length));
 		HandleRawTransmit(Buffer, Length);
 	}
 
-	virtual void HandlePacket(const uint8* Buffer, uint16 Length) = 0;
+	virtual void HandlePacket(const uint8_t* Buffer, uint16_t Length) = 0;
 
-	virtual void HandleRawTransmit(const uint8* Buffer, uint16 Length) = 0;
+	virtual void HandleRawTransmit(const uint8_t* Buffer, uint16_t Length) = 0;
 
-	void HandleRawPacket(const uint8* Buffer, uint8 Length)
+	void HandleRawPacket(const uint8_t* Buffer, uint8_t Length)
 	{
 		m_Buffer.PushBack(Buffer, Length);
 
-		const uint8 HeaderSize = sizeof(m_ExpectedBytesSize);
+		const uint8_t HeaderSize = sizeof(m_ExpectedBytesSize);
 
 		while (m_Buffer.GetSize() >= HeaderSize)
 		{
-			const uint8* buffer = m_Buffer.GetData();
+			const uint8_t* buffer = m_Buffer.GetData();
 
 			ReadAndAdvanceBuffer(buffer, m_ExpectedBytesSize);
 
-			const uint16 ExpectedBufferSize = HeaderSize + m_ExpectedBytesSize;
+			const uint16_t ExpectedBufferSize = HeaderSize + m_ExpectedBytesSize;
 
 			if (m_Buffer.GetSize() > ExpectedBufferSize)
 			{
@@ -55,16 +55,16 @@ protected:
 		}
 	}
 
-	//void TransmitFragmented(const uint8* Buffer, uint16 Length, uint16 Delay) const
+	//void TransmitFragmented(const uint8_t* Buffer, uint16_t Length, uint16_t Delay) const
 	//{
-	//	uint16 index = 0;
+	//	uint16_t index = 0;
 	//	while (index < Length)
 	//	{
-	//		const uint16 CountPerStep = 64;
+	//		const uint16_t CountPerStep = 64;
 
-	//		uint16 countPerStep = (uint16)Math::Min(CountPerStep, Length - index);
+	//		uint16_t countPerStep = (uint16_t)Math::Min(CountPerStep, Length - index);
 
-	//		HandleRawTransmit(const_cast<uint8*>(Buffer + index), countPerStep);
+	//		HandleRawTransmit(const_cast<uint8_t*>(Buffer + index), countPerStep);
 
 	//		index += CountPerStep;
 
@@ -81,7 +81,7 @@ private:
 
 protected:
 	template <typename T>
-	static uint16 ReadAndAdvanceBuffer(const uint8*& Buffer, T& Data)
+	static uint16_t ReadAndAdvanceBuffer(const uint8_t*& Buffer, T& Data)
 	{
 		Data = *(T*)Buffer;
 		Buffer += sizeof(T);
@@ -91,7 +91,7 @@ protected:
 
 private:
 	BufferType m_Buffer;
-	uint16 m_ExpectedBytesSize;
+	uint16_t m_ExpectedBytesSize;
 };
 
 #endif

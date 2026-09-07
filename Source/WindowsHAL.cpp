@@ -14,9 +14,9 @@
 
 #pragma comment(lib, "portaudio.lib")
 
-WindowsHAL::WindowsHAL(void* SDRAMAddress, uint32 SDRAMSize, CrashHandler CrashHandler)
+WindowsHAL::WindowsHAL(void* SDRAMAddress, uint32_t SDRAMSize, CrashHandler CrashHandler)
 	: m_CrashHandler(CrashHandler),
-	m_SDRAMAddress(reinterpret_cast<uint8*>(SDRAMAddress)),
+	m_SDRAMAddress(reinterpret_cast<uint8_t*>(SDRAMAddress)),
 	m_SDRAMSize(SDRAMSize),
 	m_LastFreeSDRAMIndex(0),
 	m_AudioCallback(nullptr)
@@ -27,7 +27,7 @@ WindowsHAL::WindowsHAL(void* SDRAMAddress, uint32 SDRAMSize, CrashHandler CrashH
 	m_StartupTime = std::chrono::steady_clock::now();
 }
 
-void WindowsHAL::Setup(uint8 FrameLength, uint32 SampleRate, bool Boost)
+void WindowsHAL::Setup(uint8_t FrameLength, uint32_t SampleRate, bool Boost)
 {
 	ASSERT(FrameLength != 0, "Invalid FrameLength %i", FrameLength);
 
@@ -39,18 +39,18 @@ void WindowsHAL::Setup(uint8 FrameLength, uint32 SampleRate, bool Boost)
 	Pa_StartStream(stream);
 }
 
-void* WindowsHAL::Allocate(uint32 Size, bool OnSDRAM)
+void* WindowsHAL::Allocate(uint32_t Size, bool OnSDRAM)
 {
 	if (OnSDRAM)
 	{
-		const uint8 ALIGNMENT = 16;
+		const uint8_t ALIGNMENT = 16;
 
 		ASSERT(m_SDRAMAddress != nullptr, "SDRAM is not initialized");
 		ASSERT(m_LastFreeSDRAMIndex + Size <= m_SDRAMSize, "Running out of SDRAM");
 
-		uint8* ptr = m_SDRAMAddress + m_LastFreeSDRAMIndex;
+		uint8_t* ptr = m_SDRAMAddress + m_LastFreeSDRAMIndex;
 
-		uint8* alignedPtr = reinterpret_cast<uint8*>(((reinterpret_cast<uint64>(ptr) + (ALIGNMENT - 1)) / ALIGNMENT) * ALIGNMENT);
+		uint8_t* alignedPtr = reinterpret_cast<uint8_t*>(((reinterpret_cast<uint64_t>(ptr) + (ALIGNMENT - 1)) / ALIGNMENT) * ALIGNMENT);
 
 		m_LastFreeSDRAMIndex += (alignedPtr - ptr) + Size;
 
@@ -68,12 +68,12 @@ void WindowsHAL::Deallocate(void* Memory)
 	free(Memory);
 }
 
-uint32 WindowsHAL::GetTimeSinceStartupTicks(void) const
+uint32_t WindowsHAL::GetTimeSinceStartupTicks(void) const
 {
 	return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - m_StartupTime).count();
 }
 
-uint32 WindowsHAL::GetTimeSinceStartupMs(void) const
+uint32_t WindowsHAL::GetTimeSinceStartupMs(void) const
 {
 	return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - m_StartupTime).count();
 }
@@ -111,7 +111,7 @@ void WindowsHAL::Reset(bool InfiniteTime) const
 	exit(0);
 }
 
-void WindowsHAL::Delay(uint16 Ms) const
+void WindowsHAL::Delay(uint16_t Ms) const
 {
 	_Thrd_sleep_for(Ms);
 }
@@ -121,7 +121,7 @@ void WindowsHAL::Update(void)
 	m_USB.Update();
 }
 
-int WindowsHAL::AudioCallback(const void* InputBuffer, void* OutputBuffer, uint32 FramesPerBuffer, const PaStreamCallbackTimeInfo* TimeInfo, uint32 StatusFlags, void* UserData)
+int WindowsHAL::AudioCallback(const void* InputBuffer, void* OutputBuffer, uint32_t FramesPerBuffer, const PaStreamCallbackTimeInfo* TimeInfo, uint32_t StatusFlags, void* UserData)
 {
 	float* in = (float*)InputBuffer;
 	float* out = (float*)OutputBuffer;

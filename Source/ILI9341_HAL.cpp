@@ -30,9 +30,9 @@ ILI9341_HAL::ILI9341_HAL(IHAL* HAL, GPIOPins SCLK, GPIOPins MOSI, GPIOPins NSS, 
 
 void ILI9341_HAL::Initialize(void)
 {
-	const uint32 FrameBufferSize = m_PixelSize.X * m_PixelSize.Y;
+	const uint32_t FrameBufferSize = m_PixelSize.X * m_PixelSize.Y;
 	m_FrameBufferChunkSize = FrameBufferSize / FRAME_BUFFER_CHUNK_COUNT;
-	m_FrameBuffer = Memory::Allocate<uint16>(FrameBufferSize, true);
+	m_FrameBuffer = Memory::Allocate<uint16_t>(FrameBufferSize, true);
 	m_FrameBufferDirty = Memory::Allocate<bool>(FRAME_BUFFER_CHUNK_COUNT, true);
 	Clear(ColorBlack);
 
@@ -48,7 +48,7 @@ void ILI9341_HAL::Update(void)
 	if (m_IsDMABusy)
 		return;
 
-	uint32 time = m_HAL->GetTimeSinceStartupMs();
+	uint32_t time = m_HAL->GetTimeSinceStartupMs();
 	if (time < m_NextUpdateTime)
 		return;
 	m_NextUpdateTime = time + m_UpdateStep;
@@ -58,7 +58,7 @@ void ILI9341_HAL::Update(void)
 	UpdateDataDMA();
 }
 
-void ILI9341_HAL::SetTargetFrameRate(uint8 Value)
+void ILI9341_HAL::SetTargetFrameRate(uint8_t Value)
 {
 	ASSERT(Value != 0, "Invalid Value %f", Value);
 
@@ -69,10 +69,10 @@ void ILI9341_HAL::SetTargetFrameRate(uint8 Value)
 
 void ILI9341_HAL::Clear(Color Color)
 {
-	uint16 color = Color.R5G6B5();
+	uint16_t color = Color.R5G6B5();
 
-	for (uint32 y = 0; y < m_Dimension.Y; ++y)
-		for (uint32 x = 0; x < m_Dimension.X; ++x)
+	for (uint32_t y = 0; y < m_Dimension.Y; ++y)
+		for (uint32_t x = 0; x < m_Dimension.X; ++x)
 			m_FrameBuffer[x + (y * m_Dimension.X)] = SWAP_ENDIAN_16BIT(color);
 
 	Memory::Set(m_FrameBufferDirty, 1, FRAME_BUFFER_CHUNK_COUNT);
@@ -87,13 +87,13 @@ void ILI9341_HAL::DrawPixel(Point Position, Color Color)
 	PaintPixel(Position.X, Position.Y, Color.R5G6B5(), Color.A);
 }
 
-void ILI9341_HAL::PaintPixel(int16 X, int16 Y, uint16 R5G6B5, uint8 Alpha)
+void ILI9341_HAL::PaintPixel(int16_t X, int16_t Y, uint16_t R5G6B5, uint8_t Alpha)
 {
-	uint32 index = X + (Y * m_Dimension.X);
+	uint32_t index = X + (Y * m_Dimension.X);
 
 	if (Alpha != 255)
 	{
-		uint16 currentColor = SWAP_ENDIAN_16BIT(m_FrameBuffer[index]);
+		uint16_t currentColor = SWAP_ENDIAN_16BIT(m_FrameBuffer[index]);
 		R5G6B5 = Color::BlendR5G6B5(R5G6B5, currentColor, Alpha);
 	}
 
@@ -113,22 +113,22 @@ void ILI9341_HAL::InitializeSPI(GPIOPins SCLK, GPIOPins MOSI, GPIOPins NSS, GPIO
 	spiConfig.clock_phase = daisy::SpiHandle::Config::ClockPhase::ONE_EDGE;
 	spiConfig.nss = daisy::SpiHandle::Config::NSS::HARD_OUTPUT;
 	spiConfig.datasize = 8;
-	spiConfig.pin_config.sclk = DaisySeedHAL::GetPin((uint8)SCLK);
-	spiConfig.pin_config.mosi = DaisySeedHAL::GetPin((uint8)MOSI);
-	spiConfig.pin_config.nss = DaisySeedHAL::GetPin((uint8)NSS);
+	spiConfig.pin_config.sclk = DaisySeedHAL::GetPin((uint8_t)SCLK);
+	spiConfig.pin_config.mosi = DaisySeedHAL::GetPin((uint8_t)MOSI);
+	spiConfig.pin_config.nss = DaisySeedHAL::GetPin((uint8_t)NSS);
 
 	m_SPI.Init(spiConfig);
 
 	daisy::GPIO::Config pinConfig;
 	pinConfig.mode = daisy::GPIO::Mode::OUTPUT;
 
-	pinConfig.pin = DaisySeedHAL::GetPin((uint8)DC);
+	pinConfig.pin = DaisySeedHAL::GetPin((uint8_t)DC);
 	m_DC.Init(pinConfig);
 
-	pinConfig.pin = DaisySeedHAL::GetPin((uint8)RST);
+	pinConfig.pin = DaisySeedHAL::GetPin((uint8_t)RST);
 	m_RST.Init(pinConfig);
 
-	pinConfig.pin = DaisySeedHAL::GetPin((uint8)NSS);
+	pinConfig.pin = DaisySeedHAL::GetPin((uint8_t)NSS);
 	m_CS.Init(pinConfig);
 	m_CS.Write(0);
 }
@@ -150,119 +150,119 @@ void ILI9341_HAL::InitDriver(Orientations Orientation)
 	// POWER CONTROL A
 	SendCommand(0xCB);
 	{
-		uint8 data[5] = { 0x39, 0x2C, 0x00, 0x34, 0x02 };
+		uint8_t data[5] = { 0x39, 0x2C, 0x00, 0x34, 0x02 };
 		SendData(data, 5);
 	}
 
 	// POWER CONTROL B
 	SendCommand(0xCF);
 	{
-		uint8 data[3] = { 0x00, 0xC1, 0x30 };
+		uint8_t data[3] = { 0x00, 0xC1, 0x30 };
 		SendData(data, 3);
 	}
 
 	// DRIVER TIMING CONTROL A
 	SendCommand(0xE8);
 	{
-		uint8 data[3] = { 0x85, 0x00, 0x78 };
+		uint8_t data[3] = { 0x85, 0x00, 0x78 };
 		SendData(data, 3);
 	}
 
 	// DRIVER TIMING CONTROL B
 	SendCommand(0xEA);
 	{
-		uint8 data[2] = { 0x00, 0x00 };
+		uint8_t data[2] = { 0x00, 0x00 };
 		SendData(data, 2);
 	}
 
 	// POWER ON SEQUENCE CONTROL
 	SendCommand(0xED);
 	{
-		uint8 data[4] = { 0x64, 0x03, 0x12, 0x81 };
+		uint8_t data[4] = { 0x64, 0x03, 0x12, 0x81 };
 		SendData(data, 4);
 	}
 
 	// PUMP RATIO CONTROL
 	SendCommand(0xF7);
 	{
-		uint8 data[1] = { 0x20 };
+		uint8_t data[1] = { 0x20 };
 		SendData(data, 1);
 	}
 
 	// POWER CONTROL,VRH[5:0]
 	SendCommand(0xC0);
 	{
-		uint8 data[1] = { 0x23 };
+		uint8_t data[1] = { 0x23 };
 		SendData(data, 1);
 	}
 
 	// POWER CONTROL,SAP[2:0];BT[3:0]
 	SendCommand(0xC1);
 	{
-		uint8 data[1] = { 0x10 };
+		uint8_t data[1] = { 0x10 };
 		SendData(data, 1);
 	}
 
 	// VCM CONTROL
 	SendCommand(0xC5);
 	{
-		uint8 data[2] = { 0x3E, 0x28 };
+		uint8_t data[2] = { 0x3E, 0x28 };
 		SendData(data, 2);
 	}
 
 	// VCM CONTROL 2
 	SendCommand(0xC7);
 	{
-		uint8 data[1] = { 0x86 };
+		uint8_t data[1] = { 0x86 };
 		SendData(data, 1);
 	}
 
 	// MEMORY ACCESS CONTROL
 	SendCommand(0x36);
 	{
-		uint8 data[1] = { 0x48 };
+		uint8_t data[1] = { 0x48 };
 		SendData(data, 1);
 	}
 
 	// PIXEL FORMAT
 	SendCommand(0x3A);
 	{
-		uint8 data[1] = { 0x55 };
+		uint8_t data[1] = { 0x55 };
 		SendData(data, 1);
 	}
 
 	// FRAME RATIO CONTROL, STANDARD RGB COLOR
 	SendCommand(0xB1);
 	{
-		uint8 data[2] = { 0x00, 0x18 };
+		uint8_t data[2] = { 0x00, 0x18 };
 		SendData(data, 2);
 	}
 
 	// DISPLAY FUNCTION CONTROL
 	SendCommand(0xB6);
 	{
-		uint8 data[3] = { 0x08, 0x82, 0x27 };
+		uint8_t data[3] = { 0x08, 0x82, 0x27 };
 		SendData(data, 3);
 	}
 
 	// 3GAMMA FUNCTION DISABLE
 	SendCommand(0xF2);
 	{
-		uint8 data[1] = { 0x00 };
+		uint8_t data[1] = { 0x00 };
 		SendData(data, 1);
 	}
 
 	// GAMMA CURVE SELECTED
 	SendCommand(0x26);
 	{
-		uint8 data[1] = { 0x01 };
+		uint8_t data[1] = { 0x01 };
 		SendData(data, 1);
 	}
 
 	// POSITIVE GAMMA CORRECTION
 	SendCommand(0xE0);
 	{
-		uint8 data[15] = { 0x0F,
+		uint8_t data[15] = { 0x0F,
 						  0x31,
 						  0x2B,
 						  0x0C,
@@ -283,7 +283,7 @@ void ILI9341_HAL::InitDriver(Orientations Orientation)
 	// NEGATIVE GAMMA CORRECTION
 	SendCommand(0xE1);
 	{
-		uint8 data[15] = { 0x00,
+		uint8_t data[15] = { 0x00,
 						  0x0E,
 						  0x14,
 						  0x03,
@@ -308,8 +308,8 @@ void ILI9341_HAL::InitDriver(Orientations Orientation)
 	// SET BACKGROUND TO BLACK
 	SetAddressWindow(0, 0, m_Dimension.X - 1, m_Dimension.Y - 1);
 	m_DC.Write(1);
-	uint8 black[2] = { 0, 0 };
-	for (uint32 i = 0; i < m_PixelSize.X * m_PixelSize.Y; i++)
+	uint8_t black[2] = { 0, 0 };
+	for (uint32_t i = 0; i < m_PixelSize.X * m_PixelSize.Y; i++)
 		m_SPI.BlockingTransmit(black, 2);
 
 	// TURN ON DISPLAY
@@ -319,19 +319,19 @@ void ILI9341_HAL::InitDriver(Orientations Orientation)
 	SendCommand(0x36);
 	m_HAL->Delay(10);
 	{
-		uint8 data[1] = { SetOrientationAndGetTheRotationBits(Orientation) };
+		uint8_t data[1] = { SetOrientationAndGetTheRotationBits(Orientation) };
 		SendData(data, 1);
 	}
 }
 
-uint8 ILI9341_HAL::SetOrientationAndGetTheRotationBits(Orientations Orientation)
+uint8_t ILI9341_HAL::SetOrientationAndGetTheRotationBits(Orientations Orientation)
 {
-	uint8 ili_bgr = 0x08;
-	uint8 ili_mx = 0x40;
-	uint8 ili_my = 0x80;
-	uint8 ili_mv = 0x20;
+	uint8_t ili_bgr = 0x08;
+	uint8_t ili_mx = 0x40;
+	uint8_t ili_my = 0x80;
+	uint8_t ili_mv = 0x20;
 
-	uint8 rotationBits = ili_bgr;
+	uint8_t rotationBits = ili_bgr;
 
 	switch (Orientation)
 	{
@@ -367,39 +367,39 @@ uint8 ILI9341_HAL::SetOrientationAndGetTheRotationBits(Orientations Orientation)
 	return rotationBits;
 }
 
-void ILI9341_HAL::SendCommand(uint8 Command)
+void ILI9341_HAL::SendCommand(uint8_t Command)
 {
 	m_DC.Write(0);
 
 	m_SPI.BlockingTransmit(&Command, 1);
 }
 
-void ILI9341_HAL::SendData(uint8* Buffer, uint32 Size)
+void ILI9341_HAL::SendData(uint8_t* Buffer, uint32_t Size)
 {
 	m_DC.Write(1);
 
 	m_SPI.BlockingTransmit(Buffer, Size);
 }
 
-void ILI9341_HAL::SetAddressWindow(uint16 X0, uint16 Y0, uint16 X1, uint16 Y1)
+void ILI9341_HAL::SetAddressWindow(uint16_t X0, uint16_t Y0, uint16_t X1, uint16_t Y1)
 {
 	// Column address set
 	SendCommand(0x2A); // CASET
 	{
-		uint8 data[4] = {(uint8)((X0 >> 8) & 0xFF),
-						 (uint8)(X0 & 0xFF),
-						 (uint8)((X1 >> 8) & 0xFF),
-						 (uint8)(X1 & 0xFF) };
+		uint8_t data[4] = {(uint8_t)((X0 >> 8) & 0xFF),
+						 (uint8_t)(X0 & 0xFF),
+						 (uint8_t)((X1 >> 8) & 0xFF),
+						 (uint8_t)(X1 & 0xFF) };
 		SendData(data, 4);
 	}
 
 	// Row address set
 	SendCommand(0x2B); // RASET
 	{
-		uint8 data[4] = {(uint8)((Y0 >> 8) & 0xFF),
-						 (uint8)(Y0 & 0xFF),
-						 (uint8)((Y1 >> 8) & 0xFF),
-						 (uint8)(Y1 & 0xFF) };
+		uint8_t data[4] = {(uint8_t)((Y0 >> 8) & 0xFF),
+						 (uint8_t)(Y0 & 0xFF),
+						 (uint8_t)((Y1 >> 8) & 0xFF),
+						 (uint8_t)(Y1 & 0xFF) };
 		SendData(data, 4);
 	}
 
@@ -410,7 +410,7 @@ void ILI9341_HAL::SetAddressWindow(uint16 X0, uint16 Y0, uint16 X1, uint16 Y1)
 void ILI9341_HAL::UpdateDataDMA(void)
 {
 	bool found = false;
-	for (uint8 i = m_LastFrameBufferDirtyIndex; i < FRAME_BUFFER_CHUNK_COUNT; ++i)
+	for (uint8_t i = m_LastFrameBufferDirtyIndex; i < FRAME_BUFFER_CHUNK_COUNT; ++i)
 	{
 		if (!m_FrameBufferDirty[i])
 			continue;
@@ -423,18 +423,18 @@ void ILI9341_HAL::UpdateDataDMA(void)
 	if (!found)
 		return;
 
-	const uint16 chunkHeight = m_FrameBufferChunkSize / m_Dimension.X;
+	const uint16_t chunkHeight = m_FrameBufferChunkSize / m_Dimension.X;
 
-	const uint16 x0 = 0;
-	const uint16 y0 = m_LastFrameBufferDirtyIndex * chunkHeight;
-	const uint16 x1 = m_Dimension.X - 1;
-	const uint16 y1 = y0 + chunkHeight;
+	const uint16_t x0 = 0;
+	const uint16_t y0 = m_LastFrameBufferDirtyIndex * chunkHeight;
+	const uint16_t x1 = m_Dimension.X - 1;
+	const uint16_t y1 = y0 + chunkHeight;
 	SetAddressWindow(x0, y0, x1, y1);
 
 	m_IsDMABusy = true;
 
-	uint8* data = reinterpret_cast<uint8*>(m_FrameBuffer + (m_LastFrameBufferDirtyIndex * m_FrameBufferChunkSize));
-	uint32 length = m_FrameBufferChunkSize * sizeof(uint16);
+	uint8_t* data = reinterpret_cast<uint8_t*>(m_FrameBuffer + (m_LastFrameBufferDirtyIndex * m_FrameBufferChunkSize));
+	uint32_t length = m_FrameBufferChunkSize * sizeof(uint16_t);
 
 	dsy_dma_clear_cache_for_buffer(data, length);
 

@@ -11,7 +11,7 @@ public:
 	typedef T ItemType;
 
 public:
-	Stack(T* Buffer = nullptr, uint16 Capacity = 0)
+	Stack(T* Buffer = nullptr, uint16_t Capacity = 0)
 		: m_Buffer(Buffer),
 		m_Capacity(Capacity),
 		m_Count(0)
@@ -70,7 +70,7 @@ public:
 
 	void Clear(void)
 	{
-		for (uint16 i = 0; i < m_Count; ++i)
+		for (uint16_t i = 0; i < m_Count; ++i)
 		{
 			m_Buffer[i].~T();
 			m_Buffer[i] = {};
@@ -79,7 +79,7 @@ public:
 		m_Count = 0;
 	}
 
-	uint16 GetSize(void) const
+	uint16_t GetSize(void) const
 	{
 		return m_Count;
 	}
@@ -94,14 +94,14 @@ public:
 		return m_Count == 0;
 	}
 
-	T& operator[](uint8 Index)
+	T& operator[](uint8_t Index)
 	{
 		ASSERT(Index < m_Capacity, "Out of Size");
 
 		return m_Buffer[Index];
 	}
 
-	const T& operator[](uint8 Index) const
+	const T& operator[](uint8_t Index) const
 	{
 		ASSERT(Index < m_Capacity, "Out of Size");
 
@@ -110,11 +110,11 @@ public:
 
 private:
 	T* m_Buffer;
-	uint16 m_Capacity;
-	uint16 m_Count;
+	uint16_t m_Capacity;
+	uint16_t m_Count;
 };
 
-template <typename T, uint16 MaxSize>
+template <typename T, uint16_t MaxSize>
 struct StaticStack : public Stack<T>
 {
 public:

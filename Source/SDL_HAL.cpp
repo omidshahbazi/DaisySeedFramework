@@ -42,7 +42,7 @@ void SDL_HAL::Initialize(void)
 	m_Renderer = SDL_CreateRenderer(m_Window, nullptr);
 	m_Texture = SDL_CreateTexture(m_Renderer, SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, m_Dimension.X, m_Dimension.Y);
 
-	m_FrameBuffer = Memory::Allocate<uint16>(m_Dimension.X * m_Dimension.Y, true);
+	m_FrameBuffer = Memory::Allocate<uint16_t>(m_Dimension.X * m_Dimension.Y, true);
 	Clear(ColorBlack);
 
 	SetTargetFrameRate(MAX_FRAME_RATE);
@@ -53,7 +53,7 @@ void SDL_HAL::Update(void)
 	SDL_Event event;
 	while (SDL_PollEvent(&event));
 
-	uint32 time = m_HAL->GetTimeSinceStartupMs();
+	uint32_t time = m_HAL->GetTimeSinceStartupMs();
 	if (time < m_NextUpdateTime)
 		return;
 	m_NextUpdateTime = time + m_UpdateStep;
@@ -62,12 +62,12 @@ void SDL_HAL::Update(void)
 
 	m_RenderListener();
 
-	SDL_UpdateTexture(m_Texture, nullptr, m_FrameBuffer, m_Dimension.X * sizeof(uint16));
+	SDL_UpdateTexture(m_Texture, nullptr, m_FrameBuffer, m_Dimension.X * sizeof(uint16_t));
 	SDL_RenderTexture(m_Renderer, m_Texture, NULL, NULL);
 	SDL_RenderPresent(m_Renderer);
 }
 
-void SDL_HAL::SetTargetFrameRate(uint8 Value)
+void SDL_HAL::SetTargetFrameRate(uint8_t Value)
 {
 	ASSERT(Value != 0, "Invalid Value %f", Value);
 
@@ -78,10 +78,10 @@ void SDL_HAL::SetTargetFrameRate(uint8 Value)
 
 void SDL_HAL::Clear(Color Color)
 {
-	uint16 color = Color.R5G6B5();
+	uint16_t color = Color.R5G6B5();
 
-	for (uint32 y = 0; y < m_Dimension.Y; ++y)
-		for (uint32 x = 0; x < m_Dimension.X; ++x)
+	for (uint32_t y = 0; y < m_Dimension.Y; ++y)
+		for (uint32_t x = 0; x < m_Dimension.X; ++x)
 			m_FrameBuffer[x + (y * m_Dimension.X)] = color;
 }
 
@@ -94,20 +94,20 @@ void SDL_HAL::DrawPixel(Point Position, Color Color)
 	PaintPixel(Position.X, Position.Y, Color.R5G6B5(), Color.A);
 }
 
-bool SDL_HAL::GetKeyState(uint16 Key) const
+bool SDL_HAL::GetKeyState(uint16_t Key) const
 {
 	const bool* keysState = SDL_GetKeyboardState(nullptr);
 
 	return keysState[Key];
 }
 
-void SDL_HAL::PaintPixel(int16 X, int16 Y, uint16 R5G6B5, uint8 Alpha)
+void SDL_HAL::PaintPixel(int16_t X, int16_t Y, uint16_t R5G6B5, uint8_t Alpha)
 {
-	uint32 index = X + (Y * m_Dimension.X);
+	uint32_t index = X + (Y * m_Dimension.X);
 
 	if (Alpha != 255)
 	{
-		uint16 currentColor = m_FrameBuffer[index];
+		uint16_t currentColor = m_FrameBuffer[index];
 		R5G6B5 = Color::BlendR5G6B5(R5G6B5, currentColor, Alpha);
 	}
 

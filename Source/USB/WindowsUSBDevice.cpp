@@ -7,9 +7,9 @@ WindowsUSBDevice::WindowsUSBDevice(void)
 	m_DeviceCount(0)
 {}
 
-void WindowsUSBDevice::Start(uint8 Index, const USBDeviceProfile& Profile)
+void WindowsUSBDevice::Start(uint8_t Index, const USBDeviceProfile& Profile)
 {
-	for (uint8 i = 0; i < Profile.ClassNodeCount; ++i)
+	for (uint8_t i = 0; i < Profile.ClassNodeCount; ++i)
 	{
 		const USBClassNode& node = Profile.ClassNodes[i];
 		switch (node.Class)
@@ -29,7 +29,7 @@ void WindowsUSBDevice::Start(uint8 Index, const USBDeviceProfile& Profile)
 
 void WindowsUSBDevice::Stop(void)
 {
-	for (uint8 i = 0; i < m_DeviceCount; ++i)
+	for (uint8_t i = 0; i < m_DeviceCount; ++i)
 		m_Interfaces[i].Stop();
 
 	m_DeviceCount = 0;
@@ -37,7 +37,7 @@ void WindowsUSBDevice::Stop(void)
 
 void WindowsUSBDevice::Update(void)
 {
-	for (uint8 i = 0; i < m_DeviceCount; ++i)
+	for (uint8_t i = 0; i < m_DeviceCount; ++i)
 		m_Interfaces[i].Update();
 }
 

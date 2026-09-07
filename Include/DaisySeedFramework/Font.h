@@ -7,14 +7,14 @@
 struct Font
 {
 public:
-	typedef uint64 DataType;
+	typedef uint64_t DataType;
 
 public:
-	uint8 MaxWidth;
-	uint8 Height;
+	uint8_t MaxWidth;
+	uint8_t Height;
 	const DataType* const Data;
 	float Scale;
-	uint8 BitsPerPixel;
+	uint8_t BitsPerPixel;
 	bool HasGlyphData;
 	cstr Glyphs;
 
@@ -25,7 +25,7 @@ public:
 	}
 
 public:
-	static constexpr Font CreateScaled(const Font& ReferenceFont, uint8 TargetHeight)
+	static constexpr Font CreateScaled(const Font& ReferenceFont, uint8_t TargetHeight)
 	{
 		Font font = ReferenceFont;
 		font.Scale = (float)TargetHeight / ReferenceFont.Height;

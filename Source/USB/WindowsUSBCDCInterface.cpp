@@ -17,7 +17,7 @@ WindowsUSBCDCInterface::WindowsUSBCDCInterface(void)
 	: m_Pipe(INVALID_HANDLE_VALUE)
 {}
 
-void WindowsUSBCDCInterface::Start(uint8 Index, const CDCClassConfig& Config)
+void WindowsUSBCDCInterface::Start(uint8_t Index, const CDCClassConfig& Config)
 {
 	ASSERT(!m_IsRunning, "Already started");
 
@@ -53,7 +53,7 @@ void WindowsUSBCDCInterface::Update(void)
 		if (bytesAvailable == 0)
 			return;
 
-		uint8 buffer[1024];
+		uint8_t buffer[1024];
 		DWORD bytesRead;
 
 		if (ReadFile(m_Pipe, buffer, sizeof(buffer) - 1, &bytesRead, nullptr))
@@ -66,17 +66,17 @@ void WindowsUSBCDCInterface::Update(void)
 		Disconnect();
 }
 
-void WindowsUSBCDCInterface::Transmit(const uint8* Buffer, uint16 Length)
+void WindowsUSBCDCInterface::Transmit(const uint8_t* Buffer, uint16_t Length)
 {
 	if (!m_IsClientConnected)
 		return;
 
-	uint16 index = 0;
+	uint16_t index = 0;
 	while (index < Length)
 	{
-		const uint16 CountPerStep = 64;
+		const uint16_t CountPerStep = 64;
 
-		uint16 countPerStep = (uint16)Math::Min(CountPerStep, Length - index);
+		uint16_t countPerStep = (uint16_t)Math::Min(CountPerStep, Length - index);
 
 		DWORD bytesWritten;
 		WriteFile(m_Pipe, Buffer + index, countPerStep, &bytesWritten, NULL);

@@ -8,7 +8,7 @@
 // interface. CTRL marks the Communications/Control interface (the one
 // carrying line-coding requests); STRM marks the Data/Streaming interface
 // (the one carrying the raw bulk IN/OUT traffic).
-enum class AMCSubClasses : uint8
+enum class AMCSubClasses : uint8_t
 {
 	CTRL = 0x01, // Communications Class Interface (control/notification)
 	STRM = 0x02, // Data Interface (bulk data transfer)
@@ -38,7 +38,7 @@ enum class AMCSubClasses : uint8
 // tell the host what kind of real-world thing each terminal represents,
 // which is what makes Windows label the endpoint "Speakers" or "Microphone"
 // instead of a generic name.
-enum class TerminalTypes : uint16
+enum class TerminalTypes : uint16_t
 {
 	USBStreaming = 0x0101,	// The "terminal" on the USB side of the topology (where samples enter/leave over USB)
 
@@ -86,7 +86,7 @@ enum class TerminalTypes : uint16
 // Synchronization type, encoded into bits D3..D2 of an isochronous
 // endpoint's bmAttributes byte. This tells the host how the device's
 // sample clock relates to the USB bus clock.
-enum class EndpointSyncTypes : uint16
+enum class EndpointSyncTypes : uint16_t
 {
 	None = 0x00,        // No synchronization information provided
 	Async = 0x04,        // Device runs its own clock; packet size may vary to absorb drift
@@ -106,7 +106,7 @@ enum class EndpointSyncTypes : uint16
 // to label channels "Left"/"Right" instead of "Channel 1"/"Channel 2".
 // Unknown (0x0000) is a valid, common choice when the channels don't map
 // to a standard spatial position (e.g. a guitar pedal's dry/wet outputs).
-enum class ChannelOutputPositions : uint16
+enum class ChannelOutputPositions : uint16_t
 {
 	Unknown = 0x0000,                          // No fixed spatial position declared
 	FrontLeft = 0x0001,                        // Front-left speaker position
@@ -121,16 +121,16 @@ BEGIN_PACK(1);
 // capture) and how many channels it carries.
 struct UAC1InputTerminalDescriptor
 {
-	uint8 bLength;                   // Total size of this descriptor: 12 bytes
+	uint8_t bLength;                   // Total size of this descriptor: 12 bytes
 	USBDescTypes bDescriptorType;     // Always CDCFunc (0x24), the class-specific interface descriptor type
-	uint8 bDescriptorSubtype;        // AC_DESC_INPUT_TERMINAL
-	uint8 bTerminalID;                // Unique ID of this terminal within the AC interface (see IT_*_ID above)
-	uint16 wTerminalType;              // What kind of terminal this is (see TerminalTypes)
-	uint8 bAssocTerminal;              // ID of an associated output terminal, or 0 if none
-	uint8 bNrChannels;                 // Number of logical audio channels this terminal carries
-	uint16 wChannelConfig;             // Spatial channel layout bitmap (see ChannelOutputPositions)
-	uint8 iChannelNames;               // String descriptor index naming the channels, or 0 for none
-	uint8 iTerminal;                   // String descriptor index naming this terminal, or 0 for none
+	uint8_t bDescriptorSubtype;        // AC_DESC_INPUT_TERMINAL
+	uint8_t bTerminalID;                // Unique ID of this terminal within the AC interface (see IT_*_ID above)
+	uint16_t wTerminalType;              // What kind of terminal this is (see TerminalTypes)
+	uint8_t bAssocTerminal;              // ID of an associated output terminal, or 0 if none
+	uint8_t bNrChannels;                 // Number of logical audio channels this terminal carries
+	uint16_t wChannelConfig;             // Spatial channel layout bitmap (see ChannelOutputPositions)
+	uint8_t iChannelNames;               // String descriptor index naming the channels, or 0 for none
+	uint8_t iTerminal;                   // String descriptor index naming this terminal, or 0 for none
 };
 END_PACK();
 
@@ -140,14 +140,14 @@ BEGIN_PACK(1);
 // capture) and which entity feeds it.
 struct UAC1OutputTerminalDescriptor
 {
-	uint8 bLength;                   // Total size of this descriptor: 9 bytes
+	uint8_t bLength;                   // Total size of this descriptor: 9 bytes
 	USBDescTypes bDescriptorType;     // Always CDCFunc (0x24)
-	uint8 bDescriptorSubtype;        // AC_DESC_OUTPUT_TERMINAL
-	uint8 bTerminalID;                // Unique ID of this terminal within the AC interface (see OT_*_ID above)
-	uint16 wTerminalType;              // What kind of terminal this is (see TerminalTypes)
-	uint8 bAssocTerminal;              // ID of an associated input terminal, or 0 if none
-	uint8 bSourceID;                   // ID of the entity (usually a Feature Unit) that feeds this terminal
-	uint8 iTerminal;                   // String descriptor index naming this terminal, or 0 for none
+	uint8_t bDescriptorSubtype;        // AC_DESC_OUTPUT_TERMINAL
+	uint8_t bTerminalID;                // Unique ID of this terminal within the AC interface (see OT_*_ID above)
+	uint16_t wTerminalType;              // What kind of terminal this is (see TerminalTypes)
+	uint8_t bAssocTerminal;              // ID of an associated input terminal, or 0 if none
+	uint8_t bSourceID;                   // ID of the entity (usually a Feature Unit) that feeds this terminal
+	uint8_t iTerminal;                   // String descriptor index naming this terminal, or 0 for none
 };
 END_PACK();
 
@@ -157,12 +157,12 @@ BEGIN_PACK(1);
 // interface and declaring the sample format tag used on the wire.
 struct UAC1StreamingInterfaceDescriptor
 {
-	uint8 bLength;                   // Total size of this descriptor: 7 bytes
+	uint8_t bLength;                   // Total size of this descriptor: 7 bytes
 	USBDescTypes bDescriptorType;     // Always CDCFunc (0x24)
-	uint8 bDescriptorSubtype;        // AS_DESC_GENERAL
-	uint8 bTerminalLink;              // ID of the AC terminal this stream connects to
-	uint8 bDelay;                     // Interface delay in number of frames, usually 0
-	uint16 wFormatTag;                 // Sample data format on the wire (see AUDIO_FORMAT_TAG_PCM)
+	uint8_t bDescriptorSubtype;        // AS_DESC_GENERAL
+	uint8_t bTerminalLink;              // ID of the AC terminal this stream connects to
+	uint8_t bDelay;                     // Interface delay in number of frames, usually 0
+	uint16_t wFormatTag;                 // Sample data format on the wire (see AUDIO_FORMAT_TAG_PCM)
 };
 END_PACK();
 
@@ -172,12 +172,12 @@ BEGIN_PACK(1);
 // controls/behaviour that don't fit in the standard descriptor.
 struct UAC1IsoEndpointDescriptor
 {
-	uint8 bLength;                   // Total size of this descriptor: 7 bytes
+	uint8_t bLength;                   // Total size of this descriptor: 7 bytes
 	USBDescTypes bDescriptorType;     // CDCEndpointFunc (0x25), the class-specific *endpoint* descriptor type
-	uint8 bDescriptorSubtype;        // AS_DESC_EP_GENERAL
-	uint8 bmAttributes;               // Extra endpoint controls bitmap (see UAC1_EP_ATTR_* above)
-	uint8 bLockDelayUnits;            // Units used to express wLockDelay: 0=undefined, 1=ms, 2=decoded PCM samples
-	uint16 wLockDelay;                  // Time it takes this endpoint to lock to a new clock, in bLockDelayUnits
+	uint8_t bDescriptorSubtype;        // AS_DESC_EP_GENERAL
+	uint8_t bmAttributes;               // Extra endpoint controls bitmap (see UAC1_EP_ATTR_* above)
+	uint8_t bLockDelayUnits;            // Units used to express wLockDelay: 0=undefined, 1=ms, 2=decoded PCM samples
+	uint16_t wLockDelay;                  // Time it takes this endpoint to lock to a new clock, in bLockDelayUnits
 };
 END_PACK();
 

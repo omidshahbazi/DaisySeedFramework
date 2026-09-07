@@ -12,7 +12,7 @@ public:
 	typedef T ItemType;
 
 public:
-	RingBuffer(T* Buffer = nullptr, uint16 Capacity = 0)
+	RingBuffer(T* Buffer = nullptr, uint16_t Capacity = 0)
 		: m_Buffer(Buffer),
 		m_Capacity(Capacity),
 		m_Head(0),
@@ -43,9 +43,9 @@ public:
 		return true;
 	}
 
-	uint16 Push(const T* Values, uint16 Count)
+	uint16_t Push(const T* Values, uint16_t Count)
 	{
-		uint16 written = 0;
+		uint16_t written = 0;
 		while (written < Count)
 		{
 			if (m_Count >= m_Capacity)
@@ -83,9 +83,9 @@ public:
 		return true;
 	}
 
-	uint16 Pop(T* OutBuffer, uint16 Count)
+	uint16_t Pop(T* OutBuffer, uint16_t Count)
 	{
-		uint16 readCount = 0;
+		uint16_t readCount = 0;
 		while (readCount < Count && m_Count > 0)
 		{
 			if (OutBuffer != nullptr)
@@ -115,17 +115,17 @@ public:
 		return m_Buffer;
 	}
 
-	uint16 GetSize(void) const
+	uint16_t GetSize(void) const
 	{
 		return m_Count;
 	}
 
-	uint16 GetCapacity(void) const
+	uint16_t GetCapacity(void) const
 	{
 		return m_Capacity;
 	}
 
-	uint16 GetFreeSpace(void) const
+	uint16_t GetFreeSpace(void) const
 	{
 		return m_Capacity - m_Count;
 	}
@@ -142,13 +142,13 @@ public:
 
 private:
 	T* m_Buffer;
-	uint16 m_Capacity;
-	uint16 m_Head;
-	uint16 m_Tail;
-	uint16 m_Count;
+	uint16_t m_Capacity;
+	uint16_t m_Head;
+	uint16_t m_Tail;
+	uint16_t m_Count;
 };
 
-template <typename T, uint16 MaxSize, bool AllowOverwrite = true>
+template <typename T, uint16_t MaxSize, bool AllowOverwrite = true>
 struct StaticRingBuffer : public RingBuffer<T, AllowOverwrite>
 {
 public:

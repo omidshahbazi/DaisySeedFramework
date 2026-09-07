@@ -13,7 +13,7 @@ struct SDL_Texture;
 
 class SDL_HAL : public I_LCD_HAL
 {
-	static constexpr uint8 MAX_FRAME_RATE = 60;
+	static constexpr uint8_t MAX_FRAME_RATE = 60;
 
 public:
 	typedef FixedFunction<void(void)> RenderEventHandler;
@@ -30,9 +30,9 @@ public:
 
 	void Update(void) override;
 
-	void SetTargetFrameRate(uint8 Value);
+	void SetTargetFrameRate(uint8_t Value);
 
-	uint8 GetTargetFrameRate(void) const
+	uint8_t GetTargetFrameRate(void) const
 	{
 		return m_TargetFrameRate;
 	}
@@ -46,10 +46,10 @@ public:
 		return m_Dimension;
 	}
 
-	bool GetKeyState(uint16 Key) const;
+	bool GetKeyState(uint16_t Key) const;
 
 private:
-	void PaintPixel(int16 X, int16 Y, uint16 R5G6B5, uint8 Alpha);
+	void PaintPixel(int16_t X, int16_t Y, uint16_t R5G6B5, uint8_t Alpha);
 
 private:
 	IHAL* m_HAL;
@@ -59,13 +59,13 @@ private:
 
 	RenderEventHandler m_RenderListener;
 
-	uint16* m_FrameBuffer;
+	uint16_t* m_FrameBuffer;
 
-	uint8 m_TargetFrameRate;
+	uint8_t m_TargetFrameRate;
 	Point m_Dimension;
 
-	uint16 m_UpdateStep;
-	uint32 m_NextUpdateTime;
+	uint16_t m_UpdateStep;
+	uint32_t m_NextUpdateTime;
 };
 
 #endif

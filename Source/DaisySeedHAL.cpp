@@ -4,11 +4,11 @@
 #include <DigitalSignalProcessing/Math.h>
 #include <DigitalSignalProcessing/Debug.h>
 
-DaisySeedHAL::DaisySeedHAL(void* SDRAMAddress, uint32 SDRAMSize, CrashHandler CrashHandler)
+DaisySeedHAL::DaisySeedHAL(void* SDRAMAddress, uint32_t SDRAMSize, CrashHandler CrashHandler)
 	: m_CrashHandler(CrashHandler),
 	m_FullSpeedUSB(Peripherals::FullSpeed),
 	m_HighSpeedUSB(Peripherals::HighSpeed),
-	m_SDRAMAddress(reinterpret_cast<uint8*>(SDRAMAddress)),
+	m_SDRAMAddress(reinterpret_cast<uint8_t*>(SDRAMAddress)),
 	m_SDRAMSize(SDRAMSize),
 	m_LastFreeSDRAMIndex(0),
 	m_AnalogPins{},
@@ -25,7 +25,7 @@ DaisySeedHAL::DaisySeedHAL(void* SDRAMAddress, uint32 SDRAMSize, CrashHandler Cr
 	SetPWMResolution(16);
 }
 
-void DaisySeedHAL::Setup(uint8 FrameLength, uint32 SampleRate, bool Boost)
+void DaisySeedHAL::Setup(uint8_t FrameLength, uint32_t SampleRate, bool Boost)
 {
 	ASSERT(FrameLength != 0, "Invalid FrameLength %i", FrameLength);
 
@@ -69,18 +69,18 @@ void DaisySeedHAL::StartAudio(AudioPassthrough Callback)
 	m_Hardware.StartAudio((daisy::AudioHandle::AudioCallback)Callback);
 }
 
-void* DaisySeedHAL::Allocate(uint32 Size, bool OnSDRAM)
+void* DaisySeedHAL::Allocate(uint32_t Size, bool OnSDRAM)
 {
 	if (OnSDRAM)
 	{
-		const uint8 ALIGNMENT = 16;
+		const uint8_t ALIGNMENT = 16;
 
 		ASSERT(m_SDRAMAddress != nullptr, "SDRAM is not initialized");
 		ASSERT(m_LastFreeSDRAMIndex + Size <= m_SDRAMSize, "Running out of SDRAM");
 
-		uint8* ptr = m_SDRAMAddress + m_LastFreeSDRAMIndex;
+		uint8_t* ptr = m_SDRAMAddress + m_LastFreeSDRAMIndex;
 
-		uint8* alignedPtr = reinterpret_cast<uint8*>(((reinterpret_cast<uint32>(ptr) + (ALIGNMENT - 1)) / ALIGNMENT) * ALIGNMENT);
+		uint8_t* alignedPtr = reinterpret_cast<uint8_t*>(((reinterpret_cast<uint32_t>(ptr) + (ALIGNMENT - 1)) / ALIGNMENT) * ALIGNMENT);
 
 		m_LastFreeSDRAMIndex += (alignedPtr - ptr) + Size;
 
@@ -98,22 +98,22 @@ void DaisySeedHAL::Deallocate(void* Memory)
 	free(Memory);
 }
 
-bool DaisySeedHAL::IsAnAnalogPin(uint8 Pin) const
+bool DaisySeedHAL::IsAnAnalogPin(uint8_t Pin) const
 {
 	switch (Pin)
 	{
-	case (uint8)GPIOPins::Pin15:
-	case (uint8)GPIOPins::Pin16:
-	case (uint8)GPIOPins::Pin17:
-	case (uint8)GPIOPins::Pin18:
-	case (uint8)GPIOPins::Pin19:
-	case (uint8)GPIOPins::Pin20:
-	case (uint8)GPIOPins::Pin21:
-	case (uint8)GPIOPins::Pin22:
-	case (uint8)GPIOPins::Pin23:
-	case (uint8)GPIOPins::Pin24:
-	case (uint8)GPIOPins::Pin25:
-	case (uint8)GPIOPins::Pin28:
+	case (uint8_t)GPIOPins::Pin15:
+	case (uint8_t)GPIOPins::Pin16:
+	case (uint8_t)GPIOPins::Pin17:
+	case (uint8_t)GPIOPins::Pin18:
+	case (uint8_t)GPIOPins::Pin19:
+	case (uint8_t)GPIOPins::Pin20:
+	case (uint8_t)GPIOPins::Pin21:
+	case (uint8_t)GPIOPins::Pin22:
+	case (uint8_t)GPIOPins::Pin23:
+	case (uint8_t)GPIOPins::Pin24:
+	case (uint8_t)GPIOPins::Pin25:
+	case (uint8_t)GPIOPins::Pin28:
 		return true;
 
 	default:
@@ -121,7 +121,7 @@ bool DaisySeedHAL::IsAnAnalogPin(uint8 Pin) const
 	}
 }
 
-bool DaisySeedHAL::IsInOutputMode(uint8 Pin) const
+bool DaisySeedHAL::IsInOutputMode(uint8_t Pin) const
 {
 	const PinState<daisy::AdcChannelConfig>* analogPinState = FindAnalogPin(Pin);
 	if (analogPinState != nullptr)
@@ -132,7 +132,7 @@ bool DaisySeedHAL::IsInOutputMode(uint8 Pin) const
 	return (digitalPinState.Mode == PinModes::DigitalOutput || digitalPinState.Mode == PinModes::PWM);
 }
 
-void DaisySeedHAL::SetPWMResolution(uint8 Value)
+void DaisySeedHAL::SetPWMResolution(uint8_t Value)
 {
 	ASSERT(8 <= Value && Value <= 16, "Invalid Value %f", Value);
 
@@ -140,7 +140,7 @@ void DaisySeedHAL::SetPWMResolution(uint8 Value)
 	m_PWMMaxDutyCycle = (1 << m_PWMResolution) - 1;
 }
 
-void DaisySeedHAL::SetPinMode(uint8 Pin, PinModes Mode)
+void DaisySeedHAL::SetPinMode(uint8_t Pin, PinModes Mode)
 {
 	ASSERT((Mode != PinModes::AnalogInput && Mode != PinModes::DigitalInput) || IsAnInputPin(Pin), "Pin %i is not an input pin", Pin);
 	ASSERT(Mode != PinModes::DigitalOutput || IsAnOutputPin(Pin), "Pin %i is not an output pin", Pin);
@@ -180,14 +180,14 @@ void DaisySeedHAL::SetPinMode(uint8 Pin, PinModes Mode)
 	}
 }
 
-float DaisySeedHAL::AnalogRead(uint8 Pin) const
+float DaisySeedHAL::AnalogRead(uint8_t Pin) const
 {
 	ASSERT(IsAnAnalogPin(Pin), "Pin %i is not an analog pin", Pin);
 
 	return m_Hardware.adc.GetFloat(GetAnalogPinIndex(Pin));
 }
 
-bool DaisySeedHAL::DigitalRead(uint8 Pin) const
+bool DaisySeedHAL::DigitalRead(uint8_t Pin) const
 {
 	ASSERT(IsADigitalPin(Pin), "Pin %i is not an digital pin", Pin);
 	ASSERT(IsInInputMode(Pin), "Pin %i is not in input mode", Pin);
@@ -196,7 +196,7 @@ bool DaisySeedHAL::DigitalRead(uint8 Pin) const
 	return !state.Object.Read();
 }
 
-void DaisySeedHAL::DigitalWrite(uint8 Pin, bool Value)
+void DaisySeedHAL::DigitalWrite(uint8_t Pin, bool Value)
 {
 	ASSERT(IsADigitalPin(Pin), "Pin %i is not an digital pin", Pin);
 	ASSERT(IsInOutputMode(Pin), "Pin %i is not in output mode", Pin);
@@ -205,7 +205,7 @@ void DaisySeedHAL::DigitalWrite(uint8 Pin, bool Value)
 	state.Object.Write(Value);
 }
 
-void DaisySeedHAL::PWMWrite(uint8 Pin, float Value)
+void DaisySeedHAL::PWMWrite(uint8_t Pin, float Value)
 {
 	ASSERT(0 <= Value && Value <= 1, "Invalid Value %f", Value);
 	ASSERT(IsInOutputMode(Pin), "Pin %i is not in output mode", Pin);
@@ -213,17 +213,17 @@ void DaisySeedHAL::PWMWrite(uint8 Pin, float Value)
 	FindOrGetPWMPin(Pin)->TargetValue = Math::Cube(Value);
 }
 
-uint32 DaisySeedHAL::GetTimeFrequency(void) const
+uint32_t DaisySeedHAL::GetTimeFrequency(void) const
 {
 	return daisy::System::GetTickFreq();
 }
 
-uint32 DaisySeedHAL::GetTimeSinceStartupTicks(void) const
+uint32_t DaisySeedHAL::GetTimeSinceStartupTicks(void) const
 {
 	return daisy::System::GetTick();
 }
 
-uint32 DaisySeedHAL::GetTimeSinceStartupMs(void) const
+uint32_t DaisySeedHAL::GetTimeSinceStartupMs(void) const
 {
 	return daisy::System::GetNow();
 }
@@ -264,7 +264,7 @@ void DaisySeedHAL::Reset(bool InfiniteTime) const
 	daisy::System::ResetToBootloader(InfiniteTime ? daisy::System::BootloaderMode::DAISY_INFINITE_TIMEOUT : daisy::System::BootloaderMode::DAISY_SKIP_TIMEOUT);
 }
 
-void DaisySeedHAL::Delay(uint16 Ms) const
+void DaisySeedHAL::Delay(uint16_t Ms) const
 {
 	daisy::System::Delay(Ms);
 }
@@ -279,7 +279,7 @@ daisy::QSPIHandle& DaisySeedHAL::GetQSPI(void)
 	return m_Hardware.qspi;
 }
 
-daisy::Pin DaisySeedHAL::GetPin(uint8 Pin)
+daisy::Pin DaisySeedHAL::GetPin(uint8_t Pin)
 {
 	switch (Pin)
 	{
@@ -355,8 +355,8 @@ daisy::Pin DaisySeedHAL::GetPin(uint8 Pin)
 
 void DaisySeedHAL::InitializeADC(void)
 {
-	daisy::AdcChannelConfig adcConfigs[(uint8)AnalogPins::COUNT];
-	uint8 index = 0;
+	daisy::AdcChannelConfig adcConfigs[(uint8_t)AnalogPins::COUNT];
+	uint8_t index = 0;
 	for (const auto& state : m_AnalogPins)
 	{
 		if (!state.Used)
@@ -376,10 +376,10 @@ void DaisySeedHAL::Update(void)
 {
 	//m_USBInterface.Update();
 
-	const uint16 SAMPLE_RATE = 1000;
+	const uint16_t SAMPLE_RATE = 1000;
 	const float STEP = 120.0F / SAMPLE_RATE;
 
-	for (uint8 i = 0; i < m_LastFreePWMPinIndex; ++i)
+	for (uint8_t i = 0; i < m_LastFreePWMPinIndex; ++i)
 	{
 		PWMPinState& pwmPin = m_PWMPins[i];
 
@@ -391,9 +391,9 @@ void DaisySeedHAL::Update(void)
 	}
 }
 
-uint8 DaisySeedHAL::GetAnalogPinIndex(uint8 Pin) const
+uint8_t DaisySeedHAL::GetAnalogPinIndex(uint8_t Pin) const
 {
-	uint8 index = 0;
+	uint8_t index = 0;
 	for (auto& state : m_AnalogPins)
 	{
 		if (state.Pin != Pin)
@@ -408,7 +408,7 @@ uint8 DaisySeedHAL::GetAnalogPinIndex(uint8 Pin) const
 	BREAK("Couldn't find the state for pin %i", Pin);
 }
 
-DaisySeedHAL::PinState<daisy::AdcChannelConfig>* DaisySeedHAL::FindAnalogPin(uint8 Pin)
+DaisySeedHAL::PinState<daisy::AdcChannelConfig>* DaisySeedHAL::FindAnalogPin(uint8_t Pin)
 {
 	for (auto& state : m_AnalogPins)
 	{
@@ -421,7 +421,7 @@ DaisySeedHAL::PinState<daisy::AdcChannelConfig>* DaisySeedHAL::FindAnalogPin(uin
 	return nullptr;
 }
 
-const DaisySeedHAL::PinState<daisy::AdcChannelConfig>* DaisySeedHAL::FindAnalogPin(uint8 Pin) const
+const DaisySeedHAL::PinState<daisy::AdcChannelConfig>* DaisySeedHAL::FindAnalogPin(uint8_t Pin) const
 {
 	for (auto& state : m_AnalogPins)
 	{
@@ -434,35 +434,35 @@ const DaisySeedHAL::PinState<daisy::AdcChannelConfig>* DaisySeedHAL::FindAnalogP
 	return nullptr;
 }
 
-DaisySeedHAL::PinState<daisy::AdcChannelConfig>* DaisySeedHAL::FindOrGetNewAnalogPin(uint8 Pin)
+DaisySeedHAL::PinState<daisy::AdcChannelConfig>* DaisySeedHAL::FindOrGetNewAnalogPin(uint8_t Pin)
 {
 	PinState<daisy::AdcChannelConfig>* state = FindAnalogPin(Pin);
 	if (state != nullptr)
 		return state;
 
-	ASSERT(m_LastFreeAnalogPinIndex < (uint8)AnalogPins::COUNT, "Out of free Analog pins");
+	ASSERT(m_LastFreeAnalogPinIndex < (uint8_t)AnalogPins::COUNT, "Out of free Analog pins");
 
 	return &m_AnalogPins[m_LastFreeAnalogPinIndex++];
 }
 
-DaisySeedHAL::PinState<daisy::GPIO>& DaisySeedHAL::GetDigitalPinState(uint8 Pin)
+DaisySeedHAL::PinState<daisy::GPIO>& DaisySeedHAL::GetDigitalPinState(uint8_t Pin)
 {
 	return m_DigitalPins[GetDigitalPinIndex(Pin)];
 }
 
-const DaisySeedHAL::PinState<daisy::GPIO>& DaisySeedHAL::GetDigitalPinState(uint8 Pin) const
+const DaisySeedHAL::PinState<daisy::GPIO>& DaisySeedHAL::GetDigitalPinState(uint8_t Pin) const
 {
 	return m_DigitalPins[GetDigitalPinIndex(Pin)];
 }
 
-uint8 DaisySeedHAL::GetDigitalPinIndex(uint8 Pin) const
+uint8_t DaisySeedHAL::GetDigitalPinIndex(uint8_t Pin) const
 {
 	ASSERT(IsADigitalPin(Pin), "Pin %i is not an digital pin", Pin);
 
-	return (uint8)Pin - (uint8)GPIOPins::Pin0;
+	return (uint8_t)Pin - (uint8_t)GPIOPins::Pin0;
 }
 
-DaisySeedHAL::PWMPinState* DaisySeedHAL::FindOrGetPWMPin(uint8 Pin)
+DaisySeedHAL::PWMPinState* DaisySeedHAL::FindOrGetPWMPin(uint8_t Pin)
 {
 	for (auto& state : m_PWMPins)
 	{
@@ -472,7 +472,7 @@ DaisySeedHAL::PWMPinState* DaisySeedHAL::FindOrGetPWMPin(uint8 Pin)
 		return &state;
 	}
 
-	ASSERT(m_LastFreePWMPinIndex < (uint8)GPIOPins::COUNT, "Out of free PWM pin states");
+	ASSERT(m_LastFreePWMPinIndex < (uint8_t)GPIOPins::COUNT, "Out of free PWM pin states");
 
 	return &m_PWMPins[m_LastFreePWMPinIndex++];
 }
