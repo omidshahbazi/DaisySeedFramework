@@ -262,7 +262,7 @@ void DaisyUSBDevice::Start(const USBDeviceProfile& Profile)
 		DeviceInstanceInfo& dii = m_Devices[m_DeviceCount++];
 		dii.Class = node.Class;
 
-		DaisyUSBInterfaceCommon::Configs configs;
+		DaisyUSBInterfaceCommon::Configs configs = {};
 		configs.InterfaceIndexStart = interfaceIndex;
 
 		switch (dii.Class)
@@ -345,11 +345,16 @@ void DaisyUSBDevice::Start(const USBDeviceProfile& Profile)
 
 	CHECK_CALL(HAL_PCD_Start(&m_DeviceHandle));
 
-	HAL_NVIC_SetPriority(OTG_HS_IRQn, 0, 0);
-	HAL_NVIC_EnableIRQ(OTG_HS_IRQn);
-
-	HAL_NVIC_SetPriority(OTG_FS_IRQn, 0, 0);
-	HAL_NVIC_EnableIRQ(OTG_FS_IRQn);
+	if (m_Peripheral == Peripherals::HighSpeed)
+	{
+		HAL_NVIC_SetPriority(OTG_HS_IRQn, 0, 0);
+		HAL_NVIC_EnableIRQ(OTG_HS_IRQn);
+	}
+	else
+	{
+		HAL_NVIC_SetPriority(OTG_FS_IRQn, 0, 0);
+		HAL_NVIC_EnableIRQ(OTG_FS_IRQn);
+	}
 
 	m_IsRunning = true;
 }
