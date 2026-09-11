@@ -14,7 +14,9 @@
 #define ms *0.001
 
 WindowsUSBCDCInterface::WindowsUSBCDCInterface(void)
-	: m_Pipe(INVALID_HANDLE_VALUE)
+	: m_Pipe(INVALID_HANDLE_VALUE),
+	m_IsClientConnected(false),
+	m_TransmitState(TransmitStates::Idle)
 {}
 
 void WindowsUSBCDCInterface::Start(uint8_t Index, const CDCClassConfig& Config)
@@ -40,6 +42,8 @@ void WindowsUSBCDCInterface::Stop(void)
 	m_Pipe = INVALID_HANDLE_VALUE;
 
 	m_IsClientConnected = false;
+
+	m_ConnectionStateChangedCallback();
 }
 
 void WindowsUSBCDCInterface::Update(void)
@@ -71,18 +75,22 @@ void WindowsUSBCDCInterface::Transmit(const uint8_t* Buffer, uint16_t Length)
 	if (!m_IsClientConnected)
 		return;
 
+	m_TransmitState = TransmitStates::Busy;
+
 	uint16_t index = 0;
 	while (index < Length)
 	{
-		const uint16_t CountPerStep = 64;
+		const uint8_t CountPerStep = (uint8_t)PacketSizes::PacketSizes64;
 
-		uint16_t countPerStep = (uint16_t)Math::Min(CountPerStep, Length - index);
+		uint8_t countPerStep = (uint8_t)Math::Min(CountPerStep, Length - index);
 
 		DWORD bytesWritten;
 		WriteFile(m_Pipe, Buffer + index, countPerStep, &bytesWritten, NULL);
 
 		index += CountPerStep;
 	}
+
+	m_TransmitState = TransmitStates::Idle;
 }
 
 void WindowsUSBCDCInterface::Disconnect(void)
@@ -93,6 +101,8 @@ void WindowsUSBCDCInterface::Disconnect(void)
 	DisconnectNamedPipe(m_Pipe);
 
 	m_IsClientConnected = false;
+
+	m_ConnectionStateChangedCallback();
 }
 
 void WindowsUSBCDCInterface::ListenForClient(void)
@@ -104,7 +114,11 @@ void WindowsUSBCDCInterface::ListenForClient(void)
 			while (m_Pipe != INVALID_HANDLE_VALUE)
 			{
 				if (ConnectNamedPipe(m_Pipe, nullptr))
+				{
 					m_IsClientConnected = true;
+
+					m_ConnectionStateChangedCallback();
+				}
 
 				while (m_IsClientConnected)
 					std::this_thread::sleep_for(std::chrono::milliseconds(1));

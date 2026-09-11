@@ -102,7 +102,7 @@ protected:
 	}
 	void DeviceReceiveAck(void);
 
-	void DeviceTransmit(const uint8_t* Buffer, uint16_t Length, uint8_t Endpoint = USB_EP0_OUT, bool ClearDCache = false);
+	void DeviceTransmit(const uint8_t* Buffer, uint16_t Length, uint8_t Endpoint = USB_EP0_IN, bool ClearDCache = false);
 	template<typename T>
 	void DeviceTransmit(T* Buffer)
 	{

@@ -21,6 +21,21 @@ public:
 		return m_IsClientConnected;
 	}
 
+	void SetConnectionStateChangedCallback(StateChangedCallback Callback) override
+	{
+		m_ConnectionStateChangedCallback = Callback;
+	}
+
+	TransmitStates GetTransmitState(void) const
+	{
+		return m_TransmitState;
+	}
+
+	void SetTransmitStateChangedCallback(StateChangedCallback Callback) override
+	{
+		m_TransmitStateChangedCallback = Callback;
+	}
+
 	void SetReceiveCallback(ReceiveCallback Callback) override
 	{
 		m_Callback = Callback;
@@ -38,6 +53,9 @@ private:
 	std::atomic_bool m_IsRunning;
 	std::thread m_ListenThread;
 	std::atomic_bool m_IsClientConnected;
+	StateChangedCallback m_ConnectionStateChangedCallback;
+	TransmitStates m_TransmitState;
+	StateChangedCallback m_TransmitStateChangedCallback;
 	ReceiveCallback m_Callback;
 };
 

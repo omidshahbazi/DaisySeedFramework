@@ -13,70 +13,90 @@ private:
 
 protected:
 	ChunkDataAssembler(void)
-		: m_ExpectedBytesSize(0)
+		: m_ExpectedDataSize(0)
 	{}
 
-	void Transmit(const uint8_t* Buffer, uint16_t Length)
+	void Reset(void)
 	{
-		HandleRawTransmit(reinterpret_cast<const uint8_t*>(&Length), sizeof(Length));
-		HandleRawTransmit(Buffer, Length);
+		ClearTransmitBuffer();
+		ResetAssembler();
 	}
 
-	virtual void HandlePacket(const uint8_t* Buffer, uint16_t Length) = 0;
-
-	virtual void HandleRawTransmit(const uint8_t* Buffer, uint16_t Length) = 0;
-
-	void HandleRawPacket(const uint8_t* Buffer, uint8_t Length)
+	void ClearTransmitBuffer(void)
 	{
-		m_Buffer.PushBack(Buffer, Length);
+		m_TransmitBuffer.Clear();
+	}
 
-		const uint8_t HeaderSize = sizeof(m_ExpectedBytesSize);
+	template<typename U>
+	void PushToTransmitBuffer(const U& Data)
+	{
+		m_TransmitBuffer.PushBack(reinterpret_cast<const uint8_t*>(&Data), sizeof(U));
+	}
 
-		while (m_Buffer.GetSize() >= HeaderSize)
+	void PushToTransmitBuffer(const uint8_t* Buffer, uint16_t Length)
+	{
+		ASSERT(Buffer != nullptr, "Buffer cannot be null");
+		ASSERT(Length != 0, "Buffer cannot be null");
+
+		m_TransmitBuffer.PushBack(Buffer, Length);
+	}
+
+	void Transmit(void)
+	{
+		uint16_t len = m_TransmitBuffer.GetSize();
+
+		m_TransmitBuffer.Insert(0, reinterpret_cast<const uint8_t*>(&len), sizeof(uint16_t));
+
+		WriteOnPort(m_TransmitBuffer.GetData(), m_TransmitBuffer.GetSize());
+	}
+
+	virtual void WriteOnPort(const uint8_t* Buffer, uint16_t Length) = 0;
+
+	virtual void OnFalseDataReceived(void)
+	{}
+
+	void StoreReceivedPacket(const uint8_t* Buffer, uint8_t Length)
+	{
+		m_ReceiveBuffer.PushBack(Buffer, Length);
+	}
+
+	void HandleReceivedPacket(void)
+	{
+		const uint8_t HeaderSize = sizeof(m_ExpectedDataSize);
+
+		while (m_ReceiveBuffer.GetSize() >= HeaderSize)
 		{
-			const uint8_t* buffer = m_Buffer.GetData();
+			const uint8_t* buffer = m_ReceiveBuffer.GetData();
 
-			ReadAndAdvanceBuffer(buffer, m_ExpectedBytesSize);
+			ReadAndAdvanceBuffer(buffer, m_ExpectedDataSize);
 
-			const uint16_t ExpectedBufferSize = HeaderSize + m_ExpectedBytesSize;
+			const uint16_t ExpectedReceiveSize = HeaderSize + m_ExpectedDataSize;
 
-			if (m_Buffer.GetSize() > ExpectedBufferSize)
+			if (m_ReceiveBuffer.GetSize() > ExpectedReceiveSize)
 			{
 				ResetAssembler();
+
+				OnFalseDataReceived();
+
 				break;
 			}
 
-			if (m_Buffer.GetSize() < ExpectedBufferSize)
+			if (m_ReceiveBuffer.GetSize() < ExpectedReceiveSize)
 				break;
 
-			HandlePacket(buffer, m_ExpectedBytesSize);
+			OnReceivedPacket(buffer, m_ExpectedDataSize);
 
-			m_Buffer.RemoveRange(0, ExpectedBufferSize);
+			m_ReceiveBuffer.RemoveRange(0, ExpectedReceiveSize);
 		}
 	}
 
-	//void TransmitFragmented(const uint8_t* Buffer, uint16_t Length, uint16_t Delay) const
-	//{
-	//	uint16_t index = 0;
-	//	while (index < Length)
-	//	{
-	//		const uint16_t CountPerStep = 64;
-
-	//		uint16_t countPerStep = (uint16_t)Math::Min(CountPerStep, Length - index);
-
-	//		HandleRawTransmit(const_cast<uint8_t*>(Buffer + index), countPerStep);
-
-	//		index += CountPerStep;
-
-	//		//delay?
-	//	}
-	//}
+	virtual void OnReceivedPacket(const uint8_t* Buffer, uint16_t Length) = 0;
 
 private:
 	void ResetAssembler(void)
 	{
-		m_Buffer.Clear();
-		m_ExpectedBytesSize = 0;
+		m_ReceiveBuffer.Clear();
+		m_ExpectedDataSize = 0;
 	}
 
 protected:
@@ -90,8 +110,9 @@ protected:
 	}
 
 private:
-	BufferType m_Buffer;
-	uint16_t m_ExpectedBytesSize;
+	BufferType m_ReceiveBuffer;
+	BufferType m_TransmitBuffer;
+	uint16_t m_ExpectedDataSize;
 };
 
 #endif

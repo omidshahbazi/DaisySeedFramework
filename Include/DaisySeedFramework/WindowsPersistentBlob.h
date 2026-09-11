@@ -19,7 +19,12 @@ public:
 	{
 		ASSERT(!m_IsInitialized, "WindowsPersistentBlob is already initialized");
 
-		m_FilePath = std::filesystem::current_path() / "Persistent" / (std::to_string(PersistentBlobBase::GetAndIncrementOffset(sizeof(T))) + ".bin");
+		m_FilePath = std::filesystem::current_path() / "Persistent";
+
+		if (!std::filesystem::exists(m_FilePath))
+			std::filesystem::create_directory(m_FilePath);
+
+		m_FilePath /= (std::to_string(PersistentBlobBase::GetAndIncrementOffset(sizeof(T))) + ".bin");
 		m_IsInitialized = true;
 
 		std::ifstream file(m_FilePath, std::ios::binary | std::ios::ate);

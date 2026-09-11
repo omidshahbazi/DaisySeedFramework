@@ -383,6 +383,7 @@ void DaisyUSBDevice::OnSetupStage(void)
 {
 	const USBDeviceSetupPacket* setup = reinterpret_cast<const USBDeviceSetupPacket*>(m_DeviceHandle.Setup);
 
+	uint8_t interfaceIndex = (uint8_t)(setup->wIndex & 0xFF);
 	uint8_t reqType = setup->bmRequestType & USB_REQ_TYPE_MASK;
 
 	if (reqType == USB_REQ_TYPE_STANDARD)
@@ -415,7 +416,6 @@ void DaisyUSBDevice::OnSetupStage(void)
 
 		case USB_REQ_SET_INTERFACE:
 		{
-			uint8_t interfaceIndex = (uint8_t)(setup->wIndex & 0xFF);
 			uint8_t altSetting = (uint8_t)(setup->wValue & 0xFF);
 
 			DeviceInstanceInfo& dii = GetDeviceInstanceByInterfaceIndex(interfaceIndex);
@@ -430,8 +430,6 @@ void DaisyUSBDevice::OnSetupStage(void)
 
 		case USB_REQ_GET_INTERFACE:
 		{
-			uint8_t interfaceIndex = (uint8_t)(setup->wIndex & 0xFF);
-
 			DeviceInstanceInfo& dii = GetDeviceInstanceByInterfaceIndex(interfaceIndex);
 
 			uint8_t altSetting = dii.Interface->GetCurrentAltSetting(interfaceIndex);
@@ -451,13 +449,13 @@ void DaisyUSBDevice::OnSetupStage(void)
 
 		if (recipient == USB_REQ_RECIPIENT_ENDPOINT)
 		{
-			DeviceInstanceInfo& dii = GetDeviceInstanceByEndpoint(TO_ENDPOINT_NUMBER((uint8_t)(setup->wIndex & 0xFF)));
+			DeviceInstanceInfo& dii = GetDeviceInstanceByEndpoint(TO_ENDPOINT_NUMBER(interfaceIndex));
 			if (!dii.Interface->OnSetupStage(setup))
 				SetStall();
 		}
 		else
 		{
-			DeviceInstanceInfo& dii = GetDeviceInstanceByInterfaceIndex((uint8_t)(setup->wIndex & 0xFF));
+			DeviceInstanceInfo& dii = GetDeviceInstanceByInterfaceIndex(interfaceIndex);
 			if (!dii.Interface->OnSetupStage(setup))
 				SetStall();
 		}
@@ -466,38 +464,48 @@ void DaisyUSBDevice::OnSetupStage(void)
 
 void DaisyUSBDevice::OnDataOutStage(uint8_t EPNum)
 {
-	DeviceInstanceInfo& dii = GetDeviceInstanceByEndpoint(EPNum);
-
 	if (EPNum == TO_ENDPOINT_NUMBER(USB_EP0_OUT))
 	{
-		dii.Interface->OnDeviceDataOutStage();
+		//Here the EPNum would be 0 for sure and all of the AMC Command Endpoints are 0 as well
+		for (uint8_t i = 0; i < m_DeviceCount; ++i)
+		{
+			if (m_Devices[i].Class != USBDeviceClasses::AMC)
+				continue;
+
+			m_Devices[i].Interface->OnDeviceDataOutStage();
+		}
 
 		return;
 	}
 
+	DeviceInstanceInfo& dii = GetDeviceInstanceByEndpoint(TO_ENDPOINT_NUMBER(EPNum));
 	dii.Interface->OnDataOutStage();
 }
 
 void DaisyUSBDevice::OnDataInStage(uint8_t EPNum)
 {
-	DeviceInstanceInfo& dii = GetDeviceInstanceByEndpoint(EPNum);
-
 	if (EPNum == TO_ENDPOINT_NUMBER(USB_EP0_IN))
 	{
-		if (m_EP0TransmitHandler.HasMore())
-		{
-			DeviceTransmit(m_EP0TransmitHandler.GetBuffer(), m_EP0TransmitHandler.GetLength());
+		m_EP0TransmitHandler.MoveForward();
 
-			m_EP0TransmitHandler.MoveForward();
-		}
+		if (m_EP0TransmitHandler.HasMore())
+			DeviceTransmit(m_EP0TransmitHandler.GetBuffer(), m_EP0TransmitHandler.GetLength());
 		else
 			DeviceReceiveAck();
 
-		dii.Interface->OnDeviceDataInStage();
+		//Here the EPNum would be 0 for sure and all of the AMC Command Endpoints are 0 as well
+		for (uint8_t i = 0; i < m_DeviceCount; ++i)
+		{
+			if (m_Devices[i].Class != USBDeviceClasses::AMC)
+				continue;
+
+			m_Devices[i].Interface->OnDeviceDataInStage();
+		}
 
 		return;
 	}
 
+	DeviceInstanceInfo& dii = GetDeviceInstanceByEndpoint(EPNum);
 	dii.Interface->OnDataInStage();
 }
 
@@ -590,8 +598,6 @@ void DaisyUSBDevice::HandleGetDescriptor(void)
 		m_EP0TransmitHandler.Set(&ep0Buffer, actualLen);
 
 		DeviceTransmit(m_EP0TransmitHandler.GetBuffer(), m_EP0TransmitHandler.GetLength());
-
-		m_EP0TransmitHandler.MoveForward();
 	}
 	else
 		SetStall();

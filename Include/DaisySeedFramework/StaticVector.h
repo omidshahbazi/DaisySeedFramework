@@ -43,6 +43,20 @@ public:
 		++m_Count;
 	}
 
+	void Insert(uint16_t Index, const T* const Value, uint16_t Count)
+	{
+		ASSERT(m_Count + Count <= m_Capacity, "Out of Size");
+		ASSERT(Index <= m_Count, "Index Out of Range");
+
+		for (int32_t i = static_cast<int32_t>(m_Count) - 1; i >= Index; --i)
+			m_Buffer[i + Count] = m_Buffer[i];
+
+		for (uint16_t i = 0; i < Count; ++i)
+			m_Buffer[Index + i] = Value[i];
+
+		m_Count += Count;
+	}
+
 	void PopBack()
 	{
 		ASSERT(0 < m_Count, "Out of Size");

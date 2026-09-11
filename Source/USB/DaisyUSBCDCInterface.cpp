@@ -12,13 +12,14 @@ DaisyUSBCDCInterface::DaisyUSBCDCInterface(DaisyUSBDevice* Device, const Configs
 
 void DaisyUSBCDCInterface::Transmit(const uint8_t* Buffer, uint16_t Length)
 {
-	ASSERT(m_IsHostConnected, "Host is not connected");
+	ASSERT(m_IsHostConnected, "Host is not connected.");
+	ASSERT(!m_TransmitHandler.HasMore(), "Transmission is busy.");
 
 	m_TransmitHandler.Set(Buffer, Length);
 
 	EndpointTransmit(m_TransmitHandler.GetBuffer(), m_TransmitHandler.GetLength());
 
-	m_TransmitHandler.MoveForward();
+	m_TransmitStateChangedCallback();
 }
 
 bool DaisyUSBCDCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
@@ -50,10 +51,15 @@ bool DaisyUSBCDCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 		bool dtr = ((m_LineState & 0x01) != 0);
 		//bool rts = ((m_LineState & 0x02) != 0);
 
+		bool prevConnectionState = m_IsHostConnected;
+
 		if (dtr)
 			m_IsHostConnected = true;
 		else
 			m_IsHostConnected = false;
+
+		if (prevConnectionState != m_IsHostConnected)
+			m_ConnectionStateChangedCallback();
 
 		DeviceTransmitAck();
 
@@ -94,11 +100,15 @@ void DaisyUSBCDCInterface::OnSetupCompleted(void)
 
 void DaisyUSBCDCInterface::OnDataInStage(void)
 {
-	if (m_TransmitHandler.HasMore())
-	{
-		EndpointTransmit(m_TransmitHandler.GetBuffer(), m_TransmitHandler.GetLength());
+	m_TransmitHandler.MoveForward();
 
-		m_TransmitHandler.MoveForward();
+	if (m_TransmitHandler.HasMore())
+		EndpointTransmit(m_TransmitHandler.GetBuffer(), m_TransmitHandler.GetLength());
+	else
+	{
+		EndpointTransmitFlush();
+
+		m_TransmitStateChangedCallback();
 	}
 }
 
@@ -107,9 +117,12 @@ void DaisyUSBCDCInterface::OnDataOutStage(void)
 	uint16_t len = EndpointReceiveCount();
 	if (len > 0)
 	{
-		m_IsHostConnected = true;
+		if (!m_IsHostConnected)
+		{
+			m_IsHostConnected = true;
 
-		EndpointReceive(m_ReceiveBuffer, len);
+			m_ConnectionStateChangedCallback();
+		}
 
 		m_ReceiveCallback(m_ReceiveBuffer, len);
 	}

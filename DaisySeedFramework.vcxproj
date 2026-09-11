@@ -98,6 +98,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>Include;DSP/Include;Libraries/portaudio/include;Libraries/SDL/include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>ON_WINDOWS;DEBUG</PreprocessorDefinitions>
+      <Optimization>Disabled</Optimization>
     </ClCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

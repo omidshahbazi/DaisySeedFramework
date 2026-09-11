@@ -23,11 +23,29 @@ public:
 		return m_IsHostConnected;
 	}
 
+	void SetConnectionStateChangedCallback(StateChangedCallback Callback) override
+	{
+		m_ConnectionStateChangedCallback = Callback;
+	}
+
+	TransmitStates GetTransmitState(void) const
+	{
+		if (m_TransmitHandler.HasMore())
+			return TransmitStates::Busy;
+
+		return TransmitStates::Idle;
+	}
+
+	void SetTransmitStateChangedCallback(StateChangedCallback Callback) override
+	{
+		m_TransmitStateChangedCallback = Callback;
+	}
+
 	bool OnSetupStage(const USBDeviceSetupPacket* Setup) override;
 	void OnSetupCompleted(void) override;
 	void OnDataInStage(void) override;
 	void OnDataOutStage(void) override;
-	
+
 	bool OnSetInterface(uint8_t InterfaceIndex, uint8_t AlternateSetting) override
 	{
 		return (AlternateSetting == 0);
@@ -49,7 +67,12 @@ private:
 
 	USBCDCLineCoding m_CDCLineCoding;
 	uint8_t m_LineState;
+
 	bool m_IsHostConnected;
+	StateChangedCallback m_ConnectionStateChangedCallback;
+
+	StateChangedCallback m_TransmitStateChangedCallback;
+
 	uint8_t m_ReceiveBuffer[(uint16_t)PacketSizes::Max];
 	BufferTransmitHandler m_TransmitHandler;
 	ReceiveCallback m_ReceiveCallback;

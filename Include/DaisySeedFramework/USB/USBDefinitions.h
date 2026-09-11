@@ -255,7 +255,7 @@ class BufferTransmitHandler
 public:
 	// ChunkSize should match the endpoint's wMaxPacketSize this handler feeds.
 	BufferTransmitHandler(uint16_t ChunkSize)
-		:m_ChunkSize(ChunkSize)
+		: m_ChunkSize(ChunkSize)
 	{}
 
 	// Clears any in-progress transfer, leaving the handler idle (HasMore() == false).
@@ -277,22 +277,28 @@ public:
 	{
 		m_BufferStart = reinterpret_cast<const uint8_t*>(Buffer);
 		m_RemainingLength = Length;
+		m_NeedsZLP = ((Length % m_ChunkSize) == 0);
 	}
 
 	// Advances past the chunk that was just sent, ready for GetBuffer()/GetLength()
 	// to return the next chunk (or to report HasMore() == false when done).
 	void MoveForward(void)
 	{
-		if (m_RemainingLength < m_ChunkSize)
+		if (m_RemainingLength == 0)
 		{
-			m_BufferStart = nullptr;
-			m_RemainingLength = 0;
+			m_NeedsZLP = false;
+			return;
 		}
-		else
+
+		if (m_RemainingLength > m_ChunkSize)
 		{
 			m_BufferStart += m_ChunkSize;
 			m_RemainingLength -= m_ChunkSize;
+			return;
 		}
+
+		m_BufferStart += m_RemainingLength;
+		m_RemainingLength = 0;
 	}
 
 	// Pointer to the start of the current (not-yet-sent) chunk.
@@ -313,13 +319,14 @@ public:
 	// True while there is still data left to send.
 	bool HasMore(void) const
 	{
-		return (m_RemainingLength != 0);
+		return (m_RemainingLength != 0 || m_NeedsZLP);
 	}
 
 private:
 	uint16_t m_ChunkSize;              // Max bytes sent per Transmit call, normally the endpoint's wMaxPacketSize
 	const uint8_t* m_BufferStart;      // Start of the not-yet-sent remainder of the buffer
 	uint16_t m_RemainingLength;        // Bytes left to send, including the current chunk
+	bool m_NeedsZLP;
 };
 
 enum class Peripherals
