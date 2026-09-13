@@ -49,6 +49,7 @@ private:
 	void ListenForClient(void);
 
 private:
+	CDCClassConfig m_Config;
 	void* m_Pipe;
 	std::atomic_bool m_IsRunning;
 	std::thread m_ListenThread;

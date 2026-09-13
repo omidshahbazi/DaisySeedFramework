@@ -108,7 +108,7 @@ void WindowsHAL::Break(void) const
 
 void WindowsHAL::Reset(bool InfiniteTime) const
 {
-	exit(0);
+	std::exit(0);
 }
 
 void WindowsHAL::Delay(uint16_t Ms) const
@@ -121,14 +121,14 @@ void WindowsHAL::Update(void)
 	m_USB.Update();
 }
 
-int WindowsHAL::AudioCallback(const void* InputBuffer, void* OutputBuffer, uint32_t FramesPerBuffer, const PaStreamCallbackTimeInfo* TimeInfo, uint32_t StatusFlags, void* UserData)
+int32_t WindowsHAL::AudioCallback(const void* InputBuffer, void* OutputBuffer, uint32_t FramesPerBuffer, const PaStreamCallbackTimeInfo* TimeInfo, uint32_t StatusFlags, void* UserData)
 {
 	float* in = (float*)InputBuffer;
 	float* out = (float*)OutputBuffer;
 
 	if (InputBuffer == nullptr)
 	{
-		for (unsigned int i = 0; i < FramesPerBuffer; i++)
+		for (uint32_t i = 0; i < FramesPerBuffer; i++)
 			*out++ = 0;
 
 		return paContinue;
@@ -137,7 +137,7 @@ int WindowsHAL::AudioCallback(const void* InputBuffer, void* OutputBuffer, uint3
 	static float inputBuffer[2][256];
 	static float outputBuffer[2][256];
 
-	for (unsigned int i = 0; i < FramesPerBuffer; i++)
+	for (uint32_t i = 0; i < FramesPerBuffer; i++)
 	{
 		inputBuffer[0][i] = *in++;
 		inputBuffer[1][i] = *in++;
@@ -155,7 +155,7 @@ int WindowsHAL::AudioCallback(const void* InputBuffer, void* OutputBuffer, uint3
 		hal->m_AudioCallback(inputBuffers, outputBuffers, FramesPerBuffer);
 	}
 
-	for (unsigned int i = 0; i < FramesPerBuffer; i++)
+	for (uint32_t i = 0; i < FramesPerBuffer; i++)
 	{
 		*out++ = outputBuffer[0][i];
 		*out++ = outputBuffer[1][i];

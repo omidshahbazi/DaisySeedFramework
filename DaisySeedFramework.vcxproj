@@ -115,6 +115,7 @@
     <ClCompile Include="Source\ILI9341_HAL.cpp" />
     <ClCompile Include="Source\LCDCanvas.cpp" />
     <ClCompile Include="Source\SDL_HAL.cpp" />
+    <ClCompile Include="Source\StringUtils.cpp" />
     <ClCompile Include="Source\USB\DaisyUSB.cpp" />
     <ClCompile Include="Source\USB\DaisyUSBAMCInterface.cpp" />
     <ClCompile Include="Source\USB\DaisyUSBCDCInterface.cpp" />
@@ -142,8 +143,10 @@
     <ClInclude Include="Include\DaisySeedFramework\SDL_HAL.h" />
     <ClInclude Include="Include\DaisySeedFramework\StaticRingBuffer.h" />
     <ClInclude Include="Include\DaisySeedFramework\StaticStack.h" />
+    <ClInclude Include="Include\DaisySeedFramework\StaticString.h" />
     <ClInclude Include="Include\DaisySeedFramework\StaticVector.h" />
     <ClInclude Include="Include\DaisySeedFramework\ChunkDataAssembler.h" />
+    <ClInclude Include="Include\DaisySeedFramework\StringUtils.h" />
     <ClInclude Include="Include\DaisySeedFramework\USB\DaisyUSB.h" />
     <ClInclude Include="Include\DaisySeedFramework\USB\DaisyUSBHost.h" />
     <ClInclude Include="Include\DaisySeedFramework\USB\DaisyUSBInterfaceCommon.h" />

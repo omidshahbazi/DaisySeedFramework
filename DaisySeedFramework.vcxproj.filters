@@ -82,6 +82,9 @@
     <ClCompile Include="Source\USB\WindowsUSBCDCInterface.cpp">
       <Filter>Source\USB</Filter>
     </ClCompile>
+    <ClCompile Include="Source\StringUtils.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\DaisySeedFramework\Common.h">
@@ -176,6 +179,12 @@
     </ClInclude>
     <ClInclude Include="Include\DaisySeedFramework\USB\WindowsUSBCDCInterface.h">
       <Filter>Include\DaisySeedFramework\USB</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\StaticString.h">
+      <Filter>Include\DaisySeedFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\StringUtils.h">
+      <Filter>Include\DaisySeedFramework</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

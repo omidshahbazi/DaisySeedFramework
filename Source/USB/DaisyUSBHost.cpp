@@ -1,8 +1,8 @@
 #ifdef ON_HARDWARE
 
 #include "DaisySeedFramework/USB/DaisyUSBHost.h"
+#include "DaisySeedFramework/StringUtils.h"
 #include <DigitalSignalProcessing/Debug.h>
-#include <DigitalSignalProcessing/StringUtils.h>
 #include <DigitalSignalProcessing/Math.h>
 #include <DigitalSignalProcessing/Memory.h>
 

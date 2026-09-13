@@ -1,7 +1,7 @@
 #include "DaisySeedFramework/LCDCanvas.h"
+#include "DaisySeedFramework/StringUtils.h"
 #include <DigitalSignalProcessing/Math.h>
 #include <DigitalSignalProcessing/Debug.h>
-#include <DigitalSignalProcessing/StringUtils.h>
 
 #define DEFINE_GLYPH_VALUES()                                                                                                 \
 	const uint8_t BitsInDataType = sizeof(Font::DataType) * 8;                                                                  \

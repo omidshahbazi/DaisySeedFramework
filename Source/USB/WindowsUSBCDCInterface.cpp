@@ -14,7 +14,8 @@
 #define ms *0.001
 
 WindowsUSBCDCInterface::WindowsUSBCDCInterface(void)
-	: m_Pipe(INVALID_HANDLE_VALUE),
+	: m_Config{},
+	m_Pipe(INVALID_HANDLE_VALUE),
 	m_IsClientConnected(false),
 	m_TransmitState(TransmitStates::Idle)
 {}
@@ -23,10 +24,12 @@ void WindowsUSBCDCInterface::Start(uint8_t Index, const CDCClassConfig& Config)
 {
 	ASSERT(!m_IsRunning, "Already started");
 
+	m_Config = Config;
+
 	const std::string name = "WindowsUSBCDCInterface-" + std::to_string(Index);
 	const std::wstring path = L"\\\\.\\pipe\\USB-PIPE-" + std::wstring(name.begin(), name.end());
 
-	m_Pipe = CreateNamedPipeW(path.c_str(), PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, 1, 1024, 1024, 0, nullptr);
+	m_Pipe = CreateNamedPipeW(path.c_str(), PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, 1, (uint8_t)m_Config.SendBufferSize, (uint8_t)m_Config.ReceiveBufferSize, 0, nullptr);
 
 	ListenForClient();
 }
@@ -57,10 +60,10 @@ void WindowsUSBCDCInterface::Update(void)
 		if (bytesAvailable == 0)
 			return;
 
-		uint8_t buffer[1024];
+		uint8_t buffer[(uint8_t)PacketSizes::Max];
 		DWORD bytesRead;
 
-		if (ReadFile(m_Pipe, buffer, sizeof(buffer) - 1, &bytesRead, nullptr))
+		if (ReadFile(m_Pipe, buffer, (uint8_t)m_Config.ReceiveBufferSize, &bytesRead, nullptr))
 		{
 			if (m_Callback != nullptr)
 				m_Callback(buffer, bytesRead);
@@ -80,7 +83,7 @@ void WindowsUSBCDCInterface::Transmit(const uint8_t* Buffer, uint16_t Length)
 	uint16_t index = 0;
 	while (index < Length)
 	{
-		const uint8_t CountPerStep = (uint8_t)PacketSizes::PacketSizes64;
+		const uint8_t CountPerStep = (uint8_t)m_Config.SendBufferSize;
 
 		uint8_t countPerStep = (uint8_t)Math::Min(CountPerStep, Length - index);
 

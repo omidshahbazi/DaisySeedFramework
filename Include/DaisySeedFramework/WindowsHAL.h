@@ -135,7 +135,7 @@ protected:
 	virtual void Update(void);
 
 private:
-	static int AudioCallback(const void* InputBuffer, void* OutputBuffer, uint32_t FramesPerBuffer, const PaStreamCallbackTimeInfo* TimeInfo, uint32_t StatusFlags, void* UserData);
+	static int32_t AudioCallback(const void* InputBuffer, void* OutputBuffer, uint32_t FramesPerBuffer, const PaStreamCallbackTimeInfo* TimeInfo, uint32_t StatusFlags, void* UserData);
 
 private:
 	std::chrono::steady_clock::time_point m_StartupTime;
