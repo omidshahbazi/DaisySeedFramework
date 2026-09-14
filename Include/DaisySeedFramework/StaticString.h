@@ -3,8 +3,9 @@
 #define STATIC_STRING_H
 
 #include "StringUtils.h"
+#include <DigitalSignalProcessing/DataTypes.h>
 
-template <uint8_t MaxSize, uint8_t Capacity = MaxSize>
+template<uint8_t MaxSize, uint8_t Capacity = MaxSize>
 struct StaticString
 {
 public:
@@ -14,6 +15,12 @@ public:
 		Set(Value);
 	}
 
+	template<uint8_t OtherMaxSize, uint8_t OtherCapacity>
+	StaticString(const StaticString<OtherMaxSize, OtherCapacity>& Value)
+	{
+		Set(Value.GetValue());
+	}
+
 	void Clear(void)
 	{
 		m_Buffer[0] = '\0';
@@ -21,21 +28,40 @@ public:
 
 	bool Set(cstr Value, bool CutOverflow = false)
 	{
-		Clear();
-
 		return SetString(Value, m_Buffer, Capacity, CutOverflow);
+	}
+
+	str GetValue(void)
+	{
+		return m_Buffer;
+	}
+
+	cstr GetValue(void) const
+	{
+		return m_Buffer;
 	}
 
 	StaticString& operator=(cstr Value)
 	{
-		Clear();
-
-		SetString(Value, m_Buffer, Capacity, false);
+		Set(Value);
 
 		return *this;
 	}
 
-	cstr GetValue(void) const
+	template<uint8_t OtherMaxSize, uint8_t OtherCapacity>
+	StaticString& operator=(const StaticString<OtherMaxSize, OtherCapacity>& Value)
+	{
+		Set(Value.GetValue());
+
+		return *this;
+	}
+
+	operator str(void)
+	{
+		return m_Buffer;
+	}
+
+	operator cstr(void) const
 	{
 		return m_Buffer;
 	}
