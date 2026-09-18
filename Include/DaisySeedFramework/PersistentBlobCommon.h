@@ -13,13 +13,13 @@ class PersistentBlobBase
 private:
 	static uint32_t GetAndIncrementOffset(uint16_t Size)
 	{
-		const uint32_t SECTOR_SIZE = QSPI_PAGE_SIZE;
+		const uint32_t SECTOR_SIZE = QSPI_MIN_ERASE_SIZE;
 
-		static uint32_t offset = QSPI_START_ADDRESS;
+		static uint32_t offset = QSPI_USER_DATA_START_ADDRESS;
 
 		uint32_t current = offset;
 
-		ASSERT(current + Size < QSPI_END_ADDRESS, "We're running out of QSPI bound");
+		ASSERT(current + Size <= QSPI_END_ADDRESS, "We're running out of QSPI bound");
 
 		offset += Size;
 		offset = (offset + SECTOR_SIZE - 1) & ~(SECTOR_SIZE - 1);

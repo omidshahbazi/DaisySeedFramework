@@ -59,7 +59,12 @@ enum class AnalogPins
 	COUNT = 12
 };
 
-#define SDRAM_TOTAL_SIZE 64 MB
+#define STACK_POINTER_SIZE PointerSize
+#define RESET_HANDLER_POINTER_SIZE PointerSize
+#define ENTRY_POINT_SIZE STACK_POINTER_SIZE + RESET_HANDLER_POINTER_SIZE
+
+#define SRAM_TOTAL_SIZE (480 KB)
+#define SDRAM_TOTAL_SIZE (64 MB)
 
 #if defined(ON_WINDOWS)
 
@@ -76,30 +81,65 @@ enum class AnalogPins
 	uint8_t DSY_SDRAM_BSS g_##Name[Name##_Size];
 #endif
 
-//This is reserved for Bootloader
-#define QSPI_RESERVED_SIZE 256 KB
+// Memory layout constants for the external QSPI flash on Daisy Seed
+// (IS25LP064A, 8MB), used when building with APP_TYPE=BOOT_SRAM.
+//
+// Layout:
+//   0x90000000 +---------------------------+  <- QSPI chip base
+//              | Bootloader-reserved        |  QSPI_BOOTLOADER_RESERVED_SIZE
+//   0x90040000 +---------------------------+  <- QSPI_PROGRAM_START_ADDRESS
+//              | Application image          |  QSPI_PROGRAM_SIZE
+//              +---------------------------+  <- QSPI_USER_DATA_START_ADDRESS
+//              | Free for your own use      |  QSPI_USER_DATA_SIZE
+//              | (presets, samples, etc.)   |
+//   0x90800000 +---------------------------+  <- QSPI end (QSPI_TOTAL_SIZE)
+//
+// Note: the bootloader *binary* itself (~128KB) lives on internal MCU
+// flash (0x08000000, 128KB), not on QSPI at all. The 256KB reserved here
+// is just the offset the official electro-smith bootloader is hardcoded
+// to start reading the application image from
+// (daisy::System::kQspiBootloaderOffset) -- there's no separate "64KB"
+// zone inside it, so don't write anywhere in this range.
 
-// Even in SRAM mode, we it uses QSPI to store program and loads it into the SRAM in runtime to run faster
-// But in QSPI mode, it runs the code directly from QSPI which is slower
-// https://daisy.audio/tutorials/_a7_Getting-Started-Daisy-Bootloader/#custom-linkers
-// QSPI Start Address=0x90000000
-// 64KB Reserved (Still can be used, better not to)
-// Program Start Address = 0x90040000
-// So we would still have at least 1MB of space for code
-#define DEFAULT_PROGRAM_SIZE 1 MB - QSPI_RESERVED_SIZE
+// This is reserved for the bootloader. Matches
+// daisy::System::kQspiBootloaderOffset (0x40000) -- do not write here.
+#define QSPI_BOOTLOADER_RESERVED_SIZE (256 KB)
+
+// Even in SRAM mode, the app image is stored in QSPI and copied into SRAM
+// at boot time to run faster (in QSPI/BOOT_QSPI mode, code instead runs
+// directly from QSPI, which is slower).
+// https://docs.daisy.audio/tutorials/_a7_Getting-Started-Daisy-Bootloader/
+//   QSPI base address        = 0x90000000
+//   Bootloader-reserved size = 256KB
+//   Program start address    = 0x90040000
+//
+// Default program size gives 768KB (1MB total budget minus the 256KB
+// reserved for the bootloader) for the application image.
+#define QSPI_DEFAULT_PROGRAM_SIZE ((1 MB) - QSPI_BOOTLOADER_RESERVED_SIZE)
 #ifndef QSPI_PROGRAM_SIZE
-#define QSPI_PROGRAM_SIZE DEFAULT_PROGRAM_SIZE
+#define QSPI_PROGRAM_SIZE QSPI_DEFAULT_PROGRAM_SIZE
 #endif
 
-#define QSPI_TOTAL_SIZE 8 MB
-#define QSPI_PAGE_SIZE 4 KB
+#define QSPI_TOTAL_SIZE (8 MB)
 
-#ifndef QSPI_START_ADDRESS
-#define QSPI_START_ADDRESS QSPI_RESERVED_SIZE + QSPI_PROGRAM_SIZE
+#define QSPI_PAGE_SIZE (256)
+
+// Minimum erase granularity on the IS25LP064A (erases happen in 4K, 32K,
+// or 64K increments -- 4K is the smallest). This is NOT the write page
+// size: QSPIHandle::WritePage() writes in 256-byte pages internally,
+// regardless of this constant.
+#define QSPI_MIN_ERASE_SIZE (4 KB)
+#define QSPI_MAX_ERASE_SIZE (64 KB)
+
+// Address (relative to QSPI base, 0x90000000) where free space for your
+// own data starts -- right after the reserved bootloader region and the
+// application image.
+#ifndef QSPI_USER_DATA_START_ADDRESS
+#define QSPI_USER_DATA_START_ADDRESS (QSPI_BOOTLOADER_RESERVED_SIZE + QSPI_PROGRAM_SIZE)
 #endif
-static_assert(QSPI_START_ADDRESS >= QSPI_RESERVED_SIZE, "Invalid QSPI_START_ADDRESS defined");
+static_assert(QSPI_USER_DATA_START_ADDRESS >= QSPI_BOOTLOADER_RESERVED_SIZE, "Invalid QSPI_USER_DATA_START_ADDRESS defined");
 
-#define QSPI_AVAILABLE_SIZE QSPI_TOTAL_SIZE - QSPI_START_ADDRESS
+#define QSPI_USER_DATA_SIZE (QSPI_TOTAL_SIZE - QSPI_USER_DATA_START_ADDRESS)
 
 #define QSPI_END_ADDRESS QSPI_TOTAL_SIZE
 

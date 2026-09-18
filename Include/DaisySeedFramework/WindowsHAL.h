@@ -5,6 +5,7 @@
 #include "Common.h"
 #include <DigitalSignalProcessing/IHAL.h>
 #include "USB/WindowsUSB.h"
+#include "WindowsFirmware.h"
 #include <chrono>
 
 struct PaStreamCallbackTimeInfo;
@@ -125,7 +126,12 @@ public:
 		return &m_USB;
 	}
 
-	void EraseQSPIData(void) override
+	IFirmware* GetFirmware(void) override
+	{
+		return &m_Firmware;
+	}
+
+	void EraseUserData(void) override
 	{}
 
 protected:
@@ -143,6 +149,7 @@ private:
 	CrashHandler m_CrashHandler;
 
 	WindowsUSB m_USB;
+	WindowsFirmware m_Firmware;
 
 	uint8_t* m_SDRAMAddress;
 	uint32_t m_SDRAMSize;

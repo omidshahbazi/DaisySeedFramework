@@ -8,6 +8,7 @@ DaisySeedHAL::DaisySeedHAL(void* SDRAMAddress, uint32_t SDRAMSize, CrashHandler 
 	: m_CrashHandler(CrashHandler),
 	m_FullSpeedUSB(Peripherals::FullSpeed),
 	m_HighSpeedUSB(Peripherals::HighSpeed),
+	m_Firmware(this),
 	m_SDRAMAddress(reinterpret_cast<uint8_t*>(SDRAMAddress)),
 	m_SDRAMSize(SDRAMSize),
 	m_LastFreeSDRAMIndex(0),
@@ -269,9 +270,9 @@ void DaisySeedHAL::Delay(uint16_t Ms) const
 	daisy::System::Delay(Ms);
 }
 
-void DaisySeedHAL::EraseQSPIData(void)
+void DaisySeedHAL::EraseUserData(void)
 {
-	m_Hardware.qspi.Erase(QSPI_START_ADDRESS, QSPI_END_ADDRESS);
+	m_Hardware.qspi.Erase(QSPI_USER_DATA_START_ADDRESS, QSPI_END_ADDRESS);
 }
 
 daisy::QSPIHandle& DaisySeedHAL::GetQSPI(void)

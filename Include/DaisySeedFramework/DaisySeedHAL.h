@@ -5,6 +5,7 @@
 #include "Common.h"
 #include "DaisyInclude.h"
 #include "USB/DaisyUSB.h"
+#include "DaisyFirmware.h"
 #include <DigitalSignalProcessing/IHAL.h>
 
 class DaisySeedHAL : public IHAL
@@ -125,7 +126,12 @@ public:
 		return &m_FullSpeedUSB;
 	}
 
-	void EraseQSPIData(void) override;
+	IFirmware* GetFirmware(void) override
+	{
+		return &m_Firmware;
+	}
+
+	void EraseUserData(void) override;
 
 	daisy::QSPIHandle& GetQSPI(void);
 
@@ -160,6 +166,8 @@ private:
 
 	DaisyUSB m_FullSpeedUSB;
 	DaisyUSB m_HighSpeedUSB;
+
+	DaisyFirmware m_Firmware;
 
 	uint8_t* m_SDRAMAddress;
 	uint32_t m_SDRAMSize;

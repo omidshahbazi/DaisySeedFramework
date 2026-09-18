@@ -61,11 +61,12 @@ void WindowsUSBCDCInterface::Update(void)
 			return;
 
 		uint8_t buffer[(uint8_t)PacketSizes::Max];
+		DWORD bytesToRead = Math::Min(bytesAvailable, (uint8_t)m_Config.ReceiveBufferSize);
 		DWORD bytesRead;
 
-		if (ReadFile(m_Pipe, buffer, (uint8_t)m_Config.ReceiveBufferSize, &bytesRead, nullptr))
+		if (ReadFile(m_Pipe, buffer, bytesToRead, &bytesRead, nullptr))
 		{
-			if (m_Callback != nullptr)
+			if (bytesRead != 0 && m_Callback != nullptr)
 				m_Callback(buffer, bytesRead);
 		}
 	}

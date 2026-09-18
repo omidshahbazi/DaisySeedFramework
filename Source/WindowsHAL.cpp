@@ -16,6 +16,7 @@
 
 WindowsHAL::WindowsHAL(void* SDRAMAddress, uint32_t SDRAMSize, CrashHandler CrashHandler)
 	: m_CrashHandler(CrashHandler),
+	m_Firmware(this),
 	m_SDRAMAddress(reinterpret_cast<uint8_t*>(SDRAMAddress)),
 	m_SDRAMSize(SDRAMSize),
 	m_LastFreeSDRAMIndex(0),
