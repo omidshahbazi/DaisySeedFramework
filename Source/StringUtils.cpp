@@ -102,6 +102,13 @@ cstr GetFrenchNoteName(uint8_t MIDINumber)
 
 bool SetString(cstr Value, str Buffer, uint8_t BufferLength, bool CutOverflow)
 {
+	uint8_t length = GetStringLength(Value);
+
+	return SetString(Value, length, Buffer, BufferLength, CutOverflow);
+}
+
+bool SetString(cstr Value, uint16_t Length, str Buffer, uint8_t BufferLength, bool CutOverflow)
+{
 	const uint8_t ActualBufferSize = BufferLength - 1;
 	uint8_t length = GetStringLength(Value);
 

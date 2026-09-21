@@ -52,9 +52,6 @@ protected:
 
 	virtual void WriteOnPort(const uint8_t* Buffer, uint16_t Length) = 0;
 
-	virtual void OnFalseDataReceived(void)
-	{}
-
 	void StoreReceivedPacket(const uint8_t* Buffer, uint8_t Length)
 	{
 		m_ReceiveBuffer.PushBack(Buffer, Length);
@@ -71,15 +68,6 @@ protected:
 			ReadAndAdvanceBuffer(buffer, m_ExpectedDataSize);
 
 			const uint16_t ExpectedReceiveSize = HeaderSize + m_ExpectedDataSize;
-
-			if (m_ReceiveBuffer.GetSize() > ExpectedReceiveSize)
-			{
-				ResetAssembler();
-
-				OnFalseDataReceived();
-
-				break;
-			}
 
 			if (m_ReceiveBuffer.GetSize() < ExpectedReceiveSize)
 				break;

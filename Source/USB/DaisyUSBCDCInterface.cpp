@@ -1,6 +1,7 @@
 #ifdef ON_HARDWARE
 
 #include "DaisySeedFramework/USB/DaisyUSBCDCInterface.h"
+#include <DigitalSignalProcessing/Memory.h>
 
 DaisyUSBCDCInterface::DaisyUSBCDCInterface(DaisyUSBDevice* Device, const Configs& Configs, const CDCClassConfig& Class)
 	: DaisyUSBInterfaceCommon(Device, Configs),

@@ -4,13 +4,11 @@
 #include <DigitalSignalProcessing/Math.h>
 #include <DigitalSignalProcessing/Debug.h>
 
-DaisySeedHAL::DaisySeedHAL(void* SDRAMAddress, uint32_t SDRAMSize, CrashHandler CrashHandler)
-	: m_CrashHandler(CrashHandler),
+DaisySeedHAL::DaisySeedHAL(void* SDRAMAddress, uint32_t SDRAMSize)
+	: m_Firmware(this),
 	m_FullSpeedUSB(Peripherals::FullSpeed),
 	m_HighSpeedUSB(Peripherals::HighSpeed),
-	m_Firmware(this),
-	m_SDRAMAddress(reinterpret_cast<uint8_t*>(SDRAMAddress)),
-	m_SDRAMSize(SDRAMSize),
+	m_Allocator(SDRAMAddress, SDRAMSize),
 	m_LastFreeSDRAMIndex(0),
 	m_AnalogPins{},
 	m_LastFreeAnalogPinIndex(0),
@@ -20,8 +18,6 @@ DaisySeedHAL::DaisySeedHAL(void* SDRAMAddress, uint32_t SDRAMSize, CrashHandler 
 	m_PWMResolution(0),
 	m_PWMMaxDutyCycle(0)
 {
-	ASSERT(SDRAMSize == 0 || SDRAMAddress != nullptr, "SDRAMAddress cannot be null");
-	ASSERT(SDRAMAddress == nullptr || SDRAMSize > 0, "SDRAMSize cannot be zero");
 
 	SetPWMResolution(16);
 }
@@ -73,27 +69,14 @@ void DaisySeedHAL::StartAudio(AudioPassthrough Callback)
 void* DaisySeedHAL::Allocate(uint32_t Size, bool OnSDRAM)
 {
 	if (OnSDRAM)
-	{
-		const uint8_t ALIGNMENT = 16;
-
-		ASSERT(m_SDRAMAddress != nullptr, "SDRAM is not initialized");
-		ASSERT(m_LastFreeSDRAMIndex + Size <= m_SDRAMSize, "Running out of SDRAM");
-
-		uint8_t* ptr = m_SDRAMAddress + m_LastFreeSDRAMIndex;
-
-		uint8_t* alignedPtr = reinterpret_cast<uint8_t*>(((reinterpret_cast<uint32_t>(ptr) + (ALIGNMENT - 1)) / ALIGNMENT) * ALIGNMENT);
-
-		m_LastFreeSDRAMIndex += (alignedPtr - ptr) + Size;
-
-		return alignedPtr;
-	}
+		return m_Allocator.Allocate(Size);
 
 	return malloc(Size);
 }
 
 void DaisySeedHAL::Deallocate(void* Memory)
 {
-	if (m_SDRAMAddress != nullptr && m_SDRAMAddress <= Memory)
+	if (m_Allocator.Contains(Memory))
 		return;
 
 	free(Memory);
@@ -227,35 +210,6 @@ uint32_t DaisySeedHAL::GetTimeSinceStartupTicks(void) const
 uint32_t DaisySeedHAL::GetTimeSinceStartupMs(void) const
 {
 	return daisy::System::GetNow();
-}
-
-void DaisySeedHAL::Print(cstr Value)
-{
-	printf(Value);
-}
-
-bool DaisySeedHAL::IsDebuggerPresent(void) const
-{
-	return (CoreDebug->DHCSR & CoreDebug_DHCSR_C_DEBUGEN_Msk) != 0;
-}
-
-void DaisySeedHAL::Crash(void) const
-{
-	if (m_CrashHandler != nullptr)
-	{
-		m_CrashHandler(this);
-		return;
-	}
-
-	Break();
-}
-
-void DaisySeedHAL::Break(void) const
-{
-	asm("bkpt 255");
-
-	while (1)
-		Delay(1000);
 }
 
 // Bootloader version has to be in sync with the libDaisy, so if you see mal-function here, update either of them

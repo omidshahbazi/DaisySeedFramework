@@ -3,9 +3,10 @@
 #define WINDOWS_HAL_H
 
 #include "Common.h"
-#include <DigitalSignalProcessing/IHAL.h>
 #include "USB/WindowsUSB.h"
 #include "WindowsFirmware.h"
+#include <DigitalSignalProcessing/IHAL.h>
+#include <DigitalSignalProcessing/Allocator.h>
 #include <chrono>
 
 struct PaStreamCallbackTimeInfo;
@@ -13,14 +14,11 @@ struct PaStreamCallbackTimeInfo;
 class WindowsHAL : public IHAL
 {
 public:
-	typedef void (*CrashHandler)(const IHAL* HAL);
-
-public:
 	static constexpr uint8_t CHANNEL_LEFT = 0;
 	static constexpr uint8_t CHANNEL_RIGHT = 1;
 
 public:
-	WindowsHAL(void* SDRAMAddress = nullptr, uint32_t SDRAMSize = 0, CrashHandler CrashHandler = nullptr);
+	WindowsHAL(void* SDRAMAddress = nullptr, uint32_t SDRAMSize = 0);
 
 	void Setup(uint8_t FrameLength, uint32_t SampleRate, bool Boost) override;
 
@@ -109,14 +107,6 @@ public:
 		return GetTimeSinceStartupMs() / 1000.0;
 	}
 
-	void Print(cstr Value) override;
-
-	bool IsDebuggerPresent(void) const override;
-
-	void Crash(void) const override;
-
-	void Break(void) const override;
-
 	void Reset(bool InfiniteTime = true) const override;
 
 	void Delay(uint16_t Ms) const override;
@@ -146,14 +136,10 @@ private:
 private:
 	std::chrono::steady_clock::time_point m_StartupTime;
 
-	CrashHandler m_CrashHandler;
-
 	WindowsUSB m_USB;
 	WindowsFirmware m_Firmware;
 
-	uint8_t* m_SDRAMAddress;
-	uint32_t m_SDRAMSize;
-	uint32_t m_LastFreeSDRAMIndex;
+	Allocator<uint8_t, 16, false> m_Allocator;
 
 	AudioPassthrough m_AudioCallback;
 };

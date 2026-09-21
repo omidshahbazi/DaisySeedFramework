@@ -626,7 +626,7 @@ void DaisyUSBAMCInterface::BuildStreamingInterface(EP0Buffer& EP0Buffer, uint16_
 	ep->bLength = sizeof(USBEndpointDescriptor);
 	ep->bDescriptorType = USBDescTypes::Endpoint;
 	ep->bEndpointAddress = Endpoint;
-	ep->bmAttributes = (uint8_t)USBEndpointAttributes::Isochronous | (uint8_t)EndpointSyncTypes::Async;
+	ep->bmAttributes = (uint8_t)(USBEndpointAttributes::Isochronous | EndpointSyncTypes::Async);
 	ep->wMaxPacketSize = CalculateMaxPacketSize(ChannelCount, Config);
 	ep->bInterval = 1;
 	BufferOffset += sizeof(USBEndpointDescriptor);

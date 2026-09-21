@@ -204,5 +204,8 @@
     <ClInclude Include="Include\DaisySeedFramework\Version.h">
       <Filter>Include\DaisySeedFramework</Filter>
     </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\WindowsInclude.h">
+      <Filter>Include\DaisySeedFramework</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

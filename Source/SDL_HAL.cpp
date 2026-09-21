@@ -1,17 +1,10 @@
 #ifdef ON_WINDOWS
 
 #include "DaisySeedFramework/SDL_HAL.h"
+#include "DaisySeedFramework/WindowsInclude.h"
 #include <DigitalSignalProcessing/Math.h>
 #include <DigitalSignalProcessing/Debug.h>
 #include <DigitalSignalProcessing/Memory.h>
-
-#undef ns
-#undef ms
-#include <SDL3/SDL.h>
-#undef ns
-#undef ms
-//#define ns *0.000'001
-//#define ms *0.001
 
 #pragma comment(lib, "SDL3.lib")
 

@@ -75,9 +75,9 @@
     <ClCompile>
       <CPPLanguageStandard>CPP17</CPPLanguageStandard>
       <AdditionalIncludeDirectories>Include;DSP/Include;Libraries/;Libraries/libDaisy/src;Libraries/libDaisy/src/sys;Libraries/libDaisy/src/usbh;Libraries/libDaisy/Drivers/STM32H7xx_HAL_Driver/Inc;Libraries/libDaisy/Drivers/CMSIS-Device/ST/STM32H7xx/Include;Libraries/libDaisy/Drivers/CMSIS/Core/Include;Libraries/libDaisy/Drivers/CMSIS_5/CMSIS/Core/Include;Libraries/libDaisy/Middlewares/ST/STM32_USB_Host_Library/Core/Inc;Libraries/libDaisy/Middlewares/Third_Party/FatFs/src</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>ON_HARDWARE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LinkTimeOptimization>true</LinkTimeOptimization>
       <Optimization>Os</Optimization>
+      <PreprocessorDefinitions>ON_HARDWARE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <ProduceRelocationRecords>true</ProduceRelocationRecords>
@@ -90,14 +90,14 @@
     <ClCompile>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>Include;DSP/Include;Libraries/portaudio/include;Libraries/SDL/include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>ON_WINDOWS;RELEASE</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ON_WINDOWS;RELEASE=1</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>Include;DSP/Include;Libraries/portaudio/include;Libraries/SDL/include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>ON_WINDOWS;DEBUG</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ON_WINDOWS;DEBUG=1</PreprocessorDefinitions>
       <Optimization>Disabled</Optimization>
     </ClCompile>
   </ItemDefinitionGroup>
@@ -166,6 +166,7 @@
     <ClInclude Include="Include\DaisySeedFramework\Version.h" />
     <ClInclude Include="Include\DaisySeedFramework\WindowsFirmware.h" />
     <ClInclude Include="Include\DaisySeedFramework\WindowsHAL.h" />
+    <ClInclude Include="Include\DaisySeedFramework\WindowsInclude.h" />
     <ClInclude Include="Include\DaisySeedFramework\WindowsPersistentBlob.h" />
   </ItemGroup>
 </Project>

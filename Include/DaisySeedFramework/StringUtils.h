@@ -29,5 +29,6 @@ cstr GetEnglishNoteName(uint8_t MIDINumber);
 cstr GetFrenchNoteName(uint8_t MIDINumber);
 
 bool SetString(cstr Value, str Buffer, uint8_t BufferLength, bool CutOverflow = false);
+bool SetString(cstr Value, uint16_t Length, str Buffer, uint8_t BufferLength, bool CutOverflow = false);
 
 #endif

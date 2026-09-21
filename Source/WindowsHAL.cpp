@@ -1,30 +1,19 @@
 #ifdef ON_WINDOWS
 
 #include "DaisySeedFramework/WindowsHAL.h"
+#include "DaisySeedFramework/WindowsInclude.h"
 #include <DigitalSignalProcessing/Math.h>
 #include <DigitalSignalProcessing/Debug.h>
 #include <DigitalSignalProcessing/Memory.h>
 #include <portaudio.h>
 
-#undef ns
-#undef ms
-#include <Windows.h>
-#undef ns
-#undef ms
-
 #pragma comment(lib, "portaudio.lib")
 
-WindowsHAL::WindowsHAL(void* SDRAMAddress, uint32_t SDRAMSize, CrashHandler CrashHandler)
-	: m_CrashHandler(CrashHandler),
-	m_Firmware(this),
-	m_SDRAMAddress(reinterpret_cast<uint8_t*>(SDRAMAddress)),
-	m_SDRAMSize(SDRAMSize),
-	m_LastFreeSDRAMIndex(0),
+WindowsHAL::WindowsHAL(void* SDRAMAddress, uint32_t SDRAMSize)
+	: m_Firmware(this),
+	m_Allocator(SDRAMAddress, SDRAMSize),
 	m_AudioCallback(nullptr)
 {
-	ASSERT(SDRAMSize == 0 || SDRAMAddress != nullptr, "SDRAMAddress cannot be null");
-	ASSERT(SDRAMAddress == nullptr || SDRAMSize > 0, "SDRAMSize cannot be zero");
-
 	m_StartupTime = std::chrono::steady_clock::now();
 }
 
@@ -43,27 +32,14 @@ void WindowsHAL::Setup(uint8_t FrameLength, uint32_t SampleRate, bool Boost)
 void* WindowsHAL::Allocate(uint32_t Size, bool OnSDRAM)
 {
 	if (OnSDRAM)
-	{
-		const uint8_t ALIGNMENT = 16;
-
-		ASSERT(m_SDRAMAddress != nullptr, "SDRAM is not initialized");
-		ASSERT(m_LastFreeSDRAMIndex + Size <= m_SDRAMSize, "Running out of SDRAM");
-
-		uint8_t* ptr = m_SDRAMAddress + m_LastFreeSDRAMIndex;
-
-		uint8_t* alignedPtr = reinterpret_cast<uint8_t*>(((reinterpret_cast<uint64_t>(ptr) + (ALIGNMENT - 1)) / ALIGNMENT) * ALIGNMENT);
-
-		m_LastFreeSDRAMIndex += (alignedPtr - ptr) + Size;
-
-		return alignedPtr;
-	}
+		return m_Allocator.Allocate(Size);
 
 	return malloc(Size);
 }
 
 void WindowsHAL::Deallocate(void* Memory)
 {
-	if (m_SDRAMAddress != nullptr && m_SDRAMAddress <= Memory)
+	if (m_Allocator.Contains(Memory))
 		return;
 
 	free(Memory);
@@ -79,33 +55,6 @@ uint32_t WindowsHAL::GetTimeSinceStartupMs(void) const
 	return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - m_StartupTime).count();
 }
 
-void WindowsHAL::Print(cstr Value)
-{
-	printf(Value);
-}
-
-bool WindowsHAL::IsDebuggerPresent(void) const
-{
-	return ::IsDebuggerPresent();
-}
-
-void WindowsHAL::Crash(void) const
-{
-	Delay(1000);
-
-	if (m_CrashHandler != nullptr)
-	{
-		m_CrashHandler(this);
-		return;
-	}
-
-	Break();
-}
-
-void WindowsHAL::Break(void) const
-{
-	__debugbreak();
-}
 
 void WindowsHAL::Reset(bool InfiniteTime) const
 {

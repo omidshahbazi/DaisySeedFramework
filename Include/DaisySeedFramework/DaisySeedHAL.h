@@ -7,12 +7,10 @@
 #include "USB/DaisyUSB.h"
 #include "DaisyFirmware.h"
 #include <DigitalSignalProcessing/IHAL.h>
+#include <DigitalSignalProcessing/Allocator.h>
 
 class DaisySeedHAL : public IHAL
 {
-public:
-	typedef void (*CrashHandler)(const IHAL* HAL);
-
 public:
 	static constexpr uint8_t CHANNEL_LEFT = 0;
 	static constexpr uint8_t CHANNEL_RIGHT = 1;
@@ -37,7 +35,7 @@ private:
 	};
 
 public:
-	DaisySeedHAL(void* SDRAMAddress = nullptr, uint32_t SDRAMSize = 0, CrashHandler CrashHandler = nullptr);
+	DaisySeedHAL(void* SDRAMAddress = nullptr, uint32_t SDRAMSize = 0);
 
 	void Setup(uint8_t FrameLength, uint32_t SampleRate, bool Boost) override;
 
@@ -104,14 +102,6 @@ public:
 		return GetTimeSinceStartupMs() / 1000.0;
 	}
 
-	void Print(cstr Value) override;
-
-	bool IsDebuggerPresent(void) const override;
-
-	void Crash(void) const override;
-
-	void Break(void) const override;
-
 	// Bootloader version has to be in sync with the libDaisy, so if you see malfunction here, update either of them
 	// https://flash.daisy.audio/
 	void Reset(bool InfiniteTime = true) const override;
@@ -162,7 +152,8 @@ private:
 
 private:
 	daisy::DaisySeed m_Hardware;
-	CrashHandler m_CrashHandler;
+
+	Allocator<uint8_t, 16, false> m_Allocator;
 
 	DaisyUSB m_FullSpeedUSB;
 	DaisyUSB m_HighSpeedUSB;

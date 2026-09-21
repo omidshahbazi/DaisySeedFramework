@@ -1,17 +1,10 @@
 #ifdef ON_WINDOWS
 
 #include "DaisySeedFramework/USB/WindowsUSBCDCInterface.h"
+#include "DaisySeedFramework/WindowsInclude.h"
 #include <DigitalSignalProcessing/Debug.h>
 #include <DigitalSignalProcessing/Math.h>
 #include <string>
-
-#undef ns
-#undef ms
-#include <Windows.h>
-#undef ns
-#undef ms
-#define ns *0.000'001
-#define ms *0.001
 
 WindowsUSBCDCInterface::WindowsUSBCDCInterface(void)
 	: m_Config{},
@@ -81,6 +74,8 @@ void WindowsUSBCDCInterface::Transmit(const uint8_t* Buffer, uint16_t Length)
 
 	m_TransmitState = TransmitStates::Busy;
 
+	m_TransmitStateChangedCallback();
+
 	uint16_t index = 0;
 	while (index < Length)
 	{
@@ -93,6 +88,8 @@ void WindowsUSBCDCInterface::Transmit(const uint8_t* Buffer, uint16_t Length)
 
 		index += CountPerStep;
 	}
+
+	m_TransmitStateChangedCallback();
 
 	m_TransmitState = TransmitStates::Idle;
 }
