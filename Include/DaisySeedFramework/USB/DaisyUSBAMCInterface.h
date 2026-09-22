@@ -10,8 +10,23 @@
 
 class DaisyUSBAMCInterface : public IUSBAMCInterface, public DaisyUSBInterfaceCommon
 {
+#ifdef ENABLE_USB_AMC_DEBUG
+private:
+	struct DebugStats
+	{
+	public:
+		uint32_t Underrun;
+		uint32_t Overrun;
+		uint32_t IsoIncomplete;
+	};
+#endif
+
 public:
 	DaisyUSBAMCInterface(DaisyUSBDevice* Device, const Configs& Configs, const AMCClassConfig& Class);
+	
+#ifdef ENABLE_USB_AMC_DEBUG
+	void Update(void) override;
+#endif
 
 	virtual void Read(float* InterleavedBuffer, uint16_t TotalSampleCount)
 	{
@@ -135,92 +150,59 @@ private:
 	LinearGain m_CurrentInVolume;
 	bool m_CurrentIsOutMuted;
 	bool m_CurrentIsInMuted;
+
+#ifdef ENABLE_USB_AMC_DEBUG
+private:
+	uint32_t m_LastLogTime;
+	DebugStats m_DebugStatsIn;
+	DebugStats m_DebugStatsOut;
+#endif
 };
 
 template <typename T>
 uint16_t DaisyUSBAMCInterface::PopSamples(T* InterleavedBuffer, uint16_t TotalSampleCount)
 {
 	ASSERT_ON_FLOATING_TYPE(T);
-
 	ASSERT(InterleavedBuffer != nullptr, "InterleavedBuffer is null");
 	ASSERT(TotalSampleCount != 0, "TotalSampleCount is zero");
 
-	const uint8_t bytesPerSample = ((uint8_t)m_CurrentOutBitDepth / 8);
-	const size_t bytesToRead = TotalSampleCount * bytesPerSample;
-
-	uint16_t samplesPopped = 0;
-	if (m_ReceiveFIFO.GetSize() >= bytesToRead)
-		samplesPopped = TotalSampleCount;
+	const uint8_t BytesPerSample = ((uint8_t)m_CurrentOutBitDepth / 8);
+	const uint16_t AvailableSamples = (uint16_t)(m_ReceiveFIFO.GetSize() / BytesPerSample);
+	const uint16_t SamplesToPop = Math::Min(AvailableSamples, TotalSampleCount);
 
 	const float Gain = (m_CurrentIsOutMuted ? 0.0 : m_CurrentOutVolume);
 
+#define POP_SAMPLE(BitsNum) \
+	case BitDepths::BitDepths##BitsNum: \
+	{ \
+		for (uint16_t i = 0; i < SamplesToPop; ++i) \
+		{ \
+			int##BitsNum##_t pcm##BitsNum; \
+			m_ReceiveFIFO.Pop(reinterpret_cast<uint8_t*>(&pcm##BitsNum), sizeof(int##BitsNum##_t)); \
+			InterleavedBuffer[i] = ((T)pcm##BitsNum / INT##BitsNum##_MAX) * Gain; \
+		} \
+		break; \
+	}
+
 	switch (m_CurrentOutBitDepth)
 	{
-	case BitDepths::BitDepths8:
-	{
-		if (m_ReceiveFIFO.GetSize() >= bytesToRead)
-		{
-			for (uint16_t i = 0; i < TotalSampleCount; ++i)
-			{
-				int8_t pcm8;
-				m_ReceiveFIFO.Pop(reinterpret_cast<uint8_t*>(&pcm8), sizeof(int8_t));
-
-				InterleavedBuffer[i] = ((T)pcm8 / INT8_MAX) * Gain;
-			}
-		}
-		break;
+		POP_SAMPLE(8);
+		POP_SAMPLE(16);
+		POP_SAMPLE(24);
+		POP_SAMPLE(32);
 	}
 
-	case BitDepths::BitDepths16:
-	{
-		if (m_ReceiveFIFO.GetSize() >= bytesToRead)
-		{
-			for (uint16_t i = 0; i < TotalSampleCount; ++i)
-			{
-				int16_t pcm16;
-				m_ReceiveFIFO.Pop(reinterpret_cast<uint8_t*>(&pcm16), sizeof(int16_t));
-
-				InterleavedBuffer[i] = ((T)pcm16 / INT16_MAX) * Gain;
-			}
-		}
-		break;
-	}
-
-	case BitDepths::BitDepths24:
-	{
-		if (m_ReceiveFIFO.GetSize() >= bytesToRead)
-		{
-			for (uint16_t i = 0; i < TotalSampleCount; ++i)
-			{
-				int24_t pcm24;
-				m_ReceiveFIFO.Pop(reinterpret_cast<uint8_t*>(&pcm24), sizeof(int24_t));
-
-				InterleavedBuffer[i] = ((T)pcm24 / INT24_MAX) * Gain;;
-			}
-		}
-		break;
-	}
-
-	case BitDepths::BitDepths32:
-	{
-		if (m_ReceiveFIFO.GetSize() >= bytesToRead)
-		{
-			for (uint16_t i = 0; i < TotalSampleCount; ++i)
-			{
-				int32_t pcm32;
-				m_ReceiveFIFO.Pop(reinterpret_cast<uint8_t*>(&pcm32), sizeof(int32_t));
-
-				InterleavedBuffer[i] = ((T)pcm32 / INT32_MAX) * Gain;;
-			}
-		}
-		break;
-	}
-	}
-
-	for (uint16_t i = samplesPopped; i < TotalSampleCount; ++i)
+	for (uint16_t i = SamplesToPop; i < TotalSampleCount; ++i)
 		InterleavedBuffer[i] = 0;
 
-	return samplesPopped;
+#ifdef ENABLE_USB_AMC_DEBUG
+	if (SamplesToPop < TotalSampleCount)
+		m_DebugStatsOut.Underrun++;
+#endif
+
+	return SamplesToPop;
+
+#undef POP_SAMPLE
 }
 
 template <typename T>
@@ -231,62 +213,38 @@ void DaisyUSBAMCInterface::PushSamples(const T* const InterleavedBuffer, uint16_
 	ASSERT(InterleavedBuffer != nullptr, "InterleavedBuffer is null");
 	ASSERT(TotalSampleCount != 0, "TotalSampleCount is zero");
 
+	const uint8_t BytesPerSample = ((uint8_t)m_CurrentInBitDepth / 8);
+	const uint16_t AvailableSamples = (uint16_t)(m_TransmitFIFO.GetFreeSpace() / BytesPerSample);
+	const uint16_t SamplesToPush = Math::Min(AvailableSamples, TotalSampleCount);
+
 	const float Gain = (m_CurrentIsInMuted ? 0.0 : m_CurrentInVolume);
+
+#define PUSH_SAMPLE(BitsNum) \
+	case BitDepths::BitDepths##BitsNum: \
+	{ \
+		for (uint16_t i = 0; i < SamplesToPush; ++i) \
+		{ \
+			T sample = Math::ClampSignal(InterleavedBuffer[i]); \
+			int##BitsNum##_t pcm##BitsNum = (int##BitsNum##_t)(sample * INT##BitsNum##_MAX * Gain); \
+			m_TransmitFIFO.Push(reinterpret_cast<const uint8_t*>(&pcm##BitsNum), sizeof(int##BitsNum##_t)); \
+		} \
+		break; \
+	}
 
 	switch (m_CurrentInBitDepth)
 	{
-	case BitDepths::BitDepths8:
-	{
-		for (uint16_t i = 0; i < TotalSampleCount; ++i)
-		{
-			T sample = Math::ClampSignal(InterleavedBuffer[i]);
-
-			int8_t pcm8 = (int8_t)(sample * INT8_MAX * Gain);
-
-			m_TransmitFIFO.Push(reinterpret_cast<const uint8_t*>(&pcm8), sizeof(int8_t));
-		}
-		break;
+		PUSH_SAMPLE(8);
+		PUSH_SAMPLE(16);
+		PUSH_SAMPLE(24);
+		PUSH_SAMPLE(32);
 	}
 
-	case BitDepths::BitDepths16:
-	{
-		for (uint16_t i = 0; i < TotalSampleCount; ++i)
-		{
-			T sample = Math::ClampSignal(InterleavedBuffer[i]);
+#ifdef ENABLE_USB_AMC_DEBUG
+	if (SamplesToPush < TotalSampleCount)
+		m_DebugStatsIn.Overrun++;
+#endif
 
-			int16_t pcm16 = (int16_t)(sample * INT16_MAX * Gain);
-
-			m_TransmitFIFO.Push(reinterpret_cast<const uint8_t*>(&pcm16), sizeof(int16_t));
-		}
-		break;
-	}
-
-	case BitDepths::BitDepths24:
-	{
-		for (uint16_t i = 0; i < TotalSampleCount; ++i)
-		{
-			T sample = Math::ClampSignal(InterleavedBuffer[i]);
-
-			int24_t pcm24 = (int24_t)(sample * INT24_MAX * Gain);
-
-			m_TransmitFIFO.Push(reinterpret_cast<const uint8_t*>(&pcm24), sizeof(int24_t));
-		}
-		break;
-	}
-
-	case BitDepths::BitDepths32:
-	{
-		for (uint16_t i = 0; i < TotalSampleCount; ++i)
-		{
-			T sample = Math::ClampSignal(InterleavedBuffer[i]);
-
-			int32_t pcm32 = (int32_t)(sample * INT32_MAX * Gain);
-
-			m_TransmitFIFO.Push(reinterpret_cast<const uint8_t*>(&pcm32), sizeof(int32_t));
-		}
-		break;
-	}
-	}
+#undef PUSH_SAMPLE
 }
 
 #endif

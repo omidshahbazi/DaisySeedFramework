@@ -245,6 +245,12 @@ DaisyUSBDevice::DaisyUSBDevice(Peripherals Peripheral)
 	s_Instance[(uint8_t)Peripheral] = this;
 }
 
+void DaisyUSBDevice::Update(void)
+{
+	for (uint8_t i = 0; i < m_DeviceCount; ++i)
+		m_Devices[i].Interface->Update();
+}
+
 void DaisyUSBDevice::Start(const USBDeviceProfile& Profile)
 {
 	ASSERT(!m_IsRunning, "Interface has already started.");

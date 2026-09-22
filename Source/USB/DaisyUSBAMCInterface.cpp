@@ -1,5 +1,11 @@
 #ifdef ON_HARDWARE
 
+#define ENABLE_USB_AMC_DEBUG
+
+#ifndef DEBUG
+#undef ENABLE_USB_AMC_DEBUG
+#endif
+
 #include "DaisySeedFramework/USB/DaisyUSBAMCInterface.h"
 #include "DaisySeedFramework/DaisyInclude.h"
 #include <DigitalSignalProcessing/Memory.h>
@@ -22,6 +28,10 @@ DaisyUSBAMCInterface::DaisyUSBAMCInterface(DaisyUSBDevice* Device, const Configs
 	m_CurrentInBitDepth(Class.SupportedBitDepths[Class.DefaultBitDepthIndex]),
 	m_CurrentIsOutMuted(false),
 	m_CurrentIsInMuted(false)
+
+#ifdef ENABLE_USB_AMC_DEBUG
+	, m_LastLogTime(0)
+#endif
 {
 	m_ReceiveBuffer = Memory::Allocate<uint8_t>(Configs.MaxReceivePacketSize, true);
 	m_TransmitBuffer = Memory::Allocate<uint8_t>(Configs.MaxTransmitPacketSize, true);
@@ -30,6 +40,26 @@ DaisyUSBAMCInterface::DaisyUSBAMCInterface(DaisyUSBDevice* Device, const Configs
 
 	CalculateStreamingInterfaceIndices(GetConfigs(), Class, m_OutInterfaceIndex, m_InInterfaceIndex);
 }
+
+#ifdef ENABLE_USB_AMC_DEBUG
+void DaisyUSBAMCInterface::Update(void)
+{
+	DaisyUSBInterfaceCommon::Update();
+
+	uint32_t now = HAL_GetTick();
+
+	if (now - m_LastLogTime >= 1000)
+	{
+		m_LastLogTime = now;
+
+		if (m_Class.InputChannelCount != 0)
+			Log::WriteInfo(nullptr, "[Input-%s] URun: %u ORun: %u Iso-Incomp: %u FIFO: %u", m_Class.InputTitle, m_DebugStatsIn.Underrun, m_DebugStatsIn.Overrun, m_DebugStatsIn.IsoIncomplete, m_TransmitFIFO.GetSize());
+
+		if (m_Class.OutputChannelCount != 0)
+			Log::WriteInfo(nullptr, "[Output-%s] URun: %u ORun: %u Iso-Incomp: %u FIFO: %u", m_Class.OutputTitle, m_DebugStatsOut.Underrun, m_DebugStatsOut.Overrun, m_DebugStatsOut.IsoIncomplete, m_ReceiveFIFO.GetSize());
+	}
+}
+#endif
 
 bool DaisyUSBAMCInterface::OnSetupStage(const USBDeviceSetupPacket* Setup)
 {
@@ -248,7 +278,12 @@ void DaisyUSBAMCInterface::OnDataOutStage(void)
 	{
 		EndpointReceive(m_ReceiveBuffer, len);
 
-		m_ReceiveFIFO.Push(m_ReceiveBuffer, len);
+		uint16_t bytesPushed = m_ReceiveFIFO.Push(m_ReceiveBuffer, len);
+
+#ifdef ENABLE_USB_AMC_DEBUG
+		if (bytesPushed < len)
+			m_DebugStatsOut.Overrun++;
+#endif
 	}
 
 	EndpointPrepareReceive(m_ReceiveBuffer, configs.MaxReceivePacketSize);
@@ -261,6 +296,10 @@ void DaisyUSBAMCInterface::OnDataInStage(void)
 
 void DaisyUSBAMCInterface::OnIsoInIncomplete(void)
 {
+#ifdef ENABLE_USB_AMC_DEBUG
+	m_DebugStatsIn.IsoIncomplete++;
+#endif
+
 	EndpointTransmitFlush();
 
 	TransmitBuffer();
@@ -268,6 +307,10 @@ void DaisyUSBAMCInterface::OnIsoInIncomplete(void)
 
 void DaisyUSBAMCInterface::OnIsoOutIncomplete(void)
 {
+#ifdef ENABLE_USB_AMC_DEBUG
+	m_DebugStatsOut.IsoIncomplete++;
+#endif
+
 	const Configs& configs = GetConfigs();
 
 	EndpointReceiveFlush();
@@ -534,7 +577,13 @@ void DaisyUSBAMCInterface::TransmitBuffer(void)
 	uint16_t bytesRead = m_TransmitFIFO.Pop(m_TransmitBuffer, m_CurrentTransmitPacketSize);
 
 	if (bytesRead < m_CurrentTransmitPacketSize)
+	{
+#ifdef ENABLE_USB_AMC_DEBUG
+		m_DebugStatsIn.Underrun++;
+#endif
+
 		Memory::Set(m_TransmitBuffer + bytesRead, 0, m_CurrentTransmitPacketSize - bytesRead);
+	}
 
 	EndpointTransmit(m_TransmitBuffer, m_CurrentTransmitPacketSize);
 }

@@ -344,6 +344,9 @@ void DaisySeedHAL::Update(void)
 
 		pwmPin.State->Object.Write(pwmPin.CurrentValue < pwmPin.TargetValue ? true : false);
 	}
+
+	m_FullSpeedUSB.Update();
+	m_HighSpeedUSB.Update();
 }
 
 uint8_t DaisySeedHAL::GetAnalogPinIndex(uint8_t Pin) const

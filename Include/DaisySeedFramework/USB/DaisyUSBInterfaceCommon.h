@@ -25,6 +25,8 @@ public:
 
 public:
 	DaisyUSBInterfaceCommon(DaisyUSBDevice* Device, const Configs& Configs);
+	virtual void Update(void)
+	{}
 
 	virtual bool OnSetupStage(const USBDeviceSetupPacket* Setup) = 0;
 	virtual void OnSetupCompleted(void) = 0;

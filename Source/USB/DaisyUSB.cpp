@@ -25,6 +25,14 @@ DaisyUSB::DaisyUSB(Peripherals Peripheral)
 	s_Instance[(uint8_t)Peripheral] = this;
 }
 
+void DaisyUSB::Update(void)
+{
+	if (m_Profile.Mode == USBModes::Device)
+		m_Device.Update();
+	else
+		m_Host.Update();
+}
+
 void DaisyUSB::Start(const USBProfile& Profile)
 {
 	ASSERT(!m_IsRunning, "Interface has already started.");

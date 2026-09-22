@@ -45,6 +45,8 @@ private:
 public:
 	DaisyUSBDevice(Peripherals Peripheral);
 
+	void Update(void);
+
 	void Start(const USBDeviceProfile& Profile);
 	void Stop(void);
 

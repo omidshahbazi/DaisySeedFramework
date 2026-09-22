@@ -20,6 +20,8 @@ class DaisyUSBHost : public IUSBHost
 
 public:
 	DaisyUSBHost(Peripherals Peripheral);
+	void Update(void)
+	{}
 
 	void Start(const USBHostProfile& Profile);
 	void Stop(void);

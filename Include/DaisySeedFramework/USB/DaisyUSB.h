@@ -23,6 +23,8 @@ public:
 	~DaisyUSB(void)
 	{}
 
+	void Update(void);
+
 	void Start(const USBProfile& Profile);
 	void Stop(void);
 
