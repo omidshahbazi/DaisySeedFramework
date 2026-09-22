@@ -113,15 +113,15 @@ private:
 	void UpdatePacketSize(void);
 
 public:
-	static void BuildStreamingInterface(EP0Buffer& EP0Buffer, uint16_t& BufferOffset, uint8_t InterfaceIndex, uint8_t ChannelCount, uint8_t Endpoint, uint8_t TerminalLinkID, const AMCClassConfig& Config);
+	static void BuildStreamingInterface(EP0Buffer& EP0Buffer, uint16_t& BufferOffset, uint8_t InterfaceIndex, uint8_t ChannelCount, uint8_t Endpoint, uint8_t TerminalLinkID, const AMCClassConfig& Config, bool AddJitterFrame);
 
 	static void CalculateStreamingInterfaceIndices(const Configs& Configs, const AMCClassConfig& Class, uint8_t& OutInterfaceIndex, uint8_t& InInterfaceIndex);
 	static uint8_t CalculateRequiredInterfaceCount(const AMCClassConfig& Class);
 
-	static uint16_t CalculateMaxPacketSize(uint8_t ChannelCount, const AMCClassConfig& Class);
+	static uint16_t CalculateMaxPacketSize(uint8_t ChannelCount, const AMCClassConfig& Class, bool AddJitterFrame);
 
 private:
-	static uint16_t CalculatePacketSize(uint8_t ChannelCount, uint32_t SampleRate, BitDepths BitDepth);
+	static uint16_t CalculatePacketSize(uint8_t ChannelCount, uint32_t SampleRate, BitDepths BitDepth, bool AddJitterFrame);
 
 private:
 	AMCClassConfig m_Class;

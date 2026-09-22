@@ -1,6 +1,6 @@
 #ifdef ON_HARDWARE
 
-#define ENABLE_USB_AMC_DEBUG
+//#define ENABLE_USB_AMC_DEBUG
 
 #ifndef DEBUG
 #undef ENABLE_USB_AMC_DEBUG
@@ -553,11 +553,11 @@ void DaisyUSBAMCInterface::BuildConfigurationDescriptor(EP0Buffer& EP0Buffer, ui
 
 	// ---------- Output AS Interface ----------
 	if (hasOutput)
-		BuildStreamingInterface(EP0Buffer, BufferOffset, m_OutInterfaceIndex, m_Class.OutputChannelCount, configs.EndpointOut, IT_USB_STREAMING_ID, m_Class);
+		BuildStreamingInterface(EP0Buffer, BufferOffset, m_OutInterfaceIndex, m_Class.OutputChannelCount, configs.EndpointOut, IT_USB_STREAMING_ID, m_Class, false);
 
 	// ---------- Input AS Interface ----------
 	if (hasInput)
-		BuildStreamingInterface(EP0Buffer, BufferOffset, m_InInterfaceIndex, m_Class.InputChannelCount, configs.EndpointIn, OT_USB_STREAMING_ID, m_Class);
+		BuildStreamingInterface(EP0Buffer, BufferOffset, m_InInterfaceIndex, m_Class.InputChannelCount, configs.EndpointIn, OT_USB_STREAMING_ID, m_Class, true);
 }
 
 cstr DaisyUSBAMCInterface::GetDescriptorString(uint8_t StringIndex) const
@@ -574,18 +574,17 @@ void DaisyUSBAMCInterface::TransmitBuffer(void)
 {
 	const Configs& configs = GetConfigs();
 
-	uint16_t bytesRead = m_TransmitFIFO.Pop(m_TransmitBuffer, m_CurrentTransmitPacketSize);
+	const uint8_t bytesPerFrame = m_Class.InputChannelCount * ((uint8_t)m_CurrentInBitDepth / 8);
 
-	if (bytesRead < m_CurrentTransmitPacketSize)
-	{
-#ifdef ENABLE_USB_AMC_DEBUG
-		m_DebugStatsIn.Underrun++;
-#endif
+	uint16_t available = (uint16_t)m_TransmitFIFO.GetSize();
+	uint16_t bytesToPop = available - (available % bytesPerFrame);
 
-		Memory::Set(m_TransmitBuffer + bytesRead, 0, m_CurrentTransmitPacketSize - bytesRead);
-	}
+	bytesToPop = Math::Min(bytesToPop, configs.MaxTransmitPacketSize);
 
-	EndpointTransmit(m_TransmitBuffer, m_CurrentTransmitPacketSize);
+	if (bytesToPop > 0)
+		m_TransmitFIFO.Pop(m_TransmitBuffer, bytesToPop);
+
+	EndpointTransmit(m_TransmitBuffer, bytesToPop);
 }
 
 bool DaisyUSBAMCInterface::IsSampleRateSupported(uint32_t Rate) const
@@ -599,11 +598,11 @@ bool DaisyUSBAMCInterface::IsSampleRateSupported(uint32_t Rate) const
 
 void DaisyUSBAMCInterface::UpdatePacketSize(void)
 {
-	m_CurrentReceivePacketSize = CalculatePacketSize(m_Class.OutputChannelCount, m_CurrentOutSampleRate, m_CurrentOutBitDepth);
-	m_CurrentTransmitPacketSize = CalculatePacketSize(m_Class.InputChannelCount, m_CurrentInSampleRate, m_CurrentInBitDepth);
+	m_CurrentReceivePacketSize = CalculatePacketSize(m_Class.OutputChannelCount, m_CurrentOutSampleRate, m_CurrentOutBitDepth, false);
+	m_CurrentTransmitPacketSize = CalculatePacketSize(m_Class.InputChannelCount, m_CurrentInSampleRate, m_CurrentInBitDepth, true);
 }
 
-void DaisyUSBAMCInterface::BuildStreamingInterface(EP0Buffer& EP0Buffer, uint16_t& BufferOffset, uint8_t InterfaceIndex, uint8_t ChannelCount, uint8_t Endpoint, uint8_t TerminalLinkID, const AMCClassConfig& Config)
+void DaisyUSBAMCInterface::BuildStreamingInterface(EP0Buffer& EP0Buffer, uint16_t& BufferOffset, uint8_t InterfaceIndex, uint8_t ChannelCount, uint8_t Endpoint, uint8_t TerminalLinkID, const AMCClassConfig& Config, bool AddJitterFrame)
 {
 	uint8_t* buffer = EP0Buffer.configDescs;
 
@@ -676,7 +675,7 @@ void DaisyUSBAMCInterface::BuildStreamingInterface(EP0Buffer& EP0Buffer, uint16_
 	ep->bDescriptorType = USBDescTypes::Endpoint;
 	ep->bEndpointAddress = Endpoint;
 	ep->bmAttributes = (uint8_t)(USBEndpointAttributes::Isochronous | EndpointSyncTypes::Async);
-	ep->wMaxPacketSize = CalculateMaxPacketSize(ChannelCount, Config);
+	ep->wMaxPacketSize = CalculateMaxPacketSize(ChannelCount, Config, AddJitterFrame);
 	ep->bInterval = 1;
 	BufferOffset += sizeof(USBEndpointDescriptor);
 
@@ -703,7 +702,7 @@ uint8_t DaisyUSBAMCInterface::CalculateRequiredInterfaceCount(const AMCClassConf
 	return 1 + (Class.OutputChannelCount > 0 ? 1 : 0) + (Class.InputChannelCount > 0 ? 1 : 0);
 }
 
-uint16_t DaisyUSBAMCInterface::CalculateMaxPacketSize(uint8_t ChannelCount, const AMCClassConfig& Class)
+uint16_t DaisyUSBAMCInterface::CalculateMaxPacketSize(uint8_t ChannelCount, const AMCClassConfig& Class, bool AddJitterFrame)
 {
 	if (ChannelCount == 0)
 		return 0;
@@ -722,15 +721,18 @@ uint16_t DaisyUSBAMCInterface::CalculateMaxPacketSize(uint8_t ChannelCount, cons
 			maxSampleRate = Class.SupportedSampleRates[i];
 	}
 
-	return CalculatePacketSize(ChannelCount, maxSampleRate, (BitDepths)maxBitDepth);
+	return CalculatePacketSize(ChannelCount, maxSampleRate, (BitDepths)maxBitDepth, AddJitterFrame);
 }
 
-uint16_t DaisyUSBAMCInterface::CalculatePacketSize(uint8_t ChannelCount, uint32_t SampleRate, BitDepths BitDepth)
+uint16_t DaisyUSBAMCInterface::CalculatePacketSize(uint8_t ChannelCount, uint32_t SampleRate, BitDepths BitDepth, bool AddJitterFrame)
 {
 	uint32_t bytesPerFrame = ChannelCount * ((uint8_t)BitDepth / 8);
 
 	// Formula uses (Rate + 999) / 1000 to safely accommodate fractional frequencies like 44.1kHz.
 	uint32_t bytesPerPacket = bytesPerFrame * ((SampleRate + 999) / 1000);
+
+	if (AddJitterFrame)
+		bytesPerPacket += bytesPerFrame;
 
 	ASSERT(bytesPerPacket <= 1023, "Packet size exceeds Full-Speed isochronous limit");
 

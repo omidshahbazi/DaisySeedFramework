@@ -310,8 +310,8 @@ void DaisyUSBDevice::Start(const USBDeviceProfile& Profile)
 			configs.EndpointIn = (node.AMC.InputChannelCount == 0 ? 0 : TO_IN_ENDPOINT(nextEndpoint));
 			nextEndpoint++;
 
-			configs.MaxReceivePacketSize = DaisyUSBAMCInterface::CalculateMaxPacketSize(node.AMC.OutputChannelCount, node.AMC);
-			configs.MaxTransmitPacketSize = DaisyUSBAMCInterface::CalculateMaxPacketSize(node.AMC.InputChannelCount, node.AMC);
+			configs.MaxReceivePacketSize = DaisyUSBAMCInterface::CalculateMaxPacketSize(node.AMC.OutputChannelCount, node.AMC, false);
+			configs.MaxTransmitPacketSize = DaisyUSBAMCInterface::CalculateMaxPacketSize(node.AMC.InputChannelCount, node.AMC, true);
 
 			DaisyUSBAMCInterface* amc = Memory::Allocate<DaisyUSBAMCInterface>(1, true);
 			new (amc) DaisyUSBAMCInterface(this, configs, node.AMC);
