@@ -13,12 +13,7 @@ public:
 		: m_IsInitialized(false)
 	{}
 
-	bool Initialize(DaisySeedHAL* HAL)
-	{
-		return Initialize(HAL, {}, ForceResetToDefault);
-	}
-
-	bool Initialize(DaisySeedHAL* HAL, const T& DefaultData)
+	bool Initialize(DaisySeedHAL* HAL, const T& DefaultData = {})
 	{
 		ASSERT(!m_IsInitialized, "DaisyPersistentBlob is already initialized");
 
