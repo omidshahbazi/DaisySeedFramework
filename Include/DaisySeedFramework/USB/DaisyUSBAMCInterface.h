@@ -2,8 +2,8 @@
 #ifndef DAISY_USB_AMC_INTERFACE_H
 #define DAISY_USB_AMC_INTERFACE_H
 
-#include "DaisySeedFramework/USB/DaisyUSBInterfaceCommon.h"
-#include "DaisySeedFramework/USB/USBAMCDefinitions.h"
+#include "DaisyUSBInterfaceCommon.h"
+#include "USBAMCDefinitions.h"
 #include "DaisySeedFramework/StaticRingBuffer.h"
 #include <DigitalSignalProcessing/USB/IUSBAMCInterface.h>
 #include <DigitalSignalProcessing/Math.h>
@@ -78,11 +78,11 @@ public:
 		return m_CurrentInVolume;
 	}
 
-	bool GetIsOutMuted(void) const override
+	bool IsOutMuted(void) const override
 	{
 		return m_CurrentIsOutMuted;
 	}
-	bool GetIsInMuted(void) const override
+	bool IsInMuted(void) const override
 	{
 		return m_CurrentIsInMuted;
 	}

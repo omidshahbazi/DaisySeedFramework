@@ -3,8 +3,20 @@
 #define STRING_UTILS_H
 
 #include <DigitalSignalProcessing/DataTypes.h>
+#include <DigitalSignalProcessing/Memory.h>
 
-uint16_t GetStringLength(cstr Value);
+template<typename CharType>
+uint16_t GetStringLength(const CharType* Value)
+{
+	if (Value == nullptr)
+		return 0;
+
+	uint16_t len = 0;
+	while (Value[len] != 0)
+		++len;
+
+	return len;
+}
 
 cstr IntToString(int32_t Value);
 
@@ -28,7 +40,32 @@ cstr GetEnglishNoteName(uint8_t MIDINumber);
 
 cstr GetFrenchNoteName(uint8_t MIDINumber);
 
-bool SetString(cstr Value, str Buffer, uint8_t BufferLength, bool CutOverflow = false);
-bool SetString(cstr Value, uint16_t Length, str Buffer, uint8_t BufferLength, bool CutOverflow = false);
+template<typename CharType>
+bool SetString(const CharType* Value, uint16_t Length, CharType* Buffer, uint8_t BufferLength, bool CutOverflow = false)
+{
+	const uint8_t ActualBufferSize = BufferLength - 1;
+	uint8_t length = GetStringLength(Value);
+
+	if (length > ActualBufferSize)
+		if (CutOverflow)
+			length = ActualBufferSize;
+		else
+			return false;
+
+	if (length != 0)
+		Memory::Copy(Value, Buffer, length);
+
+	Buffer[length] = 0;
+
+	return true;
+}
+
+template<typename CharType>
+bool SetString(const CharType* Value, CharType* Buffer, uint8_t BufferLength, bool CutOverflow = false)
+{
+	uint8_t length = GetStringLength(Value);
+
+	return SetString(Value, length, Buffer, BufferLength, CutOverflow);
+}
 
 #endif

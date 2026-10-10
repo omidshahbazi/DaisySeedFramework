@@ -4,7 +4,7 @@
 #include "DaisySeedFramework/WindowsInclude.h"
 #include <DigitalSignalProcessing/Debug.h>
 #include <DigitalSignalProcessing/Math.h>
-#include <string>
+#include <DaisySeedFramework/StaticString.h>
 
 WindowsUSBCDCInterface::WindowsUSBCDCInterface(void)
 	: m_Config{},
@@ -19,10 +19,13 @@ void WindowsUSBCDCInterface::Start(uint8_t Index, const CDCClassConfig& Config)
 
 	m_Config = Config;
 
-	const std::string name = "WindowsUSBCDCInterface-" + std::to_string(Index);
-	const std::wstring path = L"\\\\.\\pipe\\USB-PIPE-" + std::wstring(name.begin(), name.end());
+	StaticString<128> name = "WindowsUSBCDCInterface-";
+	name += ToString(Index);
 
-	m_Pipe = CreateNamedPipeW(path.c_str(), PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, 1, (uint8_t)m_Config.SendBufferSize, (uint8_t)m_Config.ReceiveBufferSize, 0, nullptr);
+	StaticWString<256> path = L"\\\\.\\pipe\\USB-PIPE-";
+	path += StaticWString<128>(name.GetValue(), name.GetValue() + name.GetLength());
+
+	m_Pipe = CreateNamedPipeW(path.GetValue(), PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, 1, (uint8_t)m_Config.SendBufferSize, (uint8_t)m_Config.ReceiveBufferSize, 0, nullptr);
 
 	ListenForClient();
 }

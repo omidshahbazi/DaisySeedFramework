@@ -2,11 +2,11 @@
 #ifndef DAISY_USB_DEVICE_H
 #define DAISY_USB_DEVICE_H
 
-#include "../Common.h"
-#include "DaisySeedFramework/USB/USBDefinitions.h"
-#include "DaisySeedFramework/USB/DaisyUSBCDCInterface.h"
-#include "DaisySeedFramework/USB/DaisyUSBAMCInterface.h"
-#include "DaisySeedFramework/DaisyInclude.h"
+#include "DaisySeedFramework/Common.h"
+#include "USBDefinitions.h"
+#include "DaisyUSBCDCInterface.h"
+#include "DaisyUSBAMCInterface.h"
+#include "DaisySeedFramework/StaticVector.h"
 #include <DigitalSignalProcessing/USB/IUSBDevice.h>
 #include <DigitalSignalProcessing/Debug.h>
 
@@ -52,7 +52,7 @@ public:
 
 	IUSBInterface* GetInterface(uint8_t Index) override
 	{
-		ASSERT(Index < m_DeviceCount, "Index out of range");
+		ASSERT(Index < m_Devices.GetSize(), "Index out of range");
 
 		const DeviceInstanceInfo& dii = m_Devices[Index];
 
@@ -131,8 +131,7 @@ private:
 
 	BufferTransmitHandler m_EP0TransmitHandler;
 
-	DeviceInstanceInfo m_Devices[MaxClassCount];
-	uint8_t m_DeviceCount;
+	StaticVector<DeviceInstanceInfo, MaxClassCount> m_Devices;
 };
 
 #endif

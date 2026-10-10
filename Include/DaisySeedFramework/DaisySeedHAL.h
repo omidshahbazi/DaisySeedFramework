@@ -3,6 +3,7 @@
 #define DAISY_SEED_HAL_H
 
 #include "Common.h"
+#include "StaticArray.h"
 #include "DaisyInclude.h"
 #include "USB/DaisyUSB.h"
 #include "DaisyFirmware.h"
@@ -164,12 +165,12 @@ private:
 	uint32_t m_SDRAMSize;
 	uint32_t m_LastFreeSDRAMIndex;
 
-	PinState<daisy::AdcChannelConfig> m_AnalogPins[(uint8_t)AnalogPins::COUNT];
+	StaticArray<PinState<daisy::AdcChannelConfig>, (uint8_t)AnalogPins::COUNT> m_AnalogPins;
 	uint8_t m_LastFreeAnalogPinIndex;
 
-	PinState<daisy::GPIO> m_DigitalPins[(uint8_t)GPIOPins::COUNT];
+	StaticArray<PinState<daisy::GPIO>, (uint8_t)GPIOPins::COUNT> m_DigitalPins;
 
-	PWMPinState m_PWMPins[(uint8_t)GPIOPins::COUNT];
+	StaticArray<PWMPinState, (uint8_t)GPIOPins::COUNT> m_PWMPins;
 	uint8_t m_LastFreePWMPinIndex;
 
 	uint8_t m_PWMResolution;

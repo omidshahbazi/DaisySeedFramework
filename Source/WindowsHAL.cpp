@@ -27,6 +27,26 @@ void WindowsHAL::Setup(uint8_t FrameLength, uint32_t SampleRate, bool Boost)
 	Pa_OpenDefaultStream(&stream, 2, 2, paFloat32, SampleRate, FrameLength, (PaStreamCallback*)AudioCallback, this);
 
 	Pa_StartStream(stream);
+
+
+
+
+	int numDevices = Pa_GetDeviceCount();
+	PaDeviceIndex inputDevice = Pa_GetDefaultInputDevice();
+
+	for (int i = 0; i < numDevices; i++)
+	{
+		const PaDeviceInfo* deviceInfo = Pa_GetDeviceInfo(i);
+		printf("Device %d: %s\n", i, deviceInfo->name);
+		if (deviceInfo->maxInputChannels > 0)
+		{
+			if (strstr(deviceInfo->name, "Your-Interface-Name") != NULL)
+			{
+				inputDevice = i;
+				break;
+			}
+		}
+	}
 }
 
 void* WindowsHAL::Allocate(uint32_t Size, bool OnSDRAM)
@@ -54,7 +74,6 @@ uint32_t WindowsHAL::GetTimeSinceStartupMs(void) const
 {
 	return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - m_StartupTime).count();
 }
-
 
 void WindowsHAL::Reset(bool InfiniteTime) const
 {

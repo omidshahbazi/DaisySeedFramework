@@ -94,6 +94,9 @@
     <ClCompile Include="Source\Version.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Barrier.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\DaisySeedFramework\Common.h">
@@ -205,6 +208,15 @@
       <Filter>Include\DaisySeedFramework</Filter>
     </ClInclude>
     <ClInclude Include="Include\DaisySeedFramework\WindowsInclude.h">
+      <Filter>Include\DaisySeedFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\StaticArray.h">
+      <Filter>Include\DaisySeedFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\Factory.h">
+      <Filter>Include\DaisySeedFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\Barrier.h">
       <Filter>Include\DaisySeedFramework</Filter>
     </ClInclude>
   </ItemGroup>

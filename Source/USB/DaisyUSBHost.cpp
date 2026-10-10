@@ -2,7 +2,6 @@
 
 #include "DaisySeedFramework/USB/DaisyUSBHost.h"
 #include "DaisySeedFramework/StringUtils.h"
-#include <DigitalSignalProcessing/Debug.h>
 #include <DigitalSignalProcessing/Math.h>
 #include <DigitalSignalProcessing/Memory.h>
 
@@ -11,8 +10,6 @@ static DaisyUSBHost* s_Instance[(uint8_t)Peripherals::COUNT] = {};
 extern "C"
 {
 }
-
-#define CHECK_CALL(Expr) ASSERT((Expr) == HAL_OK, #Expr);
 
 DaisyUSBHost::DaisyUSBHost(Peripherals Peripheral)
 	: m_Peripheral(Peripheral),

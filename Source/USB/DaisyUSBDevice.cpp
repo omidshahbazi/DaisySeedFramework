@@ -234,20 +234,17 @@ extern "C"
 	}
 }
 
-#define CHECK_CALL(Expr) ASSERT((Expr) == HAL_OK, #Expr);
-
 DaisyUSBDevice::DaisyUSBDevice(Peripherals Peripheral)
 	: m_Peripheral(Peripheral),
 	m_IsRunning(false),
-	m_EP0TransmitHandler((uint16_t)PacketSizes::Max),
-	m_DeviceCount(0)
+	m_EP0TransmitHandler((uint16_t)PacketSizes::Max)
 {
 	s_Instance[(uint8_t)Peripheral] = this;
 }
 
 void DaisyUSBDevice::Update(void)
 {
-	for (uint8_t i = 0; i < m_DeviceCount; ++i)
+	for (uint8_t i = 0; i < m_Devices.GetSize(); ++i)
 		m_Devices[i].Interface->Update();
 }
 
@@ -265,7 +262,9 @@ void DaisyUSBDevice::Start(const USBDeviceProfile& Profile)
 	{
 		const USBClassNode& node = Profile.ClassNodes[i];
 
-		DeviceInstanceInfo& dii = m_Devices[m_DeviceCount++];
+		m_Devices.Extend(1);
+
+		DeviceInstanceInfo& dii = m_Devices.Back();
 		dii.Class = node.Class;
 
 		DaisyUSBInterfaceCommon::Configs configs = {};
@@ -300,7 +299,7 @@ void DaisyUSBDevice::Start(const USBDeviceProfile& Profile)
 			ASSERT(node.AMC.SupportedSampleRateCount != 0, "AMC needs at least one supported sample rate");
 			ASSERT(node.AMC.SupportedBitDepthCount != 0, "AMC needs at least one supported sample rate");
 
-			// LINE1_TODO: Add support for multiple bit depths. For now, we only support one bit depth. (Requires alt setting change)
+			// TODO: Add support for multiple bit depths. For now, we only support one bit depth. (Requires alt setting change)
 			ASSERT(node.AMC.SupportedBitDepthCount == 1, "AMC only supports one bit depth for now");
 
 			configs.InterfaceIndexCount = DaisyUSBAMCInterface::CalculateRequiredInterfaceCount(node.AMC);
@@ -369,14 +368,15 @@ void DaisyUSBDevice::Stop(void)
 {
 	ASSERT(m_IsRunning, "Interface is not started.");
 
-	// LINE1_TODO: Calling this would cause a memory leak, so we don't call it. The memory will be freed when the device is reset.
+	// TODO: Calling this would cause a memory leak, so we don't call it. The memory will be freed when the device is reset.
 
 	CHECK_CALL(HAL_PCD_Stop(&m_DeviceHandle));
 	CHECK_CALL(HAL_PCD_DeInit(&m_DeviceHandle));
 
 	m_EP0TransmitHandler.Reset();
 
-	m_DeviceCount = 0;
+	m_Devices.Clear();
+
 	m_IsRunning = false;
 }
 
@@ -413,7 +413,7 @@ void DaisyUSBDevice::OnSetupStage(void)
 
 		case USB_REQ_SET_CONFIGURATION:
 		{
-			for (uint8_t i = 0; i < m_DeviceCount; ++i)
+			for (uint8_t i = 0; i < m_Devices.GetSize(); ++i)
 				m_Devices[i].Interface->OnSetupCompleted();
 
 			DeviceTransmitAck();
@@ -473,7 +473,7 @@ void DaisyUSBDevice::OnDataOutStage(uint8_t EPNum)
 	if (EPNum == TO_ENDPOINT_NUMBER(USB_EP0_OUT))
 	{
 		//Here the EPNum would be 0 for sure and all of the AMC Command Endpoints are 0 as well
-		for (uint8_t i = 0; i < m_DeviceCount; ++i)
+		for (uint8_t i = 0; i < m_Devices.GetSize(); ++i)
 		{
 			if (m_Devices[i].Class != USBDeviceClasses::AMC)
 				continue;
@@ -500,7 +500,7 @@ void DaisyUSBDevice::OnDataInStage(uint8_t EPNum)
 			DeviceReceiveAck();
 
 		//Here the EPNum would be 0 for sure and all of the AMC Command Endpoints are 0 as well
-		for (uint8_t i = 0; i < m_DeviceCount; ++i)
+		for (uint8_t i = 0; i < m_Devices.GetSize(); ++i)
 		{
 			if (m_Devices[i].Class != USBDeviceClasses::AMC)
 				continue;
@@ -535,7 +535,7 @@ void DaisyUSBDevice::OnIsoInIncomplete(uint8_t EPNum)
 
 void DaisyUSBDevice::OnStartOfFrame(void)
 {
-	for (uint8_t i = 0; i < m_DeviceCount; ++i)
+	for (uint8_t i = 0; i < m_Devices.GetSize(); ++i)
 		m_Devices[i].Interface->OnStartOfFrame();
 }
 
@@ -578,7 +578,7 @@ void DaisyUSBDevice::HandleGetDescriptor(void)
 		else if (descIndex == USB_STRING_INDEX_SERIAL)
 			sendLen = BuildStringDescriptor(ep0Buffer, m_Profile.SerialNumber);
 		else
-			for (uint8_t i = 0; i < m_DeviceCount; ++i)
+			for (uint8_t i = 0; i < m_Devices.GetSize(); ++i)
 			{
 				cstr string = m_Devices[i].Interface->GetDescriptorString(descIndex);
 				if (string == nullptr)
@@ -659,7 +659,7 @@ void DaisyUSBDevice::SetStall(void)
 
 DaisyUSBDevice::DeviceInstanceInfo& DaisyUSBDevice::GetDeviceInstanceByInterfaceIndex(uint8_t InterfaceIndex)
 {
-	for (uint8_t i = 0; i < m_DeviceCount; ++i)
+	for (uint8_t i = 0; i < m_Devices.GetSize(); ++i)
 	{
 		if (!m_Devices[i].Interface->MatchByInterfaceIndex(InterfaceIndex))
 			continue;
@@ -672,7 +672,7 @@ DaisyUSBDevice::DeviceInstanceInfo& DaisyUSBDevice::GetDeviceInstanceByInterface
 
 DaisyUSBDevice::DeviceInstanceInfo& DaisyUSBDevice::GetDeviceInstanceByEndpoint(uint8_t Endpoint)
 {
-	for (uint8_t i = 0; i < m_DeviceCount; ++i)
+	for (uint8_t i = 0; i < m_Devices.GetSize(); ++i)
 	{
 		if (!m_Devices[i].Interface->MatchByEndpoint(Endpoint))
 			continue;

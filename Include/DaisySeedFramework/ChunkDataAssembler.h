@@ -30,7 +30,7 @@ protected:
 	template<typename U>
 	void PushToTransmitBuffer(const U& Data)
 	{
-		m_TransmitBuffer.PushBack(reinterpret_cast<const uint8_t*>(&Data), sizeof(U));
+		m_TransmitBuffer.Push(reinterpret_cast<const uint8_t*>(&Data), sizeof(U));
 	}
 
 	void PushToTransmitBuffer(const uint8_t* Buffer, uint16_t Length)
@@ -38,7 +38,7 @@ protected:
 		ASSERT(Buffer != nullptr, "Buffer cannot be null");
 		ASSERT(Length != 0, "Buffer cannot be null");
 
-		m_TransmitBuffer.PushBack(Buffer, Length);
+		m_TransmitBuffer.Push(Buffer, Length);
 	}
 
 	void Transmit(void)
@@ -54,7 +54,7 @@ protected:
 
 	void StoreReceivedPacket(const uint8_t* Buffer, uint8_t Length)
 	{
-		m_ReceiveBuffer.PushBack(Buffer, Length);
+		m_ReceiveBuffer.Push(Buffer, Length);
 	}
 
 	void HandleReceivedPacket(void)

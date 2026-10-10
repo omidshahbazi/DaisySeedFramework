@@ -2,9 +2,9 @@
 #ifndef DAISY_USB_H
 #define DAISY_USB_H
 
-#include "../Common.h"
-#include "DaisySeedFramework/USB/DaisyUSBDevice.h"
-#include "DaisySeedFramework/USB/DaisyUSBHost.h"
+#include "DaisySeedFramework/Common.h"
+#include "DaisyUSBDevice.h"
+#include "DaisyUSBHost.h"
 #include <DigitalSignalProcessing/USB/IUSB.h>
 
 extern "C"

@@ -310,19 +310,20 @@ daisy::Pin DaisySeedHAL::GetPin(uint8_t Pin)
 
 void DaisySeedHAL::InitializeADC(void)
 {
-	daisy::AdcChannelConfig adcConfigs[(uint8_t)AnalogPins::COUNT];
-	uint8_t index = 0;
-	for (const auto& state : m_AnalogPins)
+	StaticVector<daisy::AdcChannelConfig, (uint8_t)AnalogPins::COUNT> adcConfigs;
+
+	for (uint8_t i = 0; i < m_AnalogPins.GetLength(); ++i)
 	{
+		const auto& state = m_AnalogPins[i];
 		if (!state.Used)
 			continue;
 
-		adcConfigs[index++] = state.Object;
+		adcConfigs.Push(state.Object);
 	}
 
-	if (index != 0)
+	if (adcConfigs.GetSize() != 0)
 	{
-		m_Hardware.adc.Init(adcConfigs, index);
+		m_Hardware.adc.Init(adcConfigs.GetData(), adcConfigs.GetSize());
 		m_Hardware.adc.Start();
 	}
 }
@@ -351,16 +352,13 @@ void DaisySeedHAL::Update(void)
 
 uint8_t DaisySeedHAL::GetAnalogPinIndex(uint8_t Pin) const
 {
-	uint8_t index = 0;
-	for (auto& state : m_AnalogPins)
+	for (uint8_t i = 0; i < m_AnalogPins.GetLength(); ++i)
 	{
+		const auto& state = m_AnalogPins[i];
 		if (state.Pin != Pin)
-		{
-			++index;
 			continue;
-		}
 
-		return index;
+		return i;
 	}
 
 	BREAK("Couldn't find the state for pin %i", Pin);
@@ -368,8 +366,9 @@ uint8_t DaisySeedHAL::GetAnalogPinIndex(uint8_t Pin) const
 
 DaisySeedHAL::PinState<daisy::AdcChannelConfig>* DaisySeedHAL::FindAnalogPin(uint8_t Pin)
 {
-	for (auto& state : m_AnalogPins)
+	for (uint8_t i = 0; i < m_AnalogPins.GetLength(); ++i)
 	{
+		auto& state = m_AnalogPins[i];
 		if (state.Pin != Pin)
 			continue;
 
@@ -381,8 +380,9 @@ DaisySeedHAL::PinState<daisy::AdcChannelConfig>* DaisySeedHAL::FindAnalogPin(uin
 
 const DaisySeedHAL::PinState<daisy::AdcChannelConfig>* DaisySeedHAL::FindAnalogPin(uint8_t Pin) const
 {
-	for (auto& state : m_AnalogPins)
+	for (uint8_t i = 0; i < m_AnalogPins.GetLength(); ++i)
 	{
+		const auto& state = m_AnalogPins[i];
 		if (state.Pin != Pin)
 			continue;
 
@@ -422,8 +422,9 @@ uint8_t DaisySeedHAL::GetDigitalPinIndex(uint8_t Pin) const
 
 DaisySeedHAL::PWMPinState* DaisySeedHAL::FindOrGetPWMPin(uint8_t Pin)
 {
-	for (auto& state : m_PWMPins)
+	for (uint8_t i = 0; i < m_PWMPins.GetLength(); ++i)
 	{
+		auto& state = m_PWMPins[i];
 		if (state.State == nullptr || state.State->Pin != Pin)
 			continue;
 

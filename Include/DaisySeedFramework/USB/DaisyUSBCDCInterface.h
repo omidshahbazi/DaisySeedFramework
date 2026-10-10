@@ -2,8 +2,8 @@
 #ifndef DAISY_USB_CDC_INTERFACE_H
 #define DAISY_USB_CDC_INTERFACE_H
 
-#include "DaisySeedFramework/USB/DaisyUSBInterfaceCommon.h"
-#include "DaisySeedFramework/USB/USBCDCDefinitions.h"
+#include "DaisyUSBInterfaceCommon.h"
+#include "USBCDCDefinitions.h"
 #include <DigitalSignalProcessing/USB/IUSBCDCInterface.h>
 
 class DaisyUSBCDCInterface : public IUSBCDCInterface, public DaisyUSBInterfaceCommon

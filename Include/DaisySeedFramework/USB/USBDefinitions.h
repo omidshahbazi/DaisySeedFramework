@@ -2,8 +2,10 @@
 #ifndef USB_DEFINITIONS_H
 #define USB_DEFINITIONS_H
 
+#include "DaisySeedFramework/DaisyInclude.h"
 #include <DigitalSignalProcessing/DataTypes.h>
 #include <DigitalSignalProcessing/Common.h>
+#include <DigitalSignalProcessing/Debug.h>
 
 // bmRequestType field layout: D6..5 select the request type, D4..0 select
 // the recipient. USB_REQ_TYPE_MASK isolates the type bits; the request
@@ -340,5 +342,11 @@ enum class Peripherals
 
 	COUNT
 };
+
+#define CHECK_CALL(Expr) \
+	{ \
+		HAL_StatusTypeDef result = Expr; \
+		ASSERT(result == HAL_OK, #Expr); \
+	}
 
 #endif

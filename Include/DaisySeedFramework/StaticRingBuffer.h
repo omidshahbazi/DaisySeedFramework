@@ -20,6 +20,8 @@ public:
 		m_Count(0)
 	{}
 
+	RingBuffer(const RingBuffer&) = delete;
+
 	bool Push(const T& Value)
 	{
 		if (m_Count >= m_Capacity)
@@ -140,6 +142,29 @@ public:
 		return m_Count == m_Capacity;
 	}
 
+	RingBuffer& operator=(const RingBuffer& Other)
+	{
+		Clear();
+
+		Push(Other.m_Buffer, Other.m_Count);
+
+		return *this;
+	}
+
+	T& operator[](uint16_t Index)
+	{
+		ASSERT(Index < m_Capacity, "Out of Size");
+
+		return m_Buffer[Index];
+	}
+
+	const T& operator[](uint16_t Index) const
+	{
+		ASSERT(Index < m_Capacity, "Out of Size");
+
+		return m_Buffer[Index];
+	}
+
 private:
 	T* m_Buffer;
 	uint16_t m_Capacity;
@@ -155,6 +180,16 @@ public:
 	StaticRingBuffer(void)
 		: RingBuffer<T, AllowOverwrite>(m_Buffer, MaxSize)
 	{}
+
+	template<uint16_t OtherMaxSize>
+	StaticRingBuffer(const StaticRingBuffer<T, OtherMaxSize>&Other)
+	{
+		static_assert(OtherMaxSize <= MaxSize, "OtherMaxSize must be less than or equal to MaxSize");
+
+		this->Clear();
+
+		this->Push(Other.m_Buffer, Other.GetSize());
+	}
 
 private:
 	T m_Buffer[MaxSize];

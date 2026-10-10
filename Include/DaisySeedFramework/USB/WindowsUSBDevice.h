@@ -3,6 +3,7 @@
 #define WINDOWS_USB_DEVICE_H
 
 #include "WindowsUSBCDCInterface.h"
+#include "DaisySeedFramework/StaticVector.h"
 #include <DigitalSignalProcessing/USB/IUSBDevice.h>
 #include <DigitalSignalProcessing/Debug.h>
 
@@ -17,14 +18,11 @@ public:
 
 	IUSBInterface* GetInterface(uint8_t Index) override
 	{
-		ASSERT(Index < m_DeviceCount, "Invalid interface index %i", Index);
-
 		return &m_Interfaces[Index];
 	}
 
 private:
-	WindowsUSBCDCInterface m_Interfaces[MaxClassCount];
-	uint8_t m_DeviceCount;
+	StaticVector<WindowsUSBCDCInterface, MaxClassCount> m_Interfaces;
 };
 
 #endif

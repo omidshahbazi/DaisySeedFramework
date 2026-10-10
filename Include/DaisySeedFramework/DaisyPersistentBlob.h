@@ -11,10 +11,14 @@ class DaisyPersistentBlob
 public:
 	DaisyPersistentBlob(void)
 		: m_IsInitialized(false)
+	{}
+
+	bool Initialize(DaisySeedHAL* HAL)
 	{
+		return Initialize(HAL, {}, ForceResetToDefault);
 	}
 
-	bool Initialize(DaisySeedHAL *HAL, const T &DefaultData = {})
+	bool Initialize(DaisySeedHAL* HAL, const T& DefaultData)
 	{
 		ASSERT(!m_IsInitialized, "DaisyPersistentBlob is already initialized");
 
@@ -49,21 +53,21 @@ public:
 		m_Storage.RestoreDefaults(false);
 	}
 
-	void Set(const T &Object)
+	void Set(const T& Object)
 	{
 		ASSERT(m_IsInitialized, "DaisyPersistentBlob is not initialized");
 
 		m_Storage.GetSettings().Data = Object;
 	}
 
-	T &Get(void)
+	T& Get(void)
 	{
 		ASSERT(m_IsInitialized, "DaisyPersistentBlob is not initialized");
 
 		return m_Storage.GetSettings().Data;
 	}
 
-	const T &Get(void) const
+	const T& Get(void) const
 	{
 		ASSERT(m_IsInitialized, "DaisyPersistentBlob is not initialized");
 

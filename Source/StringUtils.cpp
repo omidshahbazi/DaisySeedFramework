@@ -4,18 +4,6 @@
 #include <DigitalSignalProcessing/Memory.h>
 #include <stdio.h>
 
-uint16_t GetStringLength(cstr Value)
-{
-	if (Value == nullptr)
-		return 0;
-
-	uint16_t len = 0;
-	while (Value[len] != '\0')
-		++len;
-
-	return len;
-}
-
 cstr IntToString(int32_t Value)
 {
 	static char buffer[8];
@@ -98,30 +86,4 @@ cstr GetEnglishNoteName(uint8_t MIDINumber)
 cstr GetFrenchNoteName(uint8_t MIDINumber)
 {
 	return FrenchNoteNames[Math::Moderate(MIDINumber, TotalNoteCount)];
-}
-
-bool SetString(cstr Value, str Buffer, uint8_t BufferLength, bool CutOverflow)
-{
-	uint8_t length = GetStringLength(Value);
-
-	return SetString(Value, length, Buffer, BufferLength, CutOverflow);
-}
-
-bool SetString(cstr Value, uint16_t Length, str Buffer, uint8_t BufferLength, bool CutOverflow)
-{
-	const uint8_t ActualBufferSize = BufferLength - 1;
-	uint8_t length = GetStringLength(Value);
-
-	if (length > ActualBufferSize)
-		if (CutOverflow)
-			length = ActualBufferSize;
-		else
-			return false;
-
-	if (length != 0)
-		Memory::Copy(Value, Buffer, length);
-
-	Buffer[length] = '\0';
-
-	return true;
 }

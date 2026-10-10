@@ -2,7 +2,7 @@
 #ifndef DAISY_USB_INTERFACE_COMMON_H
 #define DAISY_USB_INTERFACE_COMMON_H
 
-#include "DaisySeedFramework/USB/USBDefinitions.h"
+#include "USBDefinitions.h"
 #include <DigitalSignalProcessing/USB/USBProfile.h>
 #include <DigitalSignalProcessing/Debug.h>
 
@@ -70,7 +70,6 @@ protected:
 	template<typename T, typename ControlType>
 	void SetPendingReceive(ControlType Type)
 	{
-		//ASSERT(m_PendingReceiveType == 0, "No pending receive");
 		ASSERT(sizeof(T) <= sizeof(m_PendingReceiveBuffer), "Pending receive buffer too small");
 
 		m_PendingReceiveType = (uint8_t)Type;

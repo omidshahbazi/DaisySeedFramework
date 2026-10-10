@@ -2,13 +2,12 @@
 #ifndef DAISY_USB_HOST_H
 #define DAISY_USB_HOST_H
 
-#include "../Common.h"
-#include "DaisySeedFramework/USB/USBDefinitions.h"
-#include "DaisySeedFramework/DaisyInclude.h"
+#include "DaisySeedFramework/Common.h"
+#include "USBDefinitions.h"
 #include <DigitalSignalProcessing/USB/IUSBHost.h>
 #include <DigitalSignalProcessing/USB/USBProfile.h>
 
-// LINE1_TODO: Implement Host class for USB Host functionality. This will involve handling USB host events, managing connected devices, and providing an interface for higher-level applications to interact with USB device
+// TODO: Implement Host class for USB Host functionality. This will involve handling USB host events, managing connected devices, and providing an interface for higher-level applications to interact with USB device
 
 extern "C"
 {

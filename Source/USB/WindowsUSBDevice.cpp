@@ -3,8 +3,7 @@
 #include "DaisySeedFramework/USB/WindowsUSBDevice.h"
 
 WindowsUSBDevice::WindowsUSBDevice(void)
-	: m_Interfaces{},
-	m_DeviceCount(0)
+	: m_Interfaces{}
 {}
 
 void WindowsUSBDevice::Start(uint8_t Index, const USBDeviceProfile& Profile)
@@ -15,29 +14,34 @@ void WindowsUSBDevice::Start(uint8_t Index, const USBDeviceProfile& Profile)
 		switch (node.Class)
 		{
 		case USBDeviceClasses::CDC:
-			new (&m_Interfaces[m_DeviceCount]) WindowsUSBCDCInterface;
-			m_Interfaces[m_DeviceCount].Start(m_DeviceCount, node.CDC);
+		{
+			m_Interfaces.Extend(1);
+			uint8_t index = m_Interfaces.GetSize() - 1;
+
+			WindowsUSBCDCInterface& ref = m_Interfaces[index];
+			new (&ref) WindowsUSBCDCInterface;
+			ref.Start(index, node.CDC);
+
 			break;
+		}
 
 		default:
 			NOT_IMPLEMENTED();
 		}
-
-		m_DeviceCount++;
 	}
 }
 
 void WindowsUSBDevice::Stop(void)
 {
-	for (uint8_t i = 0; i < m_DeviceCount; ++i)
+	for (uint8_t i = 0; i < m_Interfaces.GetSize(); ++i)
 		m_Interfaces[i].Stop();
 
-	m_DeviceCount = 0;
+	m_Interfaces.Clear();
 }
 
 void WindowsUSBDevice::Update(void)
 {
-	for (uint8_t i = 0; i < m_DeviceCount; ++i)
+	for (uint8_t i = 0; i < m_Interfaces.GetSize(); ++i)
 		m_Interfaces[i].Update();
 }
 

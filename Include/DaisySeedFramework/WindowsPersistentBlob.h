@@ -19,6 +19,8 @@ public:
 	{
 		ASSERT(!m_IsInitialized, "WindowsPersistentBlob is already initialized");
 
+		m_DefaultData = DefaultData;
+
 		m_FilePath = std::filesystem::current_path() / "Persistent";
 
 		if (!std::filesystem::exists(m_FilePath))
@@ -28,6 +30,7 @@ public:
 		m_IsInitialized = true;
 
 		std::ifstream file(m_FilePath, std::ios::binary | std::ios::ate);
+		file.seekg(0, std::ios::beg);
 		if (file.is_open())
 		{
 			file.read(reinterpret_cast<char*>(&m_Data), sizeof(PersistentBlobData<T>));
@@ -35,7 +38,7 @@ public:
 		}
 		else
 		{
-			m_Data.Data = DefaultData;
+			m_Data.Data = m_DefaultData;
 
 			FlushToFile();
 
@@ -64,6 +67,8 @@ public:
 		ASSERT(m_IsInitialized, "WindowsPersistentBlob is not initialized");
 
 		std::filesystem::remove(m_FilePath);
+
+		m_Data.Data = m_DefaultData;
 	}
 
 	void Set(const T& Object)
@@ -102,6 +107,7 @@ private:
 	std::filesystem::path m_FilePath;
 	bool m_IsInitialized;
 	PersistentBlobData<T> m_Data;
+	T m_DefaultData;
 };
 
 #endif

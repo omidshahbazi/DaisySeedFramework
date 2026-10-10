@@ -147,3 +147,10 @@ static_assert(QSPI_USER_DATA_START_ADDRESS >= QSPI_BOOTLOADER_RESERVED_SIZE, "In
 
 #define BYTES_TO_WORDS(SizeInBytes) (((SizeInBytes) + 1) / sizeof(uint32_t))
 #define BYTES_TO_DWORDS(SizeInBytes) (((SizeInBytes) + 3) / sizeof(uint32_t))
+
+#ifdef ON_WINDOWS
+#include <atomic>
+#define MEMORY_BARRIER() std::atomic_thread_fence(std::memory_order_seq_cst)
+#else
+#define MEMORY_BARRIER() __asm volatile ("dmb 0xF":::"memory")
+#endif

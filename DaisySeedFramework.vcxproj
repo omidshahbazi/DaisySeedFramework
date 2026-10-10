@@ -111,6 +111,7 @@
     <None Include="stm32.xml" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source\Barrier.cpp" />
     <ClCompile Include="Source\DaisyFirmware.cpp" />
     <ClCompile Include="Source\DaisySeedHAL.cpp" />
     <ClCompile Include="Source\ILI9341_HAL.cpp" />
@@ -131,12 +132,14 @@
     <ClCompile Include="Source\WindowsHAL.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Include\DaisySeedFramework\Barrier.h" />
     <ClInclude Include="Include\DaisySeedFramework\Bitmap.h" />
     <ClInclude Include="Include\DaisySeedFramework\Common.h" />
     <ClInclude Include="Include\DaisySeedFramework\DaisyFirmware.h" />
     <ClInclude Include="Include\DaisySeedFramework\DaisyInclude.h" />
     <ClInclude Include="Include\DaisySeedFramework\DaisyPersistentBlob.h" />
     <ClInclude Include="Include\DaisySeedFramework\DaisySeedHAL.h" />
+    <ClInclude Include="Include\DaisySeedFramework\Factory.h" />
     <ClInclude Include="Include\DaisySeedFramework\Font.h" />
     <ClInclude Include="Include\DaisySeedFramework\ILI9341_HAL.h" />
     <ClInclude Include="Include\DaisySeedFramework\I_LCD_HAL.h" />
@@ -145,6 +148,7 @@
     <ClInclude Include="Include\DaisySeedFramework\Point.h" />
     <ClInclude Include="Include\DaisySeedFramework\Rect.h" />
     <ClInclude Include="Include\DaisySeedFramework\SDL_HAL.h" />
+    <ClInclude Include="Include\DaisySeedFramework\StaticArray.h" />
     <ClInclude Include="Include\DaisySeedFramework\StaticRingBuffer.h" />
     <ClInclude Include="Include\DaisySeedFramework\StaticStack.h" />
     <ClInclude Include="Include\DaisySeedFramework\StaticString.h" />

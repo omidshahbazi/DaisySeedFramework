@@ -18,20 +18,36 @@ public:
 		m_Count(0)
 	{}
 
-	void PushBack(const T& Value)
+	Vector(const Vector&) = delete;
+
+	void Extend(uint16_t Count)
+	{
+		ASSERT(m_Count + Count <= m_Capacity, "Out of Size");
+
+		m_Count += Count;
+	}
+
+	T& Push(const T& Value)
 	{
 		ASSERT(m_Count < m_Capacity, "Out of Size");
 
 		m_Buffer[m_Count++] = Value;
+
+		return m_Buffer[m_Count - 1];
 	}
 
-	void PushBack(const T* const Value, uint16_t Count)
+	void Push(const T* const Value, uint16_t Count)
 	{
 		for (uint16_t i = 0; i < Count; ++i)
-			PushBack(Value[i]);
+			Push(Value[i]);
 	}
 
-	void Insert(uint16_t Index, const T& Value)
+	void Push(const Vector<T>& Value)
+	{
+		Push(Value.GetData(), Value.GetSize());
+	}
+
+	T& Insert(uint16_t Index, const T& Value)
 	{
 		ASSERT(m_Count < m_Capacity, "Out of Size");
 		ASSERT(Index <= m_Count, "Index Out of Range");
@@ -41,6 +57,8 @@ public:
 
 		m_Buffer[Index] = Value;
 		++m_Count;
+
+		return m_Buffer[Index];
 	}
 
 	void Insert(uint16_t Index, const T* const Value, uint16_t Count)
@@ -57,7 +75,12 @@ public:
 		m_Count += Count;
 	}
 
-	void PopBack()
+	void Insert(uint16_t Index, const Vector<T>& Value)
+	{
+		Insert(Index, Value.GetData(), Value.GetSize());
+	}
+
+	void Pop(void)
 	{
 		ASSERT(0 < m_Count, "Out of Size");
 
@@ -121,10 +144,42 @@ public:
 		for (uint16_t i = 0; i < m_Count; ++i)
 		{
 			m_Buffer[i].~T();
-			m_Buffer[i] = {};
+
+			if constexpr (is_trivially_copyable_v<T>)
+				m_Buffer[i] = {};
 		}
 
 		m_Count = 0;
+	}
+
+	int16_t IndexOf(const T& Value, uint16_t StartIndex = 0) const
+	{
+		for (uint16_t i = StartIndex; i < m_Count; ++i)
+			if (m_Buffer[i] == Value)
+				return i;
+
+		return -1;
+	}
+
+	template <typename Predicate_t>
+	int16_t IndexOf(Predicate_t Predicate, uint16_t StartIndex = 0) const
+	{
+		for (uint16_t i = StartIndex; i < m_Count; ++i)
+			if (Predicate(m_Buffer[i]))
+				return i;
+
+		return -1;
+	}
+
+	bool Contains(const T& Value) const
+	{
+		return (IndexOf(Value) != -1);
+	}
+
+	template <typename Predicate_t>
+	bool Contains(Predicate_t Predicate) const
+	{
+		return (IndexOf(Predicate) != -1);
 	}
 
 	T* GetData(void)
@@ -157,15 +212,26 @@ public:
 		return m_Count == 0;
 	}
 
+	Vector& operator=(const Vector& Other)
+	{
+		Clear();
+
+		Push(Other.m_Buffer, Other.m_Count);
+
+		return *this;
+	}
+
 	T& operator[](uint16_t Index)
 	{
-		ASSERT(Index < m_Count, "Index Out of Range");
+		ASSERT(Index < m_Count, "Index [%u] must be less than Count [%u]", Index, m_Count);
+
 		return m_Buffer[Index];
 	}
 
 	const T& operator[](uint16_t Index) const
 	{
-		ASSERT(Index < m_Count, "Index Out of Range");
+		ASSERT(Index < m_Count, "Index [%u] must be less than Count [%u]", Index, m_Count);
+
 		return m_Buffer[Index];
 	}
 
@@ -181,6 +247,16 @@ struct StaticVector : public Vector<T>
 public:
 	StaticVector(void) : Vector<T>(m_Buffer, MaxSize)
 	{}
+
+	template<uint16_t OtherMaxSize>
+	StaticVector(const StaticVector<T, OtherMaxSize>& Other)
+	{
+		static_assert(OtherMaxSize <= MaxSize, "OtherMaxSize must be less than or equal to MaxSize");
+
+		this->Clear();
+
+		this->Push(Other.m_Buffer, Other.GetSize());
+	}
 
 private:
 	T m_Buffer[MaxSize];
