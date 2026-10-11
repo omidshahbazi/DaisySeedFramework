@@ -6,9 +6,15 @@
 #include <DigitalSignalProcessing/DataTypes.h>
 #include <DigitalSignalProcessing/Memory.h>
 
-template<typename CharType, uint16_t MaxSize, uint16_t Capacity = MaxSize>
+template<typename CharType, uint16_t MaxCapacity, uint16_t Capacity = MaxCapacity>
 struct BasicStaticString
 {
+	static_assert(Capacity <= MaxCapacity, "Capacity cannot be more than MaxCapacity");
+
+public:
+	static constexpr uint16_t MaxCapacity = MaxCapacity;
+	static constexpr uint16_t Capacity = Capacity;
+
 public:
 	typedef CharType* CharPointer;
 	typedef const CharType* ConstCharPointer;
@@ -20,8 +26,8 @@ public:
 		Set(Value);
 	}
 
-	template<uint16_t OtherMaxSize, uint16_t OtherCapacity>
-	BasicStaticString(const BasicStaticString<CharType, OtherMaxSize, OtherCapacity>& Value)
+	template<uint16_t OtherMaxCapacity, uint16_t OtherCapacity>
+	BasicStaticString(const BasicStaticString<CharType, OtherMaxCapacity, OtherCapacity>& Value)
 	{
 		static_assert(OtherCapacity <= Capacity, "OtherCapacity must be less than or equal to Capacity");
 
@@ -126,8 +132,8 @@ public:
 		return *this;
 	}
 
-	template<uint16_t OtherMaxSize, uint16_t OtherCapacity>
-	BasicStaticString& operator+(const BasicStaticString<CharType, OtherMaxSize, OtherCapacity>& Value)
+	template<uint16_t OtherMaxCapacity, uint16_t OtherCapacity>
+	BasicStaticString& operator+(const BasicStaticString<CharType, OtherMaxCapacity, OtherCapacity>& Value)
 	{
 		Append(Value.GetValue());
 
@@ -148,8 +154,8 @@ public:
 		return *this;
 	}
 
-	template<uint16_t OtherMaxSize, uint16_t OtherCapacity>
-	BasicStaticString& operator=(const BasicStaticString<CharType, OtherMaxSize, OtherCapacity>& Value)
+	template<uint16_t OtherMaxCapacity, uint16_t OtherCapacity>
+	BasicStaticString& operator=(const BasicStaticString<CharType, OtherMaxCapacity, OtherCapacity>& Value)
 	{
 		Set(Value.GetValue());
 
@@ -170,8 +176,8 @@ public:
 		return *this;
 	}
 
-	template<uint16_t OtherMaxSize, uint16_t OtherCapacity>
-	BasicStaticString& operator+=(const BasicStaticString<CharType, OtherMaxSize, OtherCapacity>& Value)
+	template<uint16_t OtherMaxCapacity, uint16_t OtherCapacity>
+	BasicStaticString& operator+=(const BasicStaticString<CharType, OtherMaxCapacity, OtherCapacity>& Value)
 	{
 		Append(Value.GetValue());
 
@@ -189,13 +195,13 @@ public:
 	}
 
 private:
-	CharType m_Buffer[MaxSize];
+	CharType m_Buffer[MaxCapacity];
 };
 
-template<uint16_t MaxSize, uint16_t Capacity = MaxSize>
-using StaticString = BasicStaticString<char, MaxSize, Capacity>;
+template<uint16_t MaxCapacity, uint16_t Capacity = MaxCapacity>
+using StaticString = BasicStaticString<char, MaxCapacity, Capacity>;
 
-template<uint16_t MaxSize, uint16_t Capacity = MaxSize>
-using StaticWString = BasicStaticString<wchar_t, MaxSize, Capacity>;
+template<uint16_t MaxCapacity, uint16_t Capacity = MaxCapacity>
+using StaticWString = BasicStaticString<wchar_t, MaxCapacity, Capacity>;
 
 #endif

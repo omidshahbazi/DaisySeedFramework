@@ -63,6 +63,13 @@ enum class AnalogPins
 #define RESET_HANDLER_POINTER_SIZE PointerSize
 #define ENTRY_POINT_SIZE STACK_POINTER_SIZE + RESET_HANDLER_POINTER_SIZE
 
+#define GET_VPTR(Type) \
+	[](void) \
+	{ \
+		Type type; \
+		return *reinterpret_cast<void**>(&type); \
+	}()
+
 #define SRAM_TOTAL_SIZE (480 KB)
 #define SDRAM_TOTAL_SIZE (64 MB)
 
