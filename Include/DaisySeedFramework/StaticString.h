@@ -12,8 +12,8 @@ struct BasicStaticString
 	static_assert(Capacity <= MaxCapacity, "Capacity cannot be more than MaxCapacity");
 
 public:
-	static constexpr uint16_t MaxCapacity = MaxCapacity;
-	static constexpr uint16_t Capacity = Capacity;
+	static constexpr uint16_t MaxCapacityValue = MaxCapacity;
+	static constexpr uint16_t CapacityValue = Capacity;
 
 public:
 	typedef CharType* CharPointer;

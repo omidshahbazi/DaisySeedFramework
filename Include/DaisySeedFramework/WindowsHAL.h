@@ -20,6 +20,12 @@ public:
 public:
 	WindowsHAL(void* SDRAMAddress = nullptr, uint32_t SDRAMSize = 0);
 
+	void SetPreferredInterfaceNames(cstr InputInterface, cstr OutputInterface)
+	{
+		m_PreferredInputInterface = InputInterface;
+		m_PreferredOutputInterface = OutputInterface;
+	}
+
 	void Setup(uint8_t FrameLength, uint32_t SampleRate, bool Boost) override;
 
 	void StartAudio(AudioPassthrough Callback) override
@@ -135,6 +141,12 @@ private:
 
 private:
 	std::chrono::steady_clock::time_point m_StartupTime;
+
+	cstr m_PreferredInputInterface;
+	cstr m_PreferredOutputInterface;
+
+	uint8_t m_InputChannelCount;
+	uint8_t m_OutputChannelCount;
 
 	WindowsUSB m_USB;
 	WindowsFirmware m_Firmware;

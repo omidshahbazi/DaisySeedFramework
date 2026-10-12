@@ -2,6 +2,7 @@
 
 #include "DaisySeedFramework/WindowsHAL.h"
 #include "DaisySeedFramework/WindowsInclude.h"
+#include "DaisySeedFramework/StaticString.h"
 #include <DigitalSignalProcessing/Math.h>
 #include <DigitalSignalProcessing/Debug.h>
 #include <DigitalSignalProcessing/Memory.h>
@@ -9,8 +10,54 @@
 
 #pragma comment(lib, "portaudio.lib")
 
+#define CHECK_CALL(Expr) \
+	{ \
+		PaError error = Expr; \
+		ASSERT(error == paNoError, #Expr " call failed with error %s", Pa_GetErrorText(error)); \
+	}
+
+void GetStreamParameters(cstr PreferredInputInterfaceName, cstr PreferredOutputInterfaceName, PaStreamParameters& Input, PaStreamParameters& Output)
+{
+	PaDeviceIndex inputDevice = Pa_GetDefaultInputDevice();
+	PaDeviceIndex outputDevice = Pa_GetDefaultOutputDevice();
+
+	PaDeviceIndex numDevices = Pa_GetDeviceCount();
+	for (PaDeviceIndex i = 0; i < numDevices; i++)
+	{
+		const PaDeviceInfo* deviceInfo = Pa_GetDeviceInfo(i);
+		const PaHostApiInfo* hostApiInfo = Pa_GetHostApiInfo(deviceInfo->hostApi);
+
+		if (hostApiInfo->type != PaHostApiTypeId::paWASAPI)
+			continue;
+
+		if (PreferredInputInterfaceName != nullptr && deviceInfo->maxInputChannels != 0 && strstr(deviceInfo->name, PreferredInputInterfaceName) != nullptr)
+			inputDevice = i;
+
+		if (PreferredOutputInterfaceName != nullptr && deviceInfo->maxOutputChannels != 0 && strstr(deviceInfo->name, PreferredOutputInterfaceName) != nullptr)
+			outputDevice = i;
+	}
+
+	const PaDeviceInfo* inputDeviceInfo = Pa_GetDeviceInfo(inputDevice);
+	Input = {};
+	Input.device = inputDevice;
+	Input.channelCount = inputDeviceInfo->maxInputChannels;
+	Input.sampleFormat = paFloat32;
+	Input.suggestedLatency = inputDeviceInfo->defaultLowInputLatency;
+
+	const PaDeviceInfo* outputDeviceInfo = Pa_GetDeviceInfo(outputDevice);
+	Output = {};
+	Output.device = outputDevice;
+	Output.channelCount = outputDeviceInfo->maxOutputChannels;
+	Output.sampleFormat = paFloat32;
+	Output.suggestedLatency = outputDeviceInfo->defaultLowOutputLatency;
+}
+
 WindowsHAL::WindowsHAL(void* SDRAMAddress, uint32_t SDRAMSize)
-	: m_Firmware(this),
+	: m_PreferredInputInterface(nullptr),
+	m_PreferredOutputInterface(nullptr),
+	m_InputChannelCount(0),
+	m_OutputChannelCount(0),
+	m_Firmware(this),
 	m_Allocator(SDRAMAddress, SDRAMSize),
 	m_AudioCallback(nullptr)
 {
@@ -21,32 +68,19 @@ void WindowsHAL::Setup(uint8_t FrameLength, uint32_t SampleRate, bool Boost)
 {
 	ASSERT(FrameLength != 0, "Invalid FrameLength %i", FrameLength);
 
-	Pa_Initialize();
+	CHECK_CALL(Pa_Initialize());
+
+	PaStreamParameters input;
+	PaStreamParameters output;
+	GetStreamParameters(m_PreferredInputInterface, m_PreferredOutputInterface, input, output);
+
+	m_InputChannelCount = input.channelCount;
+	m_OutputChannelCount = output.channelCount;
 
 	PaStream* stream;
-	Pa_OpenDefaultStream(&stream, 2, 2, paFloat32, SampleRate, FrameLength, (PaStreamCallback*)AudioCallback, this);
+	CHECK_CALL(Pa_OpenStream(&stream, &input, &output, SampleRate, FrameLength, paNoFlag, (PaStreamCallback*)AudioCallback, this));
 
-	Pa_StartStream(stream);
-
-
-
-
-	int numDevices = Pa_GetDeviceCount();
-	PaDeviceIndex inputDevice = Pa_GetDefaultInputDevice();
-
-	for (int i = 0; i < numDevices; i++)
-	{
-		const PaDeviceInfo* deviceInfo = Pa_GetDeviceInfo(i);
-		printf("Device %d: %s\n", i, deviceInfo->name);
-		if (deviceInfo->maxInputChannels > 0)
-		{
-			if (strstr(deviceInfo->name, "Your-Interface-Name") != NULL)
-			{
-				inputDevice = i;
-				break;
-			}
-		}
-	}
+	CHECK_CALL(Pa_StartStream(stream));
 }
 
 void* WindowsHAL::Allocate(uint32_t Size, bool OnSDRAM)
@@ -92,30 +126,30 @@ void WindowsHAL::Update(void)
 
 int32_t WindowsHAL::AudioCallback(const void* InputBuffer, void* OutputBuffer, uint32_t FramesPerBuffer, const PaStreamCallbackTimeInfo* TimeInfo, uint32_t StatusFlags, void* UserData)
 {
-	float* in = (float*)InputBuffer;
-	float* out = (float*)OutputBuffer;
+	static WindowsHAL* hal = reinterpret_cast<WindowsHAL*>(UserData);
 
-	if (InputBuffer == nullptr)
-	{
-		for (uint32_t i = 0; i < FramesPerBuffer; i++)
-			*out++ = 0;
-
-		return paContinue;
-	}
+	float* output = (float*)OutputBuffer;
+	if (output == nullptr)
+		return paAbort;
 
 	static float inputBuffer[2][256];
+	Memory::Set((float*)inputBuffer, 0, sizeof(inputBuffer) / sizeof(float));
+
+	float* input = (float*)InputBuffer;
+	if (input != nullptr)
+		if (hal->m_InputChannelCount == 1)
+			for (uint32_t i = 0; i < FramesPerBuffer; i++)
+				inputBuffer[0][i] = inputBuffer[1][i] = *input++;
+		else
+			for (uint32_t i = 0; i < FramesPerBuffer; i++)
+			{
+				inputBuffer[0][i] = *input++;
+				inputBuffer[1][i] = *input++;
+			}
+
 	static float outputBuffer[2][256];
+	Memory::Set((float*)outputBuffer, 0, sizeof(outputBuffer) / sizeof(float));
 
-	for (uint32_t i = 0; i < FramesPerBuffer; i++)
-	{
-		inputBuffer[0][i] = *in++;
-		inputBuffer[1][i] = *in++;
-
-		outputBuffer[0][i] = 0;
-		outputBuffer[1][i] = 0;
-	}
-
-	static WindowsHAL* hal = reinterpret_cast<WindowsHAL*>(UserData);
 	if (hal->m_AudioCallback != nullptr)
 	{
 		static float* inputBuffers[2] = { inputBuffer[0], inputBuffer[1] };
@@ -124,11 +158,15 @@ int32_t WindowsHAL::AudioCallback(const void* InputBuffer, void* OutputBuffer, u
 		hal->m_AudioCallback(inputBuffers, outputBuffers, FramesPerBuffer);
 	}
 
-	for (uint32_t i = 0; i < FramesPerBuffer; i++)
-	{
-		*out++ = outputBuffer[0][i];
-		*out++ = outputBuffer[1][i];
-	}
+	if (hal->m_OutputChannelCount == 1)
+		for (uint32_t i = 0; i < FramesPerBuffer; i++)
+			*output++ = outputBuffer[0][i];
+	else
+		for (uint32_t i = 0; i < FramesPerBuffer; i++)
+		{
+			*output++ = outputBuffer[0][i];
+			*output++ = outputBuffer[1][i];
+		}
 
 	return paContinue;
 }
