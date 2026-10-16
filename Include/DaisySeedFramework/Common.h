@@ -63,7 +63,7 @@ enum class AnalogPins
 #define RESET_HANDLER_POINTER_SIZE PointerSize
 #define ENTRY_POINT_SIZE STACK_POINTER_SIZE + RESET_HANDLER_POINTER_SIZE
 
-#define GET_VPTR(Type) \
+#define GET_VTABLE(Type) \
 	[](void) \
 	{ \
 		Type type; \
@@ -81,7 +81,6 @@ enum class AnalogPins
 
 #elif defined(ON_HARDWARE)
 #include <libDaisy/src/dev/sdram.h>
-
 
 #define DEFINE_LARGE_MEMORY_BUFFER(Name, Size)  \
 	static constexpr uint32_t Name##_Size = Size; \
