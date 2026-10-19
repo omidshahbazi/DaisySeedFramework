@@ -38,18 +38,24 @@ void GetStreamParameters(cstr PreferredInputInterfaceName, cstr PreferredOutputI
 	}
 
 	const PaDeviceInfo* inputDeviceInfo = Pa_GetDeviceInfo(inputDevice);
-	Input = {};
-	Input.device = inputDevice;
-	Input.channelCount = inputDeviceInfo->maxInputChannels;
-	Input.sampleFormat = paFloat32;
-	Input.suggestedLatency = inputDeviceInfo->defaultLowInputLatency;
+	if (inputDeviceInfo != nullptr)
+	{
+		Input = {};
+		Input.device = inputDevice;
+		Input.channelCount = inputDeviceInfo->maxInputChannels;
+		Input.sampleFormat = paFloat32;
+		Input.suggestedLatency = inputDeviceInfo->defaultLowInputLatency;
+	}
 
 	const PaDeviceInfo* outputDeviceInfo = Pa_GetDeviceInfo(outputDevice);
-	Output = {};
-	Output.device = outputDevice;
-	Output.channelCount = outputDeviceInfo->maxOutputChannels;
-	Output.sampleFormat = paFloat32;
-	Output.suggestedLatency = outputDeviceInfo->defaultLowOutputLatency;
+	if (outputDeviceInfo != nullptr)
+	{
+		Output = {};
+		Output.device = outputDevice;
+		Output.channelCount = outputDeviceInfo->maxOutputChannels;
+		Output.sampleFormat = paFloat32;
+		Output.suggestedLatency = outputDeviceInfo->defaultLowOutputLatency;
+	}
 }
 
 WindowsHAL::WindowsHAL(void* SDRAMAddress, uint32_t SDRAMSize)
@@ -78,7 +84,18 @@ void WindowsHAL::Setup(uint8_t FrameLength, uint32_t SampleRate, bool Boost)
 	m_OutputChannelCount = output.channelCount;
 
 	PaStream* stream;
-	CHECK_CALL(Pa_OpenStream(&stream, &input, &output, SampleRate, FrameLength, paNoFlag, (PaStreamCallback*)AudioCallback, this));
+	if (m_InputChannelCount == 0)
+	{
+		CHECK_CALL(Pa_OpenStream(&stream, nullptr, &output, SampleRate, FrameLength, paNoFlag, (PaStreamCallback*)AudioCallback, this));
+	}
+	else if (m_OutputChannelCount == 0)
+	{
+		CHECK_CALL(Pa_OpenStream(&stream, &input, nullptr, SampleRate, FrameLength, paNoFlag, (PaStreamCallback*)AudioCallback, this));
+	}
+	else
+	{
+		CHECK_CALL(Pa_OpenStream(&stream, &input, &output, SampleRate, FrameLength, paNoFlag, (PaStreamCallback*)AudioCallback, this));
+	}
 
 	CHECK_CALL(Pa_StartStream(stream));
 }
