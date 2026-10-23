@@ -219,5 +219,8 @@
     <ClInclude Include="Include\DaisySeedFramework\Barrier.h">
       <Filter>Include\DaisySeedFramework</Filter>
     </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\MultiBuffer.h">
+      <Filter>Include\DaisySeedFramework</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

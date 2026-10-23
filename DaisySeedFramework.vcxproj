@@ -144,6 +144,7 @@
     <ClInclude Include="Include\DaisySeedFramework\ILI9341_HAL.h" />
     <ClInclude Include="Include\DaisySeedFramework\I_LCD_HAL.h" />
     <ClInclude Include="Include\DaisySeedFramework\LCDCanvas.h" />
+    <ClInclude Include="Include\DaisySeedFramework\MultiBuffer.h" />
     <ClInclude Include="Include\DaisySeedFramework\PersistentBlobCommon.h" />
     <ClInclude Include="Include\DaisySeedFramework\Point.h" />
     <ClInclude Include="Include\DaisySeedFramework\Rect.h" />
