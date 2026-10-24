@@ -18,7 +18,7 @@ public:
 	};
 
 public:
-	virtual void Update(void) = 0;
+	virtual void Update(bool Force = false) = 0;
 
 	virtual void SetTargetFrameRate(uint8_t Value) = 0;
 	virtual uint8_t GetTargetFrameRate(void) const = 0;

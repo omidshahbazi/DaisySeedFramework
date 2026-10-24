@@ -41,13 +41,13 @@ void SDL_HAL::Initialize(void)
 	SetTargetFrameRate(MAX_FRAME_RATE);
 }
 
-void SDL_HAL::Update(void)
+void SDL_HAL::Update(bool Force)
 {
 	SDL_Event event;
 	while (SDL_PollEvent(&event));
 
 	uint32_t time = m_HAL->GetTimeSinceStartupMs();
-	if (time < m_NextUpdateTime)
+	if (!Force && time < m_NextUpdateTime)
 		return;
 	m_NextUpdateTime = time + m_UpdateStep;
 

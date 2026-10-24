@@ -78,14 +78,19 @@ public:
 		if (CurrentTime < m_Time)
 			return;
 
-		m_Requested = false;
-		m_Blob->Flush();
+		ForceFlush();
 	}
 
 	void Request(float Time)
 	{
 		m_Time = Time;
 		m_Requested = true;
+	}
+
+	void ForceFlush(void)
+	{
+		m_Requested = false;
+		m_Blob->Flush();
 	}
 
 private:

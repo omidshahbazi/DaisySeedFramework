@@ -28,7 +28,7 @@ public:
 		m_RenderListener = Listener;
 	}
 
-	void Update(void) override;
+	void Update(bool Force = false) override;
 
 	void SetTargetFrameRate(uint8_t Value);
 

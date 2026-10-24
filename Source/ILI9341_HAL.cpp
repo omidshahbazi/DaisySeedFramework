@@ -43,13 +43,13 @@ void ILI9341_HAL::Initialize(void)
 	SetTargetFrameRate(MAX_FRAME_RATE);
 }
 
-void ILI9341_HAL::Update(void)
+void ILI9341_HAL::Update(bool Force)
 {
 	if (m_IsDMABusy)
 		return;
 
 	uint32_t time = m_HAL->GetTimeSinceStartupMs();
-	if (time < m_NextUpdateTime)
+	if (!Force && time < m_NextUpdateTime)
 		return;
 	m_NextUpdateTime = time + m_UpdateStep;
 
@@ -386,7 +386,7 @@ void ILI9341_HAL::SetAddressWindow(uint16_t X0, uint16_t Y0, uint16_t X1, uint16
 	// Column address set
 	SendCommand(0x2A); // CASET
 	{
-		uint8_t data[4] = {(uint8_t)((X0 >> 8) & 0xFF),
+		uint8_t data[4] = { (uint8_t)((X0 >> 8) & 0xFF),
 						 (uint8_t)(X0 & 0xFF),
 						 (uint8_t)((X1 >> 8) & 0xFF),
 						 (uint8_t)(X1 & 0xFF) };
@@ -396,7 +396,7 @@ void ILI9341_HAL::SetAddressWindow(uint16_t X0, uint16_t Y0, uint16_t X1, uint16
 	// Row address set
 	SendCommand(0x2B); // RASET
 	{
-		uint8_t data[4] = {(uint8_t)((Y0 >> 8) & 0xFF),
+		uint8_t data[4] = { (uint8_t)((Y0 >> 8) & 0xFF),
 						 (uint8_t)(Y0 & 0xFF),
 						 (uint8_t)((Y1 >> 8) & 0xFF),
 						 (uint8_t)(Y1 & 0xFF) };
