@@ -131,6 +131,10 @@ public:
 	{
 		return true;
 	}
+	bool WritePersistentData(uint32_t StartOffset, const uint8_t* Buffer, uint32_t Length) override
+	{
+		return true;
+	}
 
 protected:
 	void InitializeADC(void)
