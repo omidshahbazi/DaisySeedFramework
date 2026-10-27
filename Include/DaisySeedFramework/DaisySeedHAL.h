@@ -6,7 +6,7 @@
 #include "StaticArray.h"
 #include "DaisyInclude.h"
 #include "USB/DaisyUSB.h"
-#include "DaisyFirmware.h"
+#include "Firmware.h"
 #include <DigitalSignalProcessing/IHAL.h>
 #include <DigitalSignalProcessing/Allocator.h>
 
@@ -122,7 +122,8 @@ public:
 		return &m_Firmware;
 	}
 
-	void EraseUserData(void) override;
+	bool ErasePersistentData(uint32_t StartOffset, uint32_t Length) override;
+	bool WritePersistentData(uint32_t StartOffset, const uint8_t* Buffer, uint32_t Length) override;
 
 	daisy::QSPIHandle& GetQSPI(void);
 
@@ -159,7 +160,7 @@ private:
 	DaisyUSB m_FullSpeedUSB;
 	DaisyUSB m_HighSpeedUSB;
 
-	DaisyFirmware m_Firmware;
+	Firmware m_Firmware;
 
 	uint8_t* m_SDRAMAddress;
 	uint32_t m_SDRAMSize;

@@ -85,10 +85,7 @@
     <ClCompile Include="Source\StringUtils.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Source\DaisyFirmware.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\WindowsFirmware.cpp">
+    <ClCompile Include="Source\Firmware.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="Source\Version.cpp">
@@ -198,10 +195,7 @@
     <ClInclude Include="Include\DaisySeedFramework\StringUtils.h">
       <Filter>Include\DaisySeedFramework</Filter>
     </ClInclude>
-    <ClInclude Include="Include\DaisySeedFramework\DaisyFirmware.h">
-      <Filter>Include\DaisySeedFramework</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\DaisySeedFramework\WindowsFirmware.h">
+    <ClInclude Include="Include\DaisySeedFramework\Firmware.h">
       <Filter>Include\DaisySeedFramework</Filter>
     </ClInclude>
     <ClInclude Include="Include\DaisySeedFramework\Version.h">

@@ -9,6 +9,7 @@
 template<typename CharType, uint16_t MaxCapacity, uint16_t Capacity = MaxCapacity>
 struct BasicStaticString
 {
+	static_assert(MaxCapacity > 1, "MaxCapacity must be greater than one");
 	static_assert(Capacity <= MaxCapacity, "Capacity cannot be more than MaxCapacity");
 
 public:
@@ -94,7 +95,7 @@ public:
 		if (!CutOverflow && newLen > ActualCapacity)
 			return false;
 
-		uint16_t remainingLen = ActualCapacity - newLen;
+		uint16_t remainingLen = ActualCapacity - currentLen;
 
 		Memory::Copy(Value, m_Buffer + currentLen, Math::Min(remainingLen, newLen));
 

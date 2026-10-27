@@ -257,7 +257,10 @@ class BufferTransmitHandler
 public:
 	// ChunkSize should match the endpoint's wMaxPacketSize this handler feeds.
 	BufferTransmitHandler(uint16_t ChunkSize)
-		: m_ChunkSize(ChunkSize)
+		: m_ChunkSize(ChunkSize),
+		m_BufferStart(nullptr),
+		m_RemainingLength(0),
+		m_NeedsZLP(false)
 	{}
 
 	// Clears any in-progress transfer, leaving the handler idle (HasMore() == false).

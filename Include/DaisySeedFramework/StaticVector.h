@@ -16,7 +16,10 @@ public:
 		: m_Buffer(Buffer),
 		m_Capacity(Capacity),
 		m_Count(0)
-	{}
+	{
+		ASSERT(Buffer != nullptr, "Buffer cannot be null");
+		ASSERT(Capacity != 0, "Capacity must be greater than zero");
+	}
 
 	Vector(const Vector&) = delete;
 
@@ -29,6 +32,7 @@ public:
 
 	T& Push(const T& Value)
 	{
+		ASSERT(m_Buffer != nullptr, "m_Buffer cannot be null");
 		ASSERT(m_Count < m_Capacity, "Out of Size");
 
 		m_Buffer[m_Count++] = Value;
@@ -49,6 +53,7 @@ public:
 
 	T& Insert(uint16_t Index, const T& Value)
 	{
+		ASSERT(m_Buffer != nullptr, "m_Buffer cannot be null");
 		ASSERT(m_Count < m_Capacity, "Out of Size");
 		ASSERT(Index <= m_Count, "Index Out of Range");
 
@@ -63,6 +68,7 @@ public:
 
 	void Insert(uint16_t Index, const T* const Value, uint16_t Count)
 	{
+		ASSERT(m_Buffer != nullptr, "m_Buffer cannot be null");
 		ASSERT(m_Count + Count <= m_Capacity, "Out of Size");
 		ASSERT(Index <= m_Count, "Index Out of Range");
 
@@ -82,6 +88,7 @@ public:
 
 	void Pop(void)
 	{
+		ASSERT(m_Buffer != nullptr, "m_Buffer cannot be null");
 		ASSERT(0 < m_Count, "Out of Size");
 
 		--m_Count;
@@ -90,30 +97,39 @@ public:
 
 	T& Front(void)
 	{
+		ASSERT(m_Buffer != nullptr, "m_Buffer cannot be null");
 		ASSERT(0 < m_Count, "Out of Size");
+
 		return m_Buffer[0];
 	}
 
 	const T& Front(void) const
 	{
+		ASSERT(m_Buffer != nullptr, "m_Buffer cannot be null");
 		ASSERT(0 < m_Count, "Out of Size");
+
 		return m_Buffer[0];
 	}
 
 	T& Back(void)
 	{
+		ASSERT(m_Buffer != nullptr, "m_Buffer cannot be null");
 		ASSERT(0 < m_Count, "Out of Size");
+
 		return m_Buffer[m_Count - 1];
 	}
 
 	const T& Back(void) const
 	{
+		ASSERT(m_Buffer != nullptr, "m_Buffer cannot be null");
 		ASSERT(0 < m_Count, "Out of Size");
+
 		return m_Buffer[m_Count - 1];
 	}
 
 	void RemoveAt(uint16_t Index)
 	{
+		ASSERT(m_Buffer != nullptr, "m_Buffer cannot be null");
 		ASSERT(Index < m_Count, "Index Out of Range");
 
 		for (uint16_t i = Index; i < m_Count - 1; ++i)
@@ -128,6 +144,7 @@ public:
 		if (Count == 0)
 			return;
 
+		ASSERT(m_Buffer != nullptr, "m_Buffer cannot be null");
 		ASSERT(Index < m_Count, "Index Out of Range");
 		ASSERT(Index + Count <= m_Count, "Range Out of Range");
 
@@ -141,6 +158,8 @@ public:
 
 	void Clear(void)
 	{
+		ASSERT(m_Buffer != nullptr, "m_Buffer cannot be null");
+
 		for (uint16_t i = 0; i < m_Count; ++i)
 		{
 			m_Buffer[i].~T();
@@ -154,6 +173,8 @@ public:
 
 	int16_t IndexOf(const T& Value, uint16_t StartIndex = 0) const
 	{
+		ASSERT(m_Buffer != nullptr, "m_Buffer cannot be null");
+
 		for (uint16_t i = StartIndex; i < m_Count; ++i)
 			if (m_Buffer[i] == Value)
 				return i;
@@ -164,6 +185,8 @@ public:
 	template <typename Predicate_t>
 	int16_t IndexOf(Predicate_t Predicate, uint16_t StartIndex = 0) const
 	{
+		ASSERT(m_Buffer != nullptr, "m_Buffer cannot be null");
+
 		for (uint16_t i = StartIndex; i < m_Count; ++i)
 			if (Predicate(m_Buffer[i]))
 				return i;
@@ -223,6 +246,7 @@ public:
 
 	T& operator[](uint16_t Index)
 	{
+		ASSERT(m_Buffer != nullptr, "m_Buffer cannot be null");
 		ASSERT(Index < m_Count, "Index [%u] must be less than Count [%u]", Index, m_Count);
 
 		return m_Buffer[Index];
@@ -230,6 +254,7 @@ public:
 
 	const T& operator[](uint16_t Index) const
 	{
+		ASSERT(m_Buffer != nullptr, "m_Buffer cannot be null");
 		ASSERT(Index < m_Count, "Index [%u] must be less than Count [%u]", Index, m_Count);
 
 		return m_Buffer[Index];
@@ -244,6 +269,8 @@ private:
 template <typename T, uint16_t MaxSize>
 struct StaticVector : public Vector<T>
 {
+	static_assert(MaxSize != 0, "MaxSize must be greater than zero");
+
 public:
 	StaticVector(void) : Vector<T>(m_Buffer, MaxSize)
 	{}

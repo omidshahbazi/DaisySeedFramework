@@ -224,9 +224,14 @@ void DaisySeedHAL::Delay(uint16_t Ms) const
 	daisy::System::Delay(Ms);
 }
 
-void DaisySeedHAL::EraseUserData(void)
+bool DaisySeedHAL::ErasePersistentData(uint32_t StartOffset, uint32_t Length)
 {
-	m_Hardware.qspi.Erase(QSPI_USER_DATA_START_ADDRESS, QSPI_END_ADDRESS);
+	return (m_Hardware.qspi.Erase(StartOffset, StartOffset + Length) != daisy::QSPIHandle::Result::OK);
+}
+
+bool DaisySeedHAL::WritePersistentData(uint32_t StartOffset, const uint8_t* Buffer, uint32_t Length)
+{
+	return (m_Hardware.qspi.Write(StartOffset, Length, const_cast<uint8_t*>(Buffer)) != daisy::QSPIHandle::Result::OK);
 }
 
 daisy::QSPIHandle& DaisySeedHAL::GetQSPI(void)

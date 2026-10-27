@@ -112,7 +112,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Barrier.cpp" />
-    <ClCompile Include="Source\DaisyFirmware.cpp" />
+    <ClCompile Include="Source\Firmware.cpp" />
     <ClCompile Include="Source\DaisySeedHAL.cpp" />
     <ClCompile Include="Source\ILI9341_HAL.cpp" />
     <ClCompile Include="Source\LCDCanvas.cpp" />
@@ -128,14 +128,13 @@
     <ClCompile Include="Source\USB\WindowsUSBCDCInterface.cpp" />
     <ClCompile Include="Source\USB\WindowsUSBDevice.cpp" />
     <ClCompile Include="Source\Version.cpp" />
-    <ClCompile Include="Source\WindowsFirmware.cpp" />
     <ClCompile Include="Source\WindowsHAL.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\DaisySeedFramework\Barrier.h" />
     <ClInclude Include="Include\DaisySeedFramework\Bitmap.h" />
     <ClInclude Include="Include\DaisySeedFramework\Common.h" />
-    <ClInclude Include="Include\DaisySeedFramework\DaisyFirmware.h" />
+    <ClInclude Include="Include\DaisySeedFramework\Firmware.h" />
     <ClInclude Include="Include\DaisySeedFramework\DaisyInclude.h" />
     <ClInclude Include="Include\DaisySeedFramework\DaisyPersistentBlob.h" />
     <ClInclude Include="Include\DaisySeedFramework\DaisySeedHAL.h" />
@@ -169,7 +168,6 @@
     <ClInclude Include="Include\DaisySeedFramework\USB\WindowsUSBCDCInterface.h" />
     <ClInclude Include="Include\DaisySeedFramework\USB\WindowsUSBDevice.h" />
     <ClInclude Include="Include\DaisySeedFramework\Version.h" />
-    <ClInclude Include="Include\DaisySeedFramework\WindowsFirmware.h" />
     <ClInclude Include="Include\DaisySeedFramework\WindowsHAL.h" />
     <ClInclude Include="Include\DaisySeedFramework\WindowsInclude.h" />
     <ClInclude Include="Include\DaisySeedFramework\WindowsPersistentBlob.h" />

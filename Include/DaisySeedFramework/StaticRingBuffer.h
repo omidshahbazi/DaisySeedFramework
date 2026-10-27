@@ -18,12 +18,17 @@ public:
 		m_Head(0),
 		m_Tail(0),
 		m_Count(0)
-	{}
+	{
+		ASSERT(Buffer != nullptr, "Buffer cannot be null");
+		ASSERT(Capacity != 0, "Capacity must be greater than zero");
+	}
 
 	RingBuffer(const RingBuffer&) = delete;
 
 	bool Push(const T& Value)
 	{
+		ASSERT(m_Buffer != nullptr, "m_Buffer cannot be null");
+
 		if (m_Count >= m_Capacity)
 		{
 			if constexpr (AllowOverwrite)
@@ -47,6 +52,8 @@ public:
 
 	uint16_t Push(const T* Values, uint16_t Count)
 	{
+		ASSERT(m_Buffer != nullptr, "m_Buffer cannot be null");
+
 		uint16_t written = 0;
 		while (written < Count)
 		{
@@ -76,6 +83,8 @@ public:
 
 	bool Pop(T& OutValue)
 	{
+		ASSERT(m_Buffer != nullptr, "m_Buffer cannot be null");
+
 		if (m_Count == 0)
 			return false;
 
@@ -87,6 +96,9 @@ public:
 
 	uint16_t Pop(T* OutBuffer, uint16_t Count)
 	{
+		ASSERT(m_Buffer != nullptr, "m_Buffer cannot be null");
+		ASSERT(OutBuffer != nullptr, "OutBuffer cannot be null");
+
 		uint16_t readCount = 0;
 		while (readCount < Count && m_Count > 0)
 		{
@@ -153,6 +165,7 @@ public:
 
 	T& operator[](uint16_t Index)
 	{
+		ASSERT(m_Buffer != nullptr, "m_Buffer cannot be null");
 		ASSERT(Index < m_Capacity, "Out of Size");
 
 		return m_Buffer[Index];
@@ -160,6 +173,7 @@ public:
 
 	const T& operator[](uint16_t Index) const
 	{
+		ASSERT(m_Buffer != nullptr, "m_Buffer cannot be null");
 		ASSERT(Index < m_Capacity, "Out of Size");
 
 		return m_Buffer[Index];
@@ -176,6 +190,8 @@ private:
 template <typename T, uint16_t MaxSize, bool AllowOverwrite = true>
 struct StaticRingBuffer : public RingBuffer<T, AllowOverwrite>
 {
+	static_assert(MaxSize != 0, "MaxSize must be greater than zero");
+
 public:
 	StaticRingBuffer(void)
 		: RingBuffer<T, AllowOverwrite>(m_Buffer, MaxSize)

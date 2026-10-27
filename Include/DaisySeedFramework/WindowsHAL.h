@@ -4,7 +4,7 @@
 
 #include "Common.h"
 #include "USB/WindowsUSB.h"
-#include "WindowsFirmware.h"
+#include "Firmware.h"
 #include <DigitalSignalProcessing/IHAL.h>
 #include <DigitalSignalProcessing/Allocator.h>
 #include <chrono>
@@ -127,8 +127,10 @@ public:
 		return &m_Firmware;
 	}
 
-	void EraseUserData(void) override
-	{}
+	bool ErasePersistentData(uint32_t StartOffset, uint32_t Length) override
+	{
+		return true;
+	}
 
 protected:
 	void InitializeADC(void)
@@ -149,7 +151,7 @@ private:
 	uint8_t m_OutputChannelCount;
 
 	WindowsUSB m_USB;
-	WindowsFirmware m_Firmware;
+	Firmware m_Firmware;
 
 	Allocator<uint8_t, 16, false> m_Allocator;
 

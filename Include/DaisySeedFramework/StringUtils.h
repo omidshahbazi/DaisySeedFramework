@@ -44,18 +44,17 @@ template<typename CharType>
 bool SetString(const CharType* Value, uint16_t Length, CharType* Buffer, uint8_t BufferLength, bool CutOverflow = false)
 {
 	const uint8_t ActualBufferSize = BufferLength - 1;
-	uint8_t length = GetStringLength(Value);
 
-	if (length > ActualBufferSize)
+	if (Length > ActualBufferSize)
 		if (CutOverflow)
-			length = ActualBufferSize;
+			Length = ActualBufferSize;
 		else
 			return false;
 
-	if (length != 0)
-		Memory::Copy(Value, Buffer, length);
+	if (Length != 0)
+		Memory::Copy(Value, Buffer, Length);
 
-	Buffer[length] = 0;
+	Buffer[Length] = 0;
 
 	return true;
 }
