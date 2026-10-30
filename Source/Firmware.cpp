@@ -87,7 +87,9 @@ void Firmware::EndUpdate(void)
 	ASSERT(m_Offset == m_Size, "Missing data detected.");
 
 #ifdef FIRMWARE_SAFE_UPDATE
-	ASSERT(m_HAL->WritePersistentData(QSPI_BOOTLOADER_RESERVED_SIZE, m_EntryPointData, SafeUpdateOffset), "Failed to write the first page.");
+	bool result = m_HAL->WritePersistentData(QSPI_BOOTLOADER_RESERVED_SIZE, m_EntryPointData, SafeUpdateOffset);
+
+	ASSERT(result, "Failed to write the first page.");
 #endif
 
 	m_HAL->Reset(false);
