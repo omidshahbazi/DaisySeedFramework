@@ -89,14 +89,14 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>Include;DSP/Include;Libraries/portaudio/include;Libraries/SDL/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Include;DSP/Include;Libraries/portaudio/include;Libraries/SDL/include;Libraries/vst3sdk;Libraries/vst3sdk/base;Libraries/vst3sdk/public.sdk;Libraries/vst3sdk/pluginterfaces</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>ON_WINDOWS;RELEASE=1</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>Include;DSP/Include;Libraries/portaudio/include;Libraries/SDL/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Include;DSP/Include;Libraries/portaudio/include;Libraries/SDL/include;Libraries/vst3sdk;Libraries/vst3sdk/base;Libraries/vst3sdk/public.sdk;Libraries/vst3sdk/pluginterfaces</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>ON_WINDOWS;DEBUG=1</PreprocessorDefinitions>
       <Optimization>Disabled</Optimization>
     </ClCompile>
@@ -128,6 +128,7 @@
     <ClCompile Include="Source\USB\WindowsUSBCDCInterface.cpp" />
     <ClCompile Include="Source\USB\WindowsUSBDevice.cpp" />
     <ClCompile Include="Source\Version.cpp" />
+    <ClCompile Include="Source\VST3HAL.cpp" />
     <ClCompile Include="Source\WindowsHAL.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -168,6 +169,7 @@
     <ClInclude Include="Include\DaisySeedFramework\USB\WindowsUSBCDCInterface.h" />
     <ClInclude Include="Include\DaisySeedFramework\USB\WindowsUSBDevice.h" />
     <ClInclude Include="Include\DaisySeedFramework\Version.h" />
+    <ClInclude Include="Include\DaisySeedFramework\VST3HAL.h" />
     <ClInclude Include="Include\DaisySeedFramework\WindowsHAL.h" />
     <ClInclude Include="Include\DaisySeedFramework\WindowsInclude.h" />
     <ClInclude Include="Include\DaisySeedFramework\WindowsPersistentBlob.h" />

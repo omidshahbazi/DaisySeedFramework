@@ -94,6 +94,9 @@
     <ClCompile Include="Source\Barrier.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Source\VST3HAL.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\DaisySeedFramework\Common.h">
@@ -214,6 +217,9 @@
       <Filter>Include\DaisySeedFramework</Filter>
     </ClInclude>
     <ClInclude Include="Include\DaisySeedFramework\MultiBuffer.h">
+      <Filter>Include\DaisySeedFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DaisySeedFramework\VST3HAL.h">
       <Filter>Include\DaisySeedFramework</Filter>
     </ClInclude>
   </ItemGroup>

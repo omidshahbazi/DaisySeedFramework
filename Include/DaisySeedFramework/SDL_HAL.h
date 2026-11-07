@@ -48,6 +48,8 @@ public:
 
 	bool GetKeyState(uint16_t Key) const;
 
+	void* GetWindowHandle(void) const;
+
 private:
 	void PaintPixel(int16_t X, int16_t Y, uint16_t R5G6B5, uint8_t Alpha);
 

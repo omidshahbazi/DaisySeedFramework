@@ -6,7 +6,10 @@
 #include <DigitalSignalProcessing/Debug.h>
 #include <DigitalSignalProcessing/Memory.h>
 
-#pragma comment(lib, "SDL3.lib")
+//#pragma comment(lib, "SDL3.lib")
+#pragma comment(lib, "SDL3-static.lib")
+#pragma comment(lib, "imm32.lib")
+#pragma comment(lib, "version.lib")
 
 SDL_HAL::SDL_HAL(IHAL* HAL, GPIOPins, GPIOPins, GPIOPins, GPIOPins, GPIOPins, Orientations Orientation, Point PixelSize)
 	:m_HAL(HAL),
@@ -92,6 +95,13 @@ bool SDL_HAL::GetKeyState(uint16_t Key) const
 	const bool* keysState = SDL_GetKeyboardState(nullptr);
 
 	return keysState[Key];
+}
+
+void* SDL_HAL::GetWindowHandle(void) const
+{
+	SDL_PropertiesID props = SDL_GetWindowProperties(m_Window);
+
+	return SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr);
 }
 
 void SDL_HAL::PaintPixel(int16_t X, int16_t Y, uint16_t R5G6B5, uint8_t Alpha)
