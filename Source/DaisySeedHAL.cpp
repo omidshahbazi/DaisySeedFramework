@@ -4,11 +4,11 @@
 #include <DigitalSignalProcessing/Math.h>
 #include <DigitalSignalProcessing/Debug.h>
 
-DaisySeedHAL::DaisySeedHAL(void* SDRAMAddress, uint32_t SDRAMSize)
+DaisySeedHAL::DaisySeedHAL(const CreationInfo& Info)
 	: m_Firmware(this),
 	m_FullSpeedUSB(Peripherals::FullSpeed),
 	m_HighSpeedUSB(Peripherals::HighSpeed),
-	m_Allocator(SDRAMAddress, SDRAMSize),
+	m_Allocator(Info.SDRAMAddress, Info.SDRAMSize),
 	m_LastFreeSDRAMIndex(0),
 	m_AnalogPins{},
 	m_LastFreeAnalogPinIndex(0),
@@ -18,21 +18,21 @@ DaisySeedHAL::DaisySeedHAL(void* SDRAMAddress, uint32_t SDRAMSize)
 	m_PWMResolution(0),
 	m_PWMMaxDutyCycle(0)
 {
-
 	SetPWMResolution(16);
 }
 
-void DaisySeedHAL::Setup(uint8_t FrameLength, uint32_t SampleRate, bool Boost)
+void DaisySeedHAL::Setup(const SetupInfo& Info)
 {
-	ASSERT(FrameLength != 0, "Invalid FrameLength %i", FrameLength);
+	ASSERT(Info.FrameLength != 0, "Invalid FrameLength %i", Info.FrameLength);
+	ASSERT(Info.SampleRate != 0, "Invalid SampleRate %i", Info.SampleRate);
 
-	m_Hardware.Init(Boost);
-	m_Hardware.SetAudioBlockSize(FrameLength);
+	m_Hardware.Init(Info.Boost);
+	m_Hardware.SetAudioBlockSize(Info.FrameLength);
 
 	m_Hardware.StartLog();
 
 	daisy::SaiHandle::Config::SampleRate daisySampleRate;
-	switch (SampleRate)
+	switch (Info.SampleRate)
 	{
 	case SAMPLE_RATE_8000:
 		daisySampleRate = daisy::SaiHandle::Config::SampleRate::SAI_8KHZ;
@@ -61,9 +61,20 @@ void DaisySeedHAL::Setup(uint8_t FrameLength, uint32_t SampleRate, bool Boost)
 	m_Hardware.SetAudioSampleRate(daisySampleRate);
 }
 
+bool DaisySeedHAL::TearDown(void)
+{
+	return true;
+}
+
 void DaisySeedHAL::StartAudio(AudioPassthrough Callback)
 {
-	m_Hardware.StartAudio((daisy::AudioHandle::AudioCallback)Callback);
+	static AudioPassthrough callback;
+	callback = Callback;
+
+	m_Hardware.StartAudio([](daisy::AudioHandle::InputBuffer Ins, daisy::AudioHandle::OutputBuffer Outs, size_t Size)
+		{
+			callback(Ins, Outs, Size);
+		});
 }
 
 void* DaisySeedHAL::Allocate(uint32_t Size, bool OnSDRAM)

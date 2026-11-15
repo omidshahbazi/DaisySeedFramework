@@ -11,6 +11,7 @@
 #include <public.sdk/source/main/pluginfactory.h>
 #include <public.sdk/source/vst/vstaudioeffect.h>
 #include <public.sdk/source/vst/vsteditcontroller.h>
+#include <DigitalSignalProcessing/Debug.h>
 
 using namespace Steinberg;
 using namespace Steinberg::Vst;
@@ -20,133 +21,229 @@ using namespace Steinberg::Vst;
 #pragma comment(lib, "base.lib")
 #pragma comment(lib, "pluginterfaces.lib")
 
-static const FUID kControllerUID(0xA1B2C3D4, 0x11223344, 0x55667788, 0x99AABBCC);
+#undef ASSERT
+#define ASSERT DSP_ASSERT
+
+static IPluginEvents* g_VST3HAL = nullptr;
+
+class Line1View : public CPluginView
+{
+public:
+	Line1View(void)
+		: CPluginView(&m_Rect)
+	{
+		Point size = g_VST3HAL->GetViewSize();
+
+		m_Rect = ViewRect(0, 0, size.X, size.Y);
+	}
+
+	void attachedToParent(void) override
+	{
+		g_VST3HAL->OnSetViewEnabled(true, systemWindow);
+
+		if (plugFrame != nullptr)
+			plugFrame->resizeView(this, &m_Rect);
+	}
+
+	void removedFromParent(void) override
+	{
+		g_VST3HAL->OnSetViewEnabled(false);
+	}
+
+	tresult PLUGIN_API isPlatformTypeSupported(FIDString Type) override
+	{
+		return strcmp(Type, kPlatformTypeHWND) == 0 ? kResultTrue : kResultFalse;
+	}
+
+	tresult PLUGIN_API setFrame(IPlugFrame* f) override
+	{
+		CPluginView::setFrame(f);
+
+		return kResultOk;
+	}
+
+	tresult PLUGIN_API onSize(ViewRect* Rect) override
+	{
+		rect = m_Rect;
+
+		return kResultOk;
+	}
+
+	tresult PLUGIN_API canResize(void) override
+	{
+		return kResultFalse;
+	}
+
+	tresult PLUGIN_API checkSizeConstraint(ViewRect* Rect) override
+	{
+		if (Rect != nullptr)
+			*Rect = m_Rect;
+
+		return kResultOk;
+	}
+
+private:
+	ViewRect m_Rect;
+};
 
 class VST3HALController : public EditController
 {
 public:
-	static FUnknown* createInstance(void*)
+	IPlugView* PLUGIN_API createView(FIDString Name) override
 	{
-		return (IEditController*)new VST3HALController();
+		if (Name && strcmp(Name, ViewType::kEditor) == 0)
+			return new Line1View();
+
+		return nullptr;
 	}
 };
 
-class VST3HALImplementation : public AudioEffect
+class VST3HALPlugin : public AudioEffect
 {
 public:
-	VST3HALImplementation(void)
+	VST3HALPlugin(const FUID& ControllerUID)
 	{
-		setControllerClass(kControllerUID);
+		setControllerClass(ControllerUID);
 	}
 
-	int32_t PLUGIN_API initialize(FUnknown* context) override
+	tresult PLUGIN_API initialize(FUnknown* Context) override
 	{
-		tresult result = AudioEffect::initialize(context);
+		tresult result = AudioEffect::initialize(Context);
 		if (result != kResultOk)
 			return result;
 
-		if (result == kResultTrue)
+		addAudioInput(STR16("In"), SpeakerArr::kStereo);
+		addAudioOutput(STR16("Out"), SpeakerArr::kStereo);
+
+		static bool isInitialized = false;
+		if (!isInitialized)
 		{
-			addAudioInput(STR16("Stereo In"), SpeakerArr::kStereo);
-			addAudioOutput(STR16("Stereo Out"), SpeakerArr::kStereo);
+			g_VST3HAL->OnInitialize();
+
+			isInitialized = true;
 		}
+
+		m_StopUpdateThread = false;
+		m_UpdateThread = std::thread([this]
+			{
+				while (!m_StopUpdateThread)
+				{
+					g_VST3HAL->OnUpdate();
+
+					std::this_thread::sleep_for(std::chrono::milliseconds(1));
+				}
+			});
 
 		return kResultOk;
 	}
 
-	int32_t PLUGIN_API process(ProcessData& data) override
+	tresult PLUGIN_API terminate(void) override
 	{
-		if (data.numInputs == 0 || data.numOutputs == 0 || data.numSamples == 0)
+		m_StopUpdateThread = true;
+		if (m_UpdateThread.joinable())
+			m_UpdateThread.join();
+
+		return AudioEffect::terminate();
+	}
+
+	tresult PLUGIN_API process(ProcessData& Data) override
+	{
+		if (Data.numInputs == 0 || Data.numOutputs == 0 || Data.numSamples == 0)
 			return kResultOk;
 
-		float** in = data.inputs[0].channelBuffers32;
-		float** out = data.outputs[0].channelBuffers32;
-		int32_t numSamples = data.numSamples;
-
-		for (int32_t i = 0; i < data.inputs[0].numChannels; ++i)
-		{
-			float* channelData = reinterpret_cast<float*>(out[i]);
-
-			//m_Distortion.Process(channelData, static_cast<uint8_t>(numSamples));
-		}
+		g_VST3HAL->OnProcessAudio(Data.inputs[0].channelBuffers32, Data.outputs[0].channelBuffers32, Data.numSamples);
 
 		return kResultOk;
 	}
 
-	static FUnknown* createInstance(void* context);
+	tresult PLUGIN_API setBusArrangements(SpeakerArrangement* Inputs, int32 InputBusCount, SpeakerArrangement* Outputs, int32 OutputBusCount) override
+	{
+		if (InputBusCount == 1 && OutputBusCount == 1 && Inputs[0] == SpeakerArr::kStereo && Outputs[0] == SpeakerArr::kStereo)
+			return AudioEffect::setBusArrangements(Inputs, InputBusCount, Outputs, OutputBusCount);
+
+		return kResultFalse;
+	}
+
+private:
+	std::thread m_UpdateThread;
+	std::atomic_bool m_StopUpdateThread;
 };
 
-VST3HAL::VST3HAL(void* SDRAMAddress, uint32_t SDRAMSize)
-	: WindowsHAL(SDRAMAddress, SDRAMSize)
-{}
-
-void VST3HAL::Setup(uint8_t FrameLength, uint32_t SampleRate, bool Boost)
+VST3HAL::VST3HAL(const CreationInfo& Info)
+	: WindowsHAL(Info),
+	m_FrameLength(0)
 {
-	//ASSERT(FrameLength != 0, "Invalid FrameLength %i", FrameLength);
+	g_VST3HAL = this;
 }
 
-FUnknown* VST3HAL::createInstance(void* context)
+void VST3HAL::Setup(const SetupInfo& Info)
 {
-	return (IAudioProcessor*)new VST3HALImplementation();
-}
+	ASSERT(Info.FrameLength != 0, "Invalid FrameLength %i", Info.FrameLength);
+	ASSERT(Info.SampleRate != 0, "Invalid SampleRate %i", Info.SampleRate);
+	ASSERT(Info.Vendor != nullptr, "Invalid Vendor");
+	ASSERT(Info.URL != nullptr, "Invalid URL");
+	ASSERT(Info.Email != nullptr, "Invalid Email");
+	ASSERT(Info.ID != 0, "Invalid ID %u", Info.ID);
+	ASSERT(Info.Name != nullptr, "Invalid Name");
 
-IPluginFactory* VST3HAL::GetFactory(cstr Vendor, cstr URL, cstr Email, uint32_t ID, cstr Category, cstr Name)
-{
+	m_OnInitialize = Info.OnInitialize;
+	m_OnTerminate = Info.OnTerminate;
+	m_OnUpdate = Info.OnUpdate;
+	m_FrameLength = Info.FrameLength;
+	m_OnGetViewSize = Info.OnGetViewSize;
+	m_OnSetViewEnabled = Info.OnSetViewEnabled;
+
+	static const FUID componentUID(Info.ID, Info.ID >> 8, Info.ID >> 16, Info.ID >> 24);
+	static const FUID controlUID(Info.ID >> 24, Info.ID >> 16, Info.ID >> 8, Info.ID);
+
 	if (gPluginFactory == nullptr)
 	{
-		PFactoryInfo factoryInfo(Vendor, URL, Email, kDefaultFactoryFlags);
+		PFactoryInfo factoryInfo(Info.Vendor, Info.URL, Info.Email, kDefaultFactoryFlags);
 		gPluginFactory = new CPluginFactory(factoryInfo);
 
-		static const FUID uid(ID, 0x4D415354, 0x45525321, 0x4C494E31);
-		static PClassInfo2 componentClass(uid, PClassInfo::kManyInstances, kVstAudioEffectClass, Name, 0, Category, Vendor, "1.0.0", kVstVersionString);
-		gPluginFactory->registerClass(&componentClass, VST3HAL::createInstance);
+		static PClassInfo2 componentClass(componentUID, 1, kVstAudioEffectClass, Info.Name, 0, "Fx", Info.Vendor, Info.Version.ToString(), kVstVersionString);
+		gPluginFactory->registerClass(&componentClass, [](void* ptr)->FUnknown* { return (IAudioProcessor*)new VST3HALPlugin(controlUID); });
 
-		static PClassInfo2 controllerClass(kControllerUID, PClassInfo::kManyInstances, kVstComponentControllerClass, "MyDistortionController", 0, "", Vendor, "1.0.0", kVstVersionString);
-		gPluginFactory->registerClass(&controllerClass, VST3HALController::createInstance);
+		static PClassInfo2 controllerClass(controlUID, 1, kVstComponentControllerClass, Info.Name, 0, "", Info.Vendor, Info.Version.ToString(), kVstVersionString);
+		gPluginFactory->registerClass(&controllerClass, [](void* ptr)->FUnknown* { return (IEditController*)new VST3HALController(); });
 	}
-	else
-		gPluginFactory->addRef();
+}
 
+void VST3HAL::OnProcessAudio(const float* const* In, float** Out, uint32_t Size)
+{
+	for (uint32_t pos = 0; pos < Size; )
+	{
+		uint8_t chunk = Math::Min<uint32_t>(Size - pos, m_FrameLength);
+
+		const float* ins[2] = { In[0] + pos, In[1] + pos };
+		float* outs[2] = { Out[0] + pos, Out[1] + pos };
+
+		m_AudioCallback(ins, outs, chunk);
+
+		pos += chunk;
+	}
+}
+
+bool VST3HAL::TearDown(void)
+{
+	return true;
+}
+
+bool VST3HAL::InitializeModule(void)
+{
+	return true;
+}
+
+bool VST3HAL::TerminateModule(void)
+{
+	g_VST3HAL->OnTerminate();
+
+	return true;
+}
+
+void* VST3HAL::GetFactory(void)
+{
 	return gPluginFactory;
 }
 
 #endif
-//
-//
-//
-//static const Steinberg::FUID kVST3AUPlugInProcessorUID(0x301DF339, 0xAFA3533F, 0xB5053B1B, 0x41367137);
-//using namespace Steinberg;
-//__declspec (dllexport) IPluginFactory* __stdcall GetPluginFactory()
-//{
-//	if (!gPluginFactory)
-//	{
-//		static PFactoryInfo factoryInfo("MyCompany", "https://www.mywebsite.com", "mailto:info@mywebsite.com", Vst::kDefaultFactoryFlags);
-//		gPluginFactory = new CPluginFactory(factoryInfo);
-//
-//		{
-//			TUID lcid = {
-//				(::Steinberg::int8)(((::Steinberg::uint32)(kVST3AUPlugInProcessorUID.getLong1()) & 0x000000FF)),
-//				(::Steinberg::int8)(((::Steinberg::uint32)(kVST3AUPlugInProcessorUID.getLong1()) & 0x0000FF00) >> 8),
-//				(::Steinberg::int8)(((::Steinberg::uint32)(kVST3AUPlugInProcessorUID.getLong1()) & 0x00FF0000) >> 16),
-//				(::Steinberg::int8)(((::Steinberg::uint32)(kVST3AUPlugInProcessorUID.getLong1()) & 0xFF000000) >> 24),
-//				(::Steinberg::int8)(((::Steinberg::uint32)(kVST3AUPlugInProcessorUID.getLong2()) & 0x00FF0000) >> 16),
-//				(::Steinberg::int8)(((::Steinberg::uint32)(kVST3AUPlugInProcessorUID.getLong2()) & 0xFF000000) >> 24),
-//				(::Steinberg::int8)(((::Steinberg::uint32)(kVST3AUPlugInProcessorUID.getLong2()) & 0x000000FF)),
-//				(::Steinberg::int8)(((::Steinberg::uint32)(kVST3AUPlugInProcessorUID.getLong2()) & 0x0000FF00) >> 8),
-//				(::Steinberg::int8)(((::Steinberg::uint32)(kVST3AUPlugInProcessorUID.getLong3()) & 0xFF000000) >> 24),
-//				(::Steinberg::int8)(((::Steinberg::uint32)(kVST3AUPlugInProcessorUID.getLong3()) & 0x00FF0000) >> 16),
-//				(::Steinberg::int8)(((::Steinberg::uint32)(kVST3AUPlugInProcessorUID.getLong3()) & 0x0000FF00) >> 8),
-//				(::Steinberg::int8)(((::Steinberg::uint32)(kVST3AUPlugInProcessorUID.getLong3()) & 0x000000FF)),
-//				(::Steinberg::int8)(((::Steinberg::uint32)(kVST3AUPlugInProcessorUID.getLong4()) & 0xFF000000) >> 24),
-//				(::Steinberg::int8)(((::Steinberg::uint32)(kVST3AUPlugInProcessorUID.getLong4()) & 0x00FF0000) >> 16),
-//				(::Steinberg::int8)(((::Steinberg::uint32)(kVST3AUPlugInProcessorUID.getLong4()) & 0x0000FF00) >> 8),
-//				(::Steinberg::int8)(((::Steinberg::uint32)(kVST3AUPlugInProcessorUID.getLong4()) & 0x000000FF)) };
-//			static PClassInfo componentClass(lcid, PClassInfo::kManyInstances, "Audio Module Class", "MyDistortionPlugin");
-//			gPluginFactory->registerClass(&componentClass, VST3HAL::createInstance);
-//		};
-//	}
-//	else
-//		gPluginFactory->addRef();
-//
-//	return gPluginFactory;
-//}

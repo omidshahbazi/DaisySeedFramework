@@ -12,7 +12,7 @@ bool Version::operator<(Version Other)
 	return (m_Number < Other.m_Number);
 }
 
-cstr Version::ToString(bool NumberOnly)
+cstr Version::ToString(bool NumberOnly) const
 {
 	static std::string value;
 

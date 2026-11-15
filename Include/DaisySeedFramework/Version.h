@@ -17,7 +17,7 @@ public:
 	bool operator ==(Version Other);
 	bool operator <(Version Other);
 
-	cstr ToString(bool NumberOnly = false);
+	cstr ToString(bool NumberOnly = false) const;
 
 public:
 	union

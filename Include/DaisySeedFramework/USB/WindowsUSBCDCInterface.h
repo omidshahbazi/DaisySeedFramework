@@ -52,6 +52,7 @@ private:
 	CDCClassConfig m_Config;
 	void* m_Pipe;
 	std::atomic_bool m_IsRunning;
+	std::atomic_bool m_Stop;
 	std::thread m_ListenThread;
 	std::atomic_bool m_IsClientConnected;
 	StateChangedCallback m_ConnectionStateChangedCallback;

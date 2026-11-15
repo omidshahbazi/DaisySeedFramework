@@ -21,7 +21,8 @@ public:
 
 		m_DefaultData = DefaultData;
 
-		m_FilePath = std::filesystem::current_path() / "Persistent";
+		m_FilePath = std::getenv("LocalAppData");
+		m_FilePath /= "Persistent";
 
 		if (!std::filesystem::exists(m_FilePath))
 			std::filesystem::create_directory(m_FilePath);
@@ -53,6 +54,13 @@ public:
 		}
 
 		return true;
+	}
+
+	void Deinitialize(void)
+	{
+		ASSERT(m_IsInitialized, "WindowsPersistentBlob is not initialized");
+
+		m_IsInitialized = false;
 	}
 
 	void Flush(void)

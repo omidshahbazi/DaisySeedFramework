@@ -15,7 +15,7 @@ WindowsUSBCDCInterface::WindowsUSBCDCInterface(void)
 
 void WindowsUSBCDCInterface::Start(uint8_t Index, const CDCClassConfig& Config)
 {
-	ASSERT(!m_IsRunning, "Already started");
+	ASSERT(m_Pipe == INVALID_HANDLE_VALUE, "Already started");
 
 	m_Config = Config;
 
@@ -26,15 +26,27 @@ void WindowsUSBCDCInterface::Start(uint8_t Index, const CDCClassConfig& Config)
 	path += StaticWString<128>(name.GetValue(), name.GetValue() + name.GetLength());
 
 	m_Pipe = CreateNamedPipeW(path.GetValue(), PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, 1, (uint8_t)m_Config.SendBufferSize, (uint8_t)m_Config.ReceiveBufferSize, 0, nullptr);
+	ASSERT(m_Pipe != INVALID_HANDLE_VALUE, "Could't create the Pipe");
 
 	ListenForClient();
 }
 
 void WindowsUSBCDCInterface::Stop(void)
 {
-	ASSERT(m_IsRunning, "Already stopped");
+	ASSERT(m_Pipe != INVALID_HANDLE_VALUE, "Already stopped");
+
+	m_Stop = true;
 
 	Disconnect();
+
+	while (m_IsRunning)
+	{
+		CancelSynchronousIo(m_ListenThread.native_handle());
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+	}
+
+	if (m_ListenThread.joinable())
+		m_ListenThread.join();
 
 	CloseHandle(m_Pipe);
 
@@ -117,12 +129,18 @@ void WindowsUSBCDCInterface::ListenForClient(void)
 		{
 			while (m_Pipe != INVALID_HANDLE_VALUE)
 			{
-				if (ConnectNamedPipe(m_Pipe, nullptr))
+				if (ConnectNamedPipe(m_Pipe, nullptr) || GetLastError() == ERROR_PIPE_CONNECTED)
 				{
-					m_IsClientConnected = true;
+					if (m_Stop)
+						break;
 
+					m_IsClientConnected = true;
 					m_ConnectionStateChangedCallback();
 				}
+				else if (m_Stop)
+					break;
+				else
+					continue;
 
 				while (m_IsClientConnected)
 					std::this_thread::sleep_for(std::chrono::milliseconds(1));

@@ -10,9 +10,10 @@
 class LCDCanvas
 {
 public:
-	LCDCanvas(void);
+	LCDCanvas(void); 
 
-	void Initialize(I_LCD_HAL* HAL);
+	bool Initialize(I_LCD_HAL* HAL);
+	bool Deinitialize(void);
 
 	void Clear(Color Color);
 

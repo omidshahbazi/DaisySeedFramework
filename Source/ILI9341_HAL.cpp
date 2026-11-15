@@ -28,8 +28,10 @@ ILI9341_HAL::ILI9341_HAL(IHAL* HAL, GPIOPins SCLK, GPIOPins MOSI, GPIOPins NSS, 
 	ASSERT(m_PixelSize.Y != 0, "PixelSize.Y must be greater than zero");
 }
 
-void ILI9341_HAL::Initialize(void)
+bool ILI9341_HAL::Initialize(void)
 {
+	ASSERT(m_FrameBuffer == nullptr, "ILI9341_HAL is already initialized");
+
 	const uint32_t FrameBufferSize = m_PixelSize.X * m_PixelSize.Y;
 	m_FrameBufferChunkSize = FrameBufferSize / FRAME_BUFFER_CHUNK_COUNT;
 	m_FrameBuffer = Memory::Allocate<uint16_t>(FrameBufferSize, true);
@@ -41,6 +43,21 @@ void ILI9341_HAL::Initialize(void)
 	InitDriver(m_Orientation);
 
 	SetTargetFrameRate(MAX_FRAME_RATE);
+
+	return true;
+}
+
+bool ILI9341_HAL::Deinitialize(void)
+{
+	ASSERT(m_FrameBuffer != nullptr, "ILI9341_HAL is already initialized");
+
+	Memory::Deallocate(m_FrameBuffer);
+	m_FrameBuffer = nullptr;
+
+	Memory::Deallocate(m_FrameBufferDirty);
+	m_FrameBufferDirty = nullptr;
+
+	return true;
 }
 
 void ILI9341_HAL::Update(bool Force)

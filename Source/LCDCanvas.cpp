@@ -32,11 +32,23 @@ LCDCanvas::LCDCanvas(void)
 	m_LineSpacing(0)
 {}
 
-void LCDCanvas::Initialize(I_LCD_HAL* HAL)
+bool LCDCanvas::Initialize(I_LCD_HAL* HAL) 
 {
 	ASSERT(HAL != nullptr, "HAL cannot be null");
+	ASSERT(m_HAL == nullptr, "LCDCanvas is already initialized");
 
 	m_HAL = HAL;
+
+	return true;
+}
+
+bool LCDCanvas::Deinitialize(void)
+{
+	ASSERT(m_HAL != nullptr, "LCDCanvas is not initialized");
+
+	m_HAL = nullptr;
+
+	return true;
 }
 
 void LCDCanvas::Clear(Color Color)

@@ -14,19 +14,36 @@ struct PaStreamCallbackTimeInfo;
 class WindowsHAL : public IHAL
 {
 public:
+	struct CreationInfo
+	{
+	public:
+		void* SDRAMAddress;
+		uint32_t SDRAMSize;
+	};
+
+	struct SetupInfo
+	{
+	public:
+		uint8_t FrameLength;
+		uint32_t SampleRate;
+	};
+
+public:
 	static constexpr uint8_t CHANNEL_LEFT = 0;
 	static constexpr uint8_t CHANNEL_RIGHT = 1;
 
 public:
-	WindowsHAL(void* SDRAMAddress = nullptr, uint32_t SDRAMSize = 0);
+	WindowsHAL(const CreationInfo& Info);
 
-	void SetPreferredInterfaceNames(cstr InputInterface, cstr OutputInterface)
+	void SetPreferredInterfaces(cstr InputInterface, cstr OutputInterface)
 	{
 		m_PreferredInputInterface = InputInterface;
 		m_PreferredOutputInterface = OutputInterface;
 	}
 
-	void Setup(uint8_t FrameLength, uint32_t SampleRate, bool Boost) override;
+	bool Setup(const SetupInfo& Info);
+
+	bool TearDown(void) override;
 
 	void StartAudio(AudioPassthrough Callback) override
 	{
@@ -137,16 +154,17 @@ public:
 	}
 
 protected:
-	void InitializeADC(void)
-	{}
-
 	virtual void Update(void);
 
 private:
 	static int32_t AudioCallback(const void* InputBuffer, void* OutputBuffer, uint32_t FramesPerBuffer, const PaStreamCallbackTimeInfo* TimeInfo, uint32_t StatusFlags, void* UserData);
 
 private:
+	bool m_IsReady;
+
 	std::chrono::steady_clock::time_point m_StartupTime;
+
+	void* m_Stream;
 
 	cstr m_PreferredInputInterface;
 	cstr m_PreferredOutputInterface;
@@ -157,7 +175,7 @@ private:
 	WindowsUSB m_USB;
 	Firmware m_Firmware;
 
-	Allocator<uint8_t, 16, false> m_Allocator;
+	Allocator<uint8_t, 16, true> m_Allocator;
 
 	AudioPassthrough m_AudioCallback;
 };

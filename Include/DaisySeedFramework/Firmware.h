@@ -20,6 +20,7 @@ public:
 	Firmware(IHAL* HAL);
 
 	bool Initialize(void) override;
+	bool Deinitialize(void) override;
 
 	bool StartUpdate(uint32_t Size) override;
 	bool WritePage(const uint8_t* Buffer, uint16_t Length, uint32_t Checksum) override;

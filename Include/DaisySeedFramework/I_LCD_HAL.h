@@ -27,7 +27,34 @@ public:
 
 	virtual void DrawPixel(Point Position, Color Color) = 0;
 
-	virtual const Point &GetDimension(void) const = 0;
+	virtual const Point& GetDimension(void) const = 0;
+};
+
+class Null_LCD_HAL : public I_LCD_HAL
+{
+public:
+	void Update(bool Force = false) override
+	{}
+
+	void SetTargetFrameRate(uint8_t Value) override
+	{}
+	uint8_t GetTargetFrameRate(void) const override
+	{
+		return 0;
+	}
+
+	void Clear(Color Color) override
+	{}
+
+	void DrawPixel(Point Position, Color Color) override
+	{}
+
+	const Point& GetDimension(void) const override
+	{
+		static Point dim = {};
+
+		return dim;
+	}
 };
 
 #endif

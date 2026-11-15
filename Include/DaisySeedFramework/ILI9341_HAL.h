@@ -22,7 +22,8 @@ public:
 public:
 	ILI9341_HAL(IHAL* HAL, GPIOPins SCLK, GPIOPins MOSI, GPIOPins NSS, GPIOPins DC, GPIOPins RST, Orientations Orientation, Point PixelSize);
 
-	void Initialize(void);
+	bool Initialize(void);
+	bool Deinitialize(void);
 
 	void SetOnRender(RenderEventHandler Listener)
 	{

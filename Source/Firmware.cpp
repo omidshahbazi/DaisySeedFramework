@@ -21,6 +21,15 @@ bool Firmware::Initialize(void)
 	return true;
 }
 
+bool Firmware::Deinitialize(void)
+{
+	ASSERT(m_IsInitialized, "Firmware is not initialized");
+
+	m_IsInitialized = false;
+
+	return true;
+}
+
 bool Firmware::StartUpdate(uint32_t Size)
 {
 	ASSERT(m_IsInitialized, "Firmware is not initialized");

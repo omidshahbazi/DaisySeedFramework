@@ -58,21 +58,25 @@ void GetStreamParameters(cstr PreferredInputInterfaceName, cstr PreferredOutputI
 	}
 }
 
-WindowsHAL::WindowsHAL(void* SDRAMAddress, uint32_t SDRAMSize)
-	: m_PreferredInputInterface(nullptr),
+WindowsHAL::WindowsHAL(const CreationInfo& Info)
+	: m_IsReady(false),
+	m_Stream(nullptr),
+	m_PreferredInputInterface(nullptr),
 	m_PreferredOutputInterface(nullptr),
 	m_InputChannelCount(0),
 	m_OutputChannelCount(0),
 	m_Firmware(this),
-	m_Allocator(SDRAMAddress, SDRAMSize),
+	m_Allocator(Info.SDRAMAddress, Info.SDRAMSize),
 	m_AudioCallback(nullptr)
 {
 	m_StartupTime = std::chrono::steady_clock::now();
 }
 
-void WindowsHAL::Setup(uint8_t FrameLength, uint32_t SampleRate, bool Boost)
+bool WindowsHAL::Setup(const SetupInfo& Info)
 {
-	ASSERT(FrameLength != 0, "Invalid FrameLength %i", FrameLength);
+	ASSERT(!m_IsReady, "WindowsHAL is already ready");
+	ASSERT(Info.FrameLength != 0, "Invalid FrameLength %i", Info.FrameLength);
+	ASSERT(Info.SampleRate != 0, "Invalid SampleRate %i", Info.SampleRate);
 
 	CHECK_CALL(Pa_Initialize());
 
@@ -83,21 +87,41 @@ void WindowsHAL::Setup(uint8_t FrameLength, uint32_t SampleRate, bool Boost)
 	m_InputChannelCount = input.channelCount;
 	m_OutputChannelCount = output.channelCount;
 
-	PaStream* stream;
 	if (m_InputChannelCount == 0)
 	{
-		CHECK_CALL(Pa_OpenStream(&stream, nullptr, &output, SampleRate, FrameLength, paNoFlag, (PaStreamCallback*)AudioCallback, this));
+		CHECK_CALL(Pa_OpenStream(&m_Stream, nullptr, &output, Info.SampleRate, Info.FrameLength, paNoFlag, (PaStreamCallback*)AudioCallback, this));
 	}
 	else if (m_OutputChannelCount == 0)
 	{
-		CHECK_CALL(Pa_OpenStream(&stream, &input, nullptr, SampleRate, FrameLength, paNoFlag, (PaStreamCallback*)AudioCallback, this));
+		CHECK_CALL(Pa_OpenStream(&m_Stream, &input, nullptr, Info.SampleRate, Info.FrameLength, paNoFlag, (PaStreamCallback*)AudioCallback, this));
 	}
 	else
 	{
-		CHECK_CALL(Pa_OpenStream(&stream, &input, &output, SampleRate, FrameLength, paNoFlag, (PaStreamCallback*)AudioCallback, this));
+		CHECK_CALL(Pa_OpenStream(&m_Stream, &input, &output, Info.SampleRate, Info.FrameLength, paNoFlag, (PaStreamCallback*)AudioCallback, this));
 	}
 
-	CHECK_CALL(Pa_StartStream(stream));
+	CHECK_CALL(Pa_StartStream(m_Stream));
+
+	m_IsReady = true;
+
+	return true;
+}
+
+bool WindowsHAL::TearDown(void)
+{
+	ASSERT(m_IsReady, "WindowsHAL is not ready");
+
+	CHECK_CALL(Pa_StopStream(m_Stream));
+	CHECK_CALL(Pa_CloseStream(m_Stream));
+	m_Stream = nullptr;
+
+	CHECK_CALL(Pa_Terminate());
+
+	m_Allocator.Reset();
+
+	m_IsReady = false;
+
+	return true;
 }
 
 void* WindowsHAL::Allocate(uint32_t Size, bool OnSDRAM)
@@ -142,7 +166,7 @@ void WindowsHAL::Update(void)
 }
 
 int32_t WindowsHAL::AudioCallback(const void* InputBuffer, void* OutputBuffer, uint32_t FramesPerBuffer, const PaStreamCallbackTimeInfo* TimeInfo, uint32_t StatusFlags, void* UserData)
-{
+{ 
 	static WindowsHAL* hal = reinterpret_cast<WindowsHAL*>(UserData);
 
 	float* output = (float*)OutputBuffer;

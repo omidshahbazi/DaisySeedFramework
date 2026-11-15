@@ -34,6 +34,15 @@ public:
 		return true;
 	}
 
+	bool Deinitialize(void)
+	{
+		ASSERT(m_IsInitialized, "DaisyPersistentBlob is not initialized");
+
+		m_IsInitialized = false;
+
+		return true;
+	}
+
 	void Flush(void)
 	{
 		ASSERT(m_IsInitialized, "DaisyPersistentBlob is not initialized");

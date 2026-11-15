@@ -13,6 +13,22 @@
 class DaisySeedHAL : public IHAL
 {
 public:
+	struct CreationInfo
+	{
+	public:
+		void* SDRAMAddress;
+		uint32_t SDRAMSize;
+	};
+
+	struct SetupInfo
+	{
+	public:
+		uint8_t FrameLength;
+		uint32_t SampleRate;
+		bool Boost;
+	};
+
+public:
 	static constexpr uint8_t CHANNEL_LEFT = 0;
 	static constexpr uint8_t CHANNEL_RIGHT = 1;
 
@@ -36,9 +52,11 @@ private:
 	};
 
 public:
-	DaisySeedHAL(void* SDRAMAddress = nullptr, uint32_t SDRAMSize = 0);
+	DaisySeedHAL(const CreationInfo& Info);
 
-	void Setup(uint8_t FrameLength, uint32_t SampleRate, bool Boost) override;
+	void Setup(const SetupInfo& Info);
+
+	bool TearDown(void) override;
 
 	void StartAudio(AudioPassthrough Callback) override;
 
