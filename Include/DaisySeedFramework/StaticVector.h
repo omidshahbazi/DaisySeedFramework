@@ -64,7 +64,7 @@ public:
 
 	void Insert(uint16_t Index, NotNull<const T> Value, uint16_t Count)
 	{
-		ASSERT_VALUE_LESS(m_Count + Count, m_Capacity);
+		ASSERT_VALUE_LESS_EQUAL(m_Count + Count, m_Capacity);
 		ASSERT_VALUE_LESS(Index, m_Count);
 
 		for (int32_t i = static_cast<int32_t>(m_Count) - 1; i >= Index; --i)
@@ -134,7 +134,7 @@ public:
 			return;
 
 		ASSERT_VALUE_LESS(Index, m_Count);
-		ASSERT_VALUE_LESS(Index + Count, m_Count);
+		ASSERT_VALUE_LESS_EQUAL(Index + Count, m_Count);
 
 		uint16_t elementsAfterRange = m_Count - (Index + Count);
 
