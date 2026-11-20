@@ -2,7 +2,7 @@
 #ifndef STATIC_ARRAY_H
 #define STATIC_ARRAY_H
 
-#include <DigitalSignalProcessing/Debug.h>
+#include <DigitalSignalProcessing/ExtendedDataTypes.h>
 
 template<typename T, uint16_t Length>
 struct StaticArray
@@ -83,17 +83,13 @@ public:
 		return *this;
 	}
 
-	T& operator[](uint16_t Index)
+	T& operator[](co_uint16_t<0, Length> Index)
 	{
-		ASSERT(Index < Length, "Index [%u] must be less than Length [%u]", Index, Length);
-
 		return m_Buffer[Index];
 	}
 
-	const T& operator[](uint16_t Index) const
+	const T& operator[](co_uint16_t<0, Length> Index) const
 	{
-		ASSERT(Index < Length, "Index [%u] must be less than Length [%u]", Index, Length);
-
 		return m_Buffer[Index];
 	}
 

@@ -23,8 +23,14 @@ public:
 	struct SetupInfo
 	{
 	public:
-		uint8_t FrameLength;
-		uint32_t SampleRate;
+		SetupInfo(puint8_t FrameLength, puint32_t SampleRate)
+			: FrameLength(FrameLength),
+			SampleRate(SampleRate),
+			Boost(false)
+		{}
+
+		puint8_t FrameLength;
+		puint32_t SampleRate;
 		bool Boost;
 	};
 
@@ -93,7 +99,7 @@ public:
 		return true;
 	}
 
-	void SetPWMResolution(uint8_t Value) override;
+	void SetPWMResolution(cc_float<8, 16> Value) override;
 
 	uint8_t GetPWMResolution(void) const override
 	{
@@ -108,7 +114,7 @@ public:
 
 	void DigitalWrite(uint8_t Pin, bool Value) override;
 
-	void PWMWrite(uint8_t Pin, float Value) override;
+	void PWMWrite(uint8_t Pin, cc_ratio_t Value) override;
 
 	uint32_t GetTimeFrequency(void) const override;
 

@@ -5,6 +5,7 @@
 #include "StringUtils.h"
 #include <DigitalSignalProcessing/DataTypes.h>
 #include <DigitalSignalProcessing/Memory.h>
+#include <DigitalSignalProcessing/NotNull.h>
 
 template<typename CharType, uint16_t MaxCapacity, uint16_t Capacity = MaxCapacity>
 struct BasicStaticString
@@ -36,11 +37,9 @@ public:
 	}
 
 	template<typename OtherCharType>
-	BasicStaticString(const OtherCharType* Begin, const OtherCharType* End)
+	BasicStaticString(NotNull<const OtherCharType> Begin, NotNull<const OtherCharType> End)
 		: m_Buffer{}
 	{
-		ASSERT(Begin != nullptr, "Begin cannot be null");
-		ASSERT(End != nullptr, "Begin cannot be null");
 		ASSERT(Begin <= End, "Begin must be before the End");
 
 		const uint16_t ActualCapacity = Capacity - 1;

@@ -23,25 +23,25 @@ private:
 
 public:
 	DaisyUSBAMCInterface(DaisyUSBDevice* Device, const Configs& Configs, const AMCClassConfig& Class);
-	
+
 #ifdef ENABLE_USB_AMC_DEBUG
 	void Update(void) override;
 #endif
 
-	virtual void Read(float* InterleavedBuffer, uint16_t TotalSampleCount)
+	virtual void Read(NotNull<float> InterleavedBuffer, puint16_t TotalSampleCount) override
 	{
 		PopSamples(InterleavedBuffer, TotalSampleCount);
 	}
-	virtual void Read(double* InterleavedBuffer, uint16_t TotalSampleCount)
+	virtual void Read(NotNull<double> InterleavedBuffer, puint16_t TotalSampleCount) override
 	{
 		PopSamples(InterleavedBuffer, TotalSampleCount);
 	}
 
-	void Write(const float* const InterleavedBuffer, uint16_t TotalSampleCount) override
+	void Write(NotNull<const float> InterleavedBuffer, puint16_t TotalSampleCount) override
 	{
 		PushSamples(InterleavedBuffer, TotalSampleCount);
 	}
-	void Write(const double* const InterleavedBuffer, uint16_t TotalSampleCount) override
+	void Write(NotNull<const double> const InterleavedBuffer, puint16_t TotalSampleCount) override
 	{
 		PushSamples(InterleavedBuffer, TotalSampleCount);
 	}
@@ -106,9 +106,9 @@ public:
 
 private:
 	template <typename T>
-	uint16_t PopSamples(T* InterleavedBuffer, uint16_t TotalSampleCount);
+	uint16_t PopSamples(NotNull<T> InterleavedBuffer, puint16_t TotalSampleCount);
 	template <typename T>
-	void PushSamples(const T* const InterleavedBuffer, uint16_t TotalSampleCount);
+	void PushSamples(NotNull<const T> InterleavedBuffer, puint16_t TotalSampleCount);
 
 	void UpdatePacketSize(void);
 
@@ -160,15 +160,13 @@ private:
 };
 
 template <typename T>
-uint16_t DaisyUSBAMCInterface::PopSamples(T* InterleavedBuffer, uint16_t TotalSampleCount)
+uint16_t DaisyUSBAMCInterface::PopSamples(NotNull<T> InterleavedBuffer, puint16_t TotalSampleCount)
 {
 	ASSERT_ON_FLOATING_TYPE(T);
-	ASSERT(InterleavedBuffer != nullptr, "InterleavedBuffer is null");
-	ASSERT(TotalSampleCount != 0, "TotalSampleCount is zero");
 
 	const uint8_t BytesPerSample = ((uint8_t)m_CurrentOutBitDepth / 8);
 	const uint16_t AvailableSamples = (uint16_t)(m_ReceiveFIFO.GetSize() / BytesPerSample);
-	const uint16_t SamplesToPop = Math::Min(AvailableSamples, TotalSampleCount);
+	const uint16_t SamplesToPop = Math::Min(AvailableSamples, (uint16_t)TotalSampleCount);
 
 	const float Gain = (m_CurrentIsOutMuted ? 0.0 : m_CurrentOutVolume);
 
@@ -206,16 +204,13 @@ uint16_t DaisyUSBAMCInterface::PopSamples(T* InterleavedBuffer, uint16_t TotalSa
 }
 
 template <typename T>
-void DaisyUSBAMCInterface::PushSamples(const T* const InterleavedBuffer, uint16_t TotalSampleCount)
+void DaisyUSBAMCInterface::PushSamples(NotNull<const T> InterleavedBuffer, puint16_t TotalSampleCount)
 {
 	ASSERT_ON_FLOATING_TYPE(T);
 
-	ASSERT(InterleavedBuffer != nullptr, "InterleavedBuffer is null");
-	ASSERT(TotalSampleCount != 0, "TotalSampleCount is zero");
-
 	const uint8_t BytesPerSample = ((uint8_t)m_CurrentInBitDepth / 8);
 	const uint16_t AvailableSamples = (uint16_t)(m_TransmitFIFO.GetFreeSpace() / BytesPerSample);
-	const uint16_t SamplesToPush = Math::Min(AvailableSamples, TotalSampleCount);
+	const uint16_t SamplesToPush = Math::Min(AvailableSamples, (uint16_t)TotalSampleCount);
 
 	const float Gain = (m_CurrentIsInMuted ? 0.0 : m_CurrentInVolume);
 

@@ -23,7 +23,7 @@ void WindowsUSBCDCInterface::Start(uint8_t Index, const CDCClassConfig& Config)
 	name += ToString(Index);
 
 	StaticWString<256> path = L"\\\\.\\pipe\\USB-PIPE-";
-	path += StaticWString<128>(name.GetValue(), name.GetValue() + name.GetLength());
+	path += StaticWString<128>((NotNull<const char>)name.GetValue(), NotNull<const char>(name.GetValue() + name.GetLength()));
 
 	m_Pipe = CreateNamedPipeW(path.GetValue(), PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, 1, (uint8_t)m_Config.SendBufferSize, (uint8_t)m_Config.ReceiveBufferSize, 0, nullptr);
 	ASSERT(m_Pipe != INVALID_HANDLE_VALUE, "Could't create the Pipe");

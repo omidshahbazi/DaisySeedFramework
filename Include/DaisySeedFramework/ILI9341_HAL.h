@@ -32,7 +32,7 @@ public:
 
 	void Update(bool Force = false) override;
 
-	void SetTargetFrameRate(uint8_t Value);
+	void SetTargetFrameRate(puint8_t Value);
 
 	uint8_t GetTargetFrameRate(void) const
 	{

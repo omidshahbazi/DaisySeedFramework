@@ -3,7 +3,7 @@
 #define I_LCD_HAL_H
 
 #include "Point.h"
-#include <DigitalSignalProcessing/DataTypes.h>
+#include <DigitalSignalProcessing/ExtendedDataTypes.h>
 #include <DigitalSignalProcessing/Color.h>
 
 class I_LCD_HAL
@@ -20,7 +20,7 @@ public:
 public:
 	virtual void Update(bool Force = false) = 0;
 
-	virtual void SetTargetFrameRate(uint8_t Value) = 0;
+	virtual void SetTargetFrameRate(puint8_t Value) = 0;
 	virtual uint8_t GetTargetFrameRate(void) const = 0;
 
 	virtual void Clear(Color Color) = 0;
@@ -36,7 +36,7 @@ public:
 	void Update(bool Force = false) override
 	{}
 
-	void SetTargetFrameRate(uint8_t Value) override
+	void SetTargetFrameRate(puint8_t Value) override
 	{}
 	uint8_t GetTargetFrameRate(void) const override
 	{

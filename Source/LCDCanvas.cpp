@@ -32,9 +32,8 @@ LCDCanvas::LCDCanvas(void)
 	m_LineSpacing(0)
 {}
 
-bool LCDCanvas::Initialize(I_LCD_HAL* HAL) 
+bool LCDCanvas::Initialize(NotNull<I_LCD_HAL> HAL)
 {
-	ASSERT(HAL != nullptr, "HAL cannot be null");
 	ASSERT(m_HAL == nullptr, "LCDCanvas is already initialized");
 
 	m_HAL = HAL;
@@ -53,15 +52,11 @@ bool LCDCanvas::Deinitialize(void)
 
 void LCDCanvas::Clear(Color Color)
 {
-	ASSERT(m_HAL != nullptr, "m_HAL cannot be null");
-
 	m_HAL->Clear(Color);
 }
 
 void LCDCanvas::DrawPixel(int16_t X, int16_t Y, Color Color)
 {
-	ASSERT(m_HAL != nullptr, "m_HAL cannot be null");
-
 	m_HAL->DrawPixel({ X, Y }, Color);
 }
 
@@ -409,15 +404,13 @@ uint8_t LCDCanvas::DrawCharacter(int16_t X, int16_t Y, char Character, const Fon
 	return GlyphAdvance;
 }
 
-void LCDCanvas::DrawString(int16_t X, int16_t Y, cstr const String, const Font& Font, Color Color)
+void LCDCanvas::DrawString(int16_t X, int16_t Y, NotNull<cstr> String, const Font& Font, Color Color)
 {
-	DrawString(X, Y, String, GetStringLength(String), Font, Color);
+	DrawString(X, Y, String, GetStringLength((cstr)String), Font, Color);
 }
 
-void LCDCanvas::DrawString(int16_t X, int16_t Y, cstr String, uint16_t Length, const Font& Font, Color Color)
+void LCDCanvas::DrawString(int16_t X, int16_t Y, NotNull<cstr> String, uint16_t Length, const Font& Font, Color Color)
 {
-	ASSERT(String != nullptr, "String cannot be null");
-
 	if (Length == 0)
 		return;
 
@@ -450,15 +443,13 @@ Point LCDCanvas::MeasureCharacterDimension(char Character, const Font& Font)
 	return { dimensions.X + (m_CharacterSpacing * Font.Scale), (dimensions.Y * Font.Scale) + m_LineSpacing };
 }
 
-Point LCDCanvas::MeasureStringDimension(cstr String, const Font& Font)
+Point LCDCanvas::MeasureStringDimension(NotNull<cstr> String, const Font& Font)
 {
-	return MeasureStringDimension(String, GetStringLength(String), Font);
+	return MeasureStringDimension(String, GetStringLength((cstr)String), Font);
 }
 
-Point LCDCanvas::MeasureStringDimension(cstr String, uint16_t Length, const Font& Font)
+Point LCDCanvas::MeasureStringDimension(NotNull<cstr> String, uint16_t Length, const Font& Font)
 {
-	ASSERT(String != nullptr, "String cannot be null");
-
 	if (Length == 0)
 		return {};
 

@@ -61,8 +61,6 @@ void GetStreamParameters(cstr PreferredInputInterfaceName, cstr PreferredOutputI
 WindowsHAL::WindowsHAL(const CreationInfo& Info)
 	: m_IsReady(false),
 	m_Stream(nullptr),
-	m_PreferredInputInterface(nullptr),
-	m_PreferredOutputInterface(nullptr),
 	m_InputChannelCount(0),
 	m_OutputChannelCount(0),
 	m_Firmware(this),
@@ -75,14 +73,12 @@ WindowsHAL::WindowsHAL(const CreationInfo& Info)
 bool WindowsHAL::Setup(const SetupInfo& Info)
 {
 	ASSERT(!m_IsReady, "WindowsHAL is already ready");
-	ASSERT(Info.FrameLength != 0, "Invalid FrameLength %i", Info.FrameLength);
-	ASSERT(Info.SampleRate != 0, "Invalid SampleRate %i", Info.SampleRate);
 
 	CHECK_CALL(Pa_Initialize());
 
 	PaStreamParameters input;
 	PaStreamParameters output;
-	GetStreamParameters(m_PreferredInputInterface, m_PreferredOutputInterface, input, output);
+	GetStreamParameters(Info.PreferredInputInterface, Info.PreferredOutputInterface, input, output);
 
 	m_InputChannelCount = input.channelCount;
 	m_OutputChannelCount = output.channelCount;

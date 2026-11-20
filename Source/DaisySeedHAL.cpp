@@ -23,9 +23,6 @@ DaisySeedHAL::DaisySeedHAL(const CreationInfo& Info)
 
 void DaisySeedHAL::Setup(const SetupInfo& Info)
 {
-	ASSERT(Info.FrameLength != 0, "Invalid FrameLength %i", Info.FrameLength);
-	ASSERT(Info.SampleRate != 0, "Invalid SampleRate %i", Info.SampleRate);
-
 	m_Hardware.Init(Info.Boost);
 	m_Hardware.SetAudioBlockSize(Info.FrameLength);
 
@@ -127,10 +124,8 @@ bool DaisySeedHAL::IsInOutputMode(uint8_t Pin) const
 	return (digitalPinState.Mode == PinModes::DigitalOutput || digitalPinState.Mode == PinModes::PWM);
 }
 
-void DaisySeedHAL::SetPWMResolution(uint8_t Value)
+void DaisySeedHAL::SetPWMResolution(cc_float<8, 16> Value)
 {
-	ASSERT(8 <= Value && Value <= 16, "Invalid Value %f", Value);
-
 	m_PWMResolution = Value;
 	m_PWMMaxDutyCycle = (1 << m_PWMResolution) - 1;
 }
@@ -200,9 +195,8 @@ void DaisySeedHAL::DigitalWrite(uint8_t Pin, bool Value)
 	state.Object.Write(Value);
 }
 
-void DaisySeedHAL::PWMWrite(uint8_t Pin, float Value)
+void DaisySeedHAL::PWMWrite(uint8_t Pin, cc_ratio_t Value)
 {
-	ASSERT(0 <= Value && Value <= 1, "Invalid Value %f", Value);
 	ASSERT(IsInOutputMode(Pin), "Pin %i is not in output mode", Pin);
 
 	FindOrGetPWMPin(Pin)->TargetValue = Math::Cube(Value);

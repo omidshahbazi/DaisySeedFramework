@@ -21,7 +21,6 @@ DaisyUSBHost::DaisyUSBHost(Peripherals Peripheral)
 void DaisyUSBHost::Start(const USBHostProfile& Profile)
 {
 	ASSERT(!m_IsRunning, "Interface has already started.");
-	ASSERT(0 < Profile.SupportedClassCount && Profile.SupportedClassCount <= MaxClassCount, "Invalid SupportedClassCount");
 
 	m_Profile = Profile;
 

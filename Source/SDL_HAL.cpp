@@ -276,7 +276,7 @@ static LRESULT CALLBACK ChildProc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
 	return DefWindowProc(h, msg, wp, lp);
 }
 
-SDL_HAL::SDL_HAL(IHAL* HAL, GPIOPins, GPIOPins, GPIOPins, GPIOPins, GPIOPins, Orientations Orientation, Point PixelSize)
+SDL_HAL::SDL_HAL(NotNull<IHAL> HAL, GPIOPins, GPIOPins, GPIOPins, GPIOPins, GPIOPins, Orientations Orientation, Point PixelSize)
 	:m_HAL(HAL),
 	m_WindowHandle(nullptr),
 	m_Window(nullptr),
@@ -288,7 +288,6 @@ SDL_HAL::SDL_HAL(IHAL* HAL, GPIOPins, GPIOPins, GPIOPins, GPIOPins, GPIOPins, Or
 	m_UpdateStep(0),
 	m_NextUpdateTime(0)
 {
-	ASSERT(m_HAL != nullptr, "m_HAL cannot be null");
 	ASSERT(PixelSize.X != 0, "PixelSize.X must be greater than zero");
 	ASSERT(PixelSize.Y != 0, "PixelSize.Y must be greater than zero");
 
@@ -356,10 +355,10 @@ bool SDL_HAL::Initialize(bool AsyncKeyCapture, WindowHandle Parent)
 #else
 	m_Renderer = SDL_CreateRenderer(m_Window, nullptr);
 #endif
-	ASSERT(m_Renderer != nullptr, "Failed to create renderer");
+	ASSERT_NOT_NULL(m_Renderer);
 
 	m_Texture = SDL_CreateTexture(m_Renderer, SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, m_Dimension.X, m_Dimension.Y);
-	ASSERT(m_Texture != nullptr, "Failed to create texture");
+	ASSERT_NOT_NULL(m_Texture);
 
 	m_FrameBuffer = Memory::Allocate<uint16_t>(m_Dimension.X * m_Dimension.Y, true);
 	Clear(ColorBlack);
@@ -422,11 +421,9 @@ void SDL_HAL::Update(bool Force)
 	CHECK_CALL(SDL_RenderPresent(m_Renderer));
 }
 
-void SDL_HAL::SetTargetFrameRate(uint8_t Value)
+void SDL_HAL::SetTargetFrameRate(puint8_t Value)
 {
-	ASSERT(Value != 0, "Invalid Value %f", Value);
-
-	m_TargetFrameRate = Math::Min(MAX_FRAME_RATE, Value);
+	m_TargetFrameRate = Math::Min(MAX_FRAME_RATE, (uint8_t)Value);
 
 	m_UpdateStep = 1000 / m_TargetFrameRate;
 }

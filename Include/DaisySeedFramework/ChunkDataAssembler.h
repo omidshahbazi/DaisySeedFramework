@@ -33,11 +33,8 @@ protected:
 		m_TransmitBuffer.Push(reinterpret_cast<const uint8_t*>(&Data), sizeof(U));
 	}
 
-	void PushToTransmitBuffer(const uint8_t* Buffer, uint16_t Length)
+	void PushToTransmitBuffer(NotNull<const uint8_t> Buffer, puint16_t Length)
 	{
-		ASSERT(Buffer != nullptr, "Buffer cannot be null");
-		ASSERT(Length != 0, "Buffer cannot be null");
-
 		m_TransmitBuffer.Push(Buffer, Length);
 	}
 

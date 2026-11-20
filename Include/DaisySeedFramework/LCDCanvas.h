@@ -6,13 +6,15 @@
 #include "Font.h"
 #include "Bitmap.h"
 #include "Rect.h"
+#include <DigitalSignalProcessing/NotNull.h>
+#include <DigitalSignalProcessing/ExtendedDataTypes.h>
 
 class LCDCanvas
 {
 public:
-	LCDCanvas(void); 
+	LCDCanvas(void);
 
-	bool Initialize(I_LCD_HAL* HAL);
+	bool Initialize(NotNull<I_LCD_HAL> HAL);
 	bool Deinitialize(void);
 
 	void Clear(Color Color);
@@ -50,9 +52,9 @@ public:
 
 	uint8_t DrawCharacter(int16_t X, int16_t Y, char Character, const Font& Font, Color Color, bool IgnoreOffset = false);
 
-	void DrawString(int16_t X, int16_t Y, cstr const String, const Font& Font, Color Color);
+	void DrawString(int16_t X, int16_t Y, NotNull<cstr> String, const Font& Font, Color Color);
 
-	void DrawString(int16_t X, int16_t Y, cstr String, uint16_t Length, const Font& Font, Color Color);
+	void DrawString(int16_t X, int16_t Y, NotNull<cstr> String, uint16_t Length, const Font& Font, Color Color);
 
 	Point MeasureCharacterDimension(char Character, const Font& Font);
 
@@ -64,9 +66,9 @@ public:
 		return GetCharacterOffset(Character, Font);
 	}
 
-	Point MeasureStringDimension(cstr String, const Font& Font);
+	Point MeasureStringDimension(NotNull<cstr> String, const Font& Font);
 
-	Point MeasureStringDimension(cstr String, uint16_t Length, const Font& Font);
+	Point MeasureStringDimension(NotNull<cstr> String, uint16_t Length, const Font& Font);
 
 	void DrawBitmap(int16_t X, int16_t Y, const Bitmap& Bitmap, Color Color, float Scale = 1);
 

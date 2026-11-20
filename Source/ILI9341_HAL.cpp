@@ -75,11 +75,9 @@ void ILI9341_HAL::Update(bool Force)
 	UpdateDataDMA();
 }
 
-void ILI9341_HAL::SetTargetFrameRate(uint8_t Value)
+void ILI9341_HAL::SetTargetFrameRate(puint8_t Value)
 {
-	ASSERT(Value != 0, "Invalid Value %f", Value);
-
-	m_TargetFrameRate = Math::Min(MAX_FRAME_RATE, Value);
+	m_TargetFrameRate = Math::Min(MAX_FRAME_RATE, (uint8_t)Value);
 
 	m_UpdateStep = 1000 / m_TargetFrameRate;
 }

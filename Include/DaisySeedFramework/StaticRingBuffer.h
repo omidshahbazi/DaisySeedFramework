@@ -4,6 +4,8 @@
 
 #include <DigitalSignalProcessing/Debug.h>
 #include <DigitalSignalProcessing/Memory.h>
+#include <DigitalSignalProcessing/ExtendedDataTypes.h>
+#include <DigitalSignalProcessing/NotNull.h>
 
 template <typename T, bool AllowOverwrite = true>
 struct RingBuffer
@@ -12,23 +14,18 @@ public:
 	typedef T ItemType;
 
 public:
-	RingBuffer(T* Buffer = nullptr, uint16_t Capacity = 0)
+	RingBuffer(NotNull<T> Buffer, puint16_t Capacity)
 		: m_Buffer(Buffer),
 		m_Capacity(Capacity),
 		m_Head(0),
 		m_Tail(0),
 		m_Count(0)
-	{
-		ASSERT(Buffer != nullptr, "Buffer cannot be null");
-		ASSERT(Capacity != 0, "Capacity must be greater than zero");
-	}
+	{}
 
 	RingBuffer(const RingBuffer&) = delete;
 
 	bool Push(const T& Value)
 	{
-		ASSERT(m_Buffer != nullptr, "m_Buffer cannot be null");
-
 		if (m_Count >= m_Capacity)
 		{
 			if constexpr (AllowOverwrite)
@@ -39,9 +36,7 @@ public:
 				return true;
 			}
 			else
-			{
 				return false;
-			}
 		}
 
 		m_Buffer[m_Head] = Value;
@@ -52,8 +47,6 @@ public:
 
 	uint16_t Push(const T* Values, uint16_t Count)
 	{
-		ASSERT(m_Buffer != nullptr, "m_Buffer cannot be null");
-
 		uint16_t written = 0;
 		while (written < Count)
 		{
@@ -66,9 +59,7 @@ public:
 					m_Tail = (m_Tail + 1) % m_Capacity;
 				}
 				else
-				{
 					break;
-				}
 			}
 			else
 			{
@@ -83,8 +74,6 @@ public:
 
 	bool Pop(T& OutValue)
 	{
-		ASSERT(m_Buffer != nullptr, "m_Buffer cannot be null");
-
 		if (m_Count == 0)
 			return false;
 
@@ -94,11 +83,8 @@ public:
 		return true;
 	}
 
-	uint16_t Pop(T* OutBuffer, uint16_t Count)
+	uint16_t Pop(NotNull<T> OutBuffer, puint16_t Count)
 	{
-		ASSERT(m_Buffer != nullptr, "m_Buffer cannot be null");
-		ASSERT(OutBuffer != nullptr, "OutBuffer cannot be null");
-
 		uint16_t readCount = 0;
 		while (readCount < Count && m_Count > 0)
 		{
@@ -165,16 +151,14 @@ public:
 
 	T& operator[](uint16_t Index)
 	{
-		ASSERT(m_Buffer != nullptr, "m_Buffer cannot be null");
-		ASSERT(Index < m_Capacity, "Out of Size");
+		ASSERT_VALUE_LESS(Index, m_Capacity);
 
 		return m_Buffer[Index];
 	}
 
 	const T& operator[](uint16_t Index) const
 	{
-		ASSERT(m_Buffer != nullptr, "m_Buffer cannot be null");
-		ASSERT(Index < m_Capacity, "Out of Size");
+		ASSERT_VALUE_LESS(Index, m_Capacity);
 
 		return m_Buffer[Index];
 	}
@@ -198,7 +182,7 @@ public:
 	{}
 
 	template<uint16_t OtherMaxSize>
-	StaticRingBuffer(const StaticRingBuffer<T, OtherMaxSize>&Other)
+	StaticRingBuffer(const StaticRingBuffer<T, OtherMaxSize>& Other)
 	{
 		static_assert(OtherMaxSize <= MaxSize, "OtherMaxSize must be less than or equal to MaxSize");
 

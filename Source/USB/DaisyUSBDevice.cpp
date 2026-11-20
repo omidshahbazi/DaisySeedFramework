@@ -251,7 +251,6 @@ void DaisyUSBDevice::Update(void)
 void DaisyUSBDevice::Start(const USBDeviceProfile& Profile)
 {
 	ASSERT(!m_IsRunning, "Interface has already started.");
-	ASSERT(0 < Profile.ClassNodeCount && Profile.ClassNodeCount <= MaxClassCount, "Invalid ClassNodeCount");
 
 	m_Profile = Profile;
 
@@ -296,8 +295,6 @@ void DaisyUSBDevice::Start(const USBDeviceProfile& Profile)
 		{
 			ASSERT(node.AMC.OutputChannelCount != 0 || node.AMC.InputChannelCount != 0, "AMC needs at least one channel");
 			ASSERT(node.AMC.EnableHardwareMute || node.AMC.EnableHardwareVolumeControl, "Either of EnableHardwareMute or EnableHardwareVolumeControl must be true");
-			ASSERT(node.AMC.SupportedSampleRateCount != 0, "AMC needs at least one supported sample rate");
-			ASSERT(node.AMC.SupportedBitDepthCount != 0, "AMC needs at least one supported sample rate");
 
 			// TODO: Add support for multiple bit depths. For now, we only support one bit depth. (Requires alt setting change)
 			ASSERT(node.AMC.SupportedBitDepthCount == 1, "AMC only supports one bit depth for now");

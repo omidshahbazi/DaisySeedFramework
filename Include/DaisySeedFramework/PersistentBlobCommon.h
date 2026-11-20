@@ -19,7 +19,7 @@ private:
 
 		uint32_t current = offset;
 
-		ASSERT(current + Size <= QSPI_END_ADDRESS, "We're running out of QSPI bound");
+		ASSERT_VALUE_LESS_EQUAL(current + Size, QSPI_END_ADDRESS);
 
 		offset += Size;
 		offset = (offset + SECTOR_SIZE - 1) & ~(SECTOR_SIZE - 1);
@@ -62,13 +62,11 @@ template <typename BlobType>
 struct PersistentBlobDelayedFlush
 {
 public:
-	PersistentBlobDelayedFlush(BlobType* Blob)
+	PersistentBlobDelayedFlush(NotNull<BlobType> Blob)
 		: m_Blob(Blob),
 		m_Requested(false),
 		m_Time(0)
-	{
-		ASSERT(Blob != nullptr, "Blob cannot be null");
-	}
+	{}
 
 	void Update(float CurrentTime)
 	{

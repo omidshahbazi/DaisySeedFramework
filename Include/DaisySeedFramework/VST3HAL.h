@@ -5,6 +5,7 @@
 #include "WindowsHAL.h"
 #include "Version.h"
 #include "Rect.h"
+#include "DigitalSignalProcessing/NotNull.h"
 #include <DigitalSignalProcessing/FixedFunction.h>
 
 class IPluginEvents
@@ -36,11 +37,20 @@ public:
 	struct SetupInfo : public WindowsHAL::SetupInfo
 	{
 	public:
-		cstr Vendor;
-		cstr URL;
-		cstr Email;
-		uint32_t ID;
-		cstr Name;
+		SetupInfo(puint8_t FrameLength, puint32_t SampleRate, NotNull<cstr> Vendor, NotNull<cstr> URL, NotNull<cstr> Email, nzint32_t ID, NotNull<cstr> Name)
+			: WindowsHAL::SetupInfo(FrameLength, SampleRate),
+			Vendor(Vendor),
+			URL(URL),
+			Email(Email),
+			ID(ID),
+			Name(Name)
+		{}
+
+		NotNull<cstr> Vendor;
+		NotNull<cstr> URL;
+		NotNull<cstr> Email;
+		nzint32_t ID;
+		NotNull<cstr> Name;
 		Version Version;
 		DefaultCallback OnInitialize;
 		DefaultCallback OnTerminate;

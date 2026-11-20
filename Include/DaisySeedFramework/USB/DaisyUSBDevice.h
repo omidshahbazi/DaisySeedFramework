@@ -52,7 +52,7 @@ public:
 
 	IUSBInterface* GetInterface(uint8_t Index) override
 	{
-		ASSERT(Index < m_Devices.GetSize(), "Index out of range");
+		ASSERT_VALUE_LESS(Index, m_Devices.GetSize());
 
 		const DeviceInstanceInfo& dii = m_Devices[Index];
 

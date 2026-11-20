@@ -178,14 +178,6 @@ VST3HAL::VST3HAL(const CreationInfo& Info)
 
 void VST3HAL::Setup(const SetupInfo& Info)
 {
-	ASSERT(Info.FrameLength != 0, "Invalid FrameLength %i", Info.FrameLength);
-	ASSERT(Info.SampleRate != 0, "Invalid SampleRate %i", Info.SampleRate);
-	ASSERT(Info.Vendor != nullptr, "Invalid Vendor");
-	ASSERT(Info.URL != nullptr, "Invalid URL");
-	ASSERT(Info.Email != nullptr, "Invalid Email");
-	ASSERT(Info.ID != 0, "Invalid ID %u", Info.ID);
-	ASSERT(Info.Name != nullptr, "Invalid Name");
-
 	m_OnInitialize = Info.OnInitialize;
 	m_OnTerminate = Info.OnTerminate;
 	m_OnUpdate = Info.OnUpdate;

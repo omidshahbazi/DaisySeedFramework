@@ -5,6 +5,7 @@
 #include "Common.h"
 #include "I_LCD_HAL.h"
 #include <DigitalSignalProcessing/IHAL.h>
+#include <DigitalSignalProcessing/NotNull.h>
 #include <DigitalSignalProcessing/FixedFunction.h>
 
 struct SDL_Window;
@@ -139,7 +140,7 @@ public:
 	typedef FixedFunction<void(void)> RenderEventHandler;
 
 public:
-	SDL_HAL(IHAL* HAL, GPIOPins, GPIOPins, GPIOPins, GPIOPins, GPIOPins, Orientations Orientation, Point PixelSize);
+	SDL_HAL(NotNull<IHAL> HAL, GPIOPins, GPIOPins, GPIOPins, GPIOPins, GPIOPins, Orientations Orientation, Point PixelSize);
 
 	bool Initialize(bool AsyncKeyCapture = false, WindowHandle Parent = nullptr);
 	bool Deinitialize(void);
@@ -151,7 +152,7 @@ public:
 
 	void Update(bool Force = false) override;
 
-	void SetTargetFrameRate(uint8_t Value);
+	void SetTargetFrameRate(puint8_t Value);
 
 	uint8_t GetTargetFrameRate(void) const
 	{

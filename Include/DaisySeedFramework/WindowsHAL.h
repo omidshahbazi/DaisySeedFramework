@@ -24,8 +24,18 @@ public:
 	struct SetupInfo
 	{
 	public:
-		uint8_t FrameLength;
-		uint32_t SampleRate;
+		SetupInfo(puint8_t FrameLength, puint32_t SampleRate)
+			: FrameLength(FrameLength),
+			SampleRate(SampleRate),
+			PreferredInputInterface(nullptr),
+			PreferredOutputInterface(nullptr)
+		{}
+
+		puint8_t FrameLength;
+		puint32_t SampleRate;
+
+		cstr PreferredInputInterface;
+		cstr PreferredOutputInterface;
 	};
 
 public:
@@ -34,12 +44,6 @@ public:
 
 public:
 	WindowsHAL(const CreationInfo& Info);
-
-	void SetPreferredInterfaces(cstr InputInterface, cstr OutputInterface)
-	{
-		m_PreferredInputInterface = InputInterface;
-		m_PreferredOutputInterface = OutputInterface;
-	}
 
 	bool Setup(const SetupInfo& Info);
 
@@ -89,7 +93,7 @@ public:
 		return true;
 	}
 
-	void SetPWMResolution(uint8_t Value) override
+	void SetPWMResolution(cc_float<8, 16> Value) override
 	{}
 
 	uint8_t GetPWMResolution(void) const override
@@ -113,7 +117,7 @@ public:
 	void DigitalWrite(uint8_t Pin, bool Value) override
 	{}
 
-	void PWMWrite(uint8_t Pin, float Value) override
+	void PWMWrite(uint8_t Pin, cc_ratio_t Value) override
 	{}
 
 	uint32_t GetTimeFrequency(void) const override
@@ -165,9 +169,6 @@ private:
 	std::chrono::steady_clock::time_point m_StartupTime;
 
 	void* m_Stream;
-
-	cstr m_PreferredInputInterface;
-	cstr m_PreferredOutputInterface;
 
 	uint8_t m_InputChannelCount;
 	uint8_t m_OutputChannelCount;
