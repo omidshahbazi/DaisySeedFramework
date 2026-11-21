@@ -14,7 +14,7 @@ private:
 	static constexpr uint8_t MAX_FRAME_RATE = 60;
 
 	static constexpr uint16_t FRAME_BUFFER_CHUNK_COUNT = 10;
-	static_assert(FRAME_BUFFER_CHUNK_COUNT > 2, "FRAME_BUFFER_CHUNK_COUNT must be greater than 2, cause the HAL_SPI_Transmit_DMA accepts the length as uint16_t");
+	STATIC_ASSERT(FRAME_BUFFER_CHUNK_COUNT > 2, "FRAME_BUFFER_CHUNK_COUNT must be greater than 2, cause the HAL_SPI_Transmit_DMA accepts the length as uint16_t");
 
 public:
 	typedef FixedFunction<void(void)> RenderEventHandler;

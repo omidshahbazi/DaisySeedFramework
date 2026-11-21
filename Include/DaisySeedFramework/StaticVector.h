@@ -249,7 +249,7 @@ private:
 template <typename T, uint16_t MaxSize>
 struct StaticVector : public Vector<T>
 {
-	static_assert(MaxSize != 0, "MaxSize must be greater than zero");
+	STATIC_ASSERT(MaxSize != 0, "MaxSize must be greater than zero");
 
 public:
 	StaticVector(void) : Vector<T>(m_Buffer, MaxSize)
@@ -258,7 +258,7 @@ public:
 	template<uint16_t OtherMaxSize>
 	StaticVector(const StaticVector<T, OtherMaxSize>& Other)
 	{
-		static_assert(OtherMaxSize <= MaxSize, "OtherMaxSize must be less than or equal to MaxSize");
+		STATIC_ASSERT(OtherMaxSize <= MaxSize, "OtherMaxSize must be less than or equal to MaxSize");
 
 		this->Clear();
 

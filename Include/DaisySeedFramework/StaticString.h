@@ -10,8 +10,8 @@
 template<typename CharType, uint16_t MaxCapacity, uint16_t Capacity = MaxCapacity>
 struct BasicStaticString
 {
-	static_assert(MaxCapacity > 1, "MaxCapacity must be greater than one");
-	static_assert(Capacity <= MaxCapacity, "Capacity cannot be more than MaxCapacity");
+	STATIC_ASSERT(MaxCapacity > 1, "MaxCapacity must be greater than one");
+	STATIC_ASSERT(Capacity <= MaxCapacity, "Capacity cannot be more than MaxCapacity");
 
 public:
 	static constexpr uint16_t MaxCapacityValue = MaxCapacity;
@@ -31,7 +31,7 @@ public:
 	template<uint16_t OtherMaxCapacity, uint16_t OtherCapacity>
 	BasicStaticString(const BasicStaticString<CharType, OtherMaxCapacity, OtherCapacity>& Value)
 	{
-		static_assert(OtherCapacity <= Capacity, "OtherCapacity must be less than or equal to Capacity");
+		STATIC_ASSERT(OtherCapacity <= Capacity, "OtherCapacity must be less than or equal to Capacity");
 
 		Set(Value.GetValue());
 	}

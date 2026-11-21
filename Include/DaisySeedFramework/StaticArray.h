@@ -7,7 +7,7 @@
 template<typename T, uint16_t Length>
 struct StaticArray
 {
-	static_assert(Length != 0, "Length must be greater than zero");
+	STATIC_ASSERT(Length != 0, "Length must be greater than zero");
 
 public:
 	StaticArray(void)
