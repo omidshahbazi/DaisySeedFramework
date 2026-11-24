@@ -1,4 +1,4 @@
-#ifdef ON_HARDWARE
+#ifdef PLATFORM_HARDWARE
 
 #include "DaisySeedFramework/USB/DaisyUSBDevice.h"
 #include "DaisySeedFramework/StringUtils.h"

@@ -2,8 +2,8 @@
 
 #include <DigitalSignalProcessing/Common.h>
 
-#if !defined(ON_WINDOWS) && !defined(ON_HARDWARE)
-#error "Neither of ON_WINDOWS or ON_HARDWARE are defined"
+#if !defined(PLATFORM_WINDOWS) && !defined(PLATFORM_HARDWARE)
+#error "Neither of PLATFORM_WINDOWS or PLATFORM_HARDWARE are defined"
 #endif
 
 enum class GPIOPins
@@ -73,13 +73,13 @@ enum class AnalogPins
 #define SRAM_TOTAL_SIZE (480 KB)
 #define SDRAM_TOTAL_SIZE (64 MB)
 
-#if defined(ON_WINDOWS)
+#if defined(PLATFORM_WINDOWS)
 
 #define DEFINE_LARGE_MEMORY_BUFFER(Name, Size)  \
 	static constexpr uint32_t Name##_Size = Size; \
 	uint8_t g_##Name[Name##_Size] = {0};
 
-#elif defined(ON_HARDWARE)
+#elif defined(PLATFORM_HARDWARE)
 #include <libDaisy/src/dev/sdram.h>
 
 #define DEFINE_LARGE_MEMORY_BUFFER(Name, Size)  \
@@ -154,7 +154,7 @@ STATIC_ASSERT(QSPI_USER_DATA_START_ADDRESS >= QSPI_BOOTLOADER_RESERVED_SIZE, "In
 #define BYTES_TO_WORDS(SizeInBytes) (((SizeInBytes) + 1) / sizeof(uint32_t))
 #define BYTES_TO_DWORDS(SizeInBytes) (((SizeInBytes) + 3) / sizeof(uint32_t))
 
-#ifdef ON_WINDOWS
+#ifdef PLATFORM_WINDOWS
 #include <atomic>
 #define MEMORY_BARRIER() std::atomic_thread_fence(std::memory_order_seq_cst)
 #else

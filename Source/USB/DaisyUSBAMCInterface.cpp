@@ -1,4 +1,4 @@
-#ifdef ON_HARDWARE
+#ifdef PLATFORM_HARDWARE
 
 //#define ENABLE_USB_AMC_DEBUG
 

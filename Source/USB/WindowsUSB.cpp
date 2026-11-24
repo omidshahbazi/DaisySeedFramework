@@ -1,4 +1,4 @@
-#ifdef ON_WINDOWS
+#ifdef PLATFORM_WINDOWS
 
 #include "DaisySeedFramework/USB/WindowsUSB.h"
 

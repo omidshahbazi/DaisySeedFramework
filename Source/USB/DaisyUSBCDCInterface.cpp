@@ -1,4 +1,4 @@
-#ifdef ON_HARDWARE
+#ifdef PLATFORM_HARDWARE
 
 #include "DaisySeedFramework/USB/DaisyUSBCDCInterface.h"
 #include <DigitalSignalProcessing/Memory.h>

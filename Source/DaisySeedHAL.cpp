@@ -1,4 +1,4 @@
-#ifdef ON_HARDWARE
+#ifdef PLATFORM_HARDWARE
 
 #include "DaisySeedFramework/DaisySeedHAL.h"
 #include <DigitalSignalProcessing/Math.h>

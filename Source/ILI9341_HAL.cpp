@@ -1,4 +1,4 @@
-#ifdef ON_HARDWARE
+#ifdef PLATFORM_HARDWARE
 
 #include "DaisySeedFramework/ILI9341_HAL.h"
 #include "DaisySeedFramework/DaisySeedHAL.h"

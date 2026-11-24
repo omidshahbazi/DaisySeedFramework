@@ -1,4 +1,4 @@
-#ifdef ON_WINDOWS
+#ifdef PLATFORM_WINDOWS
 
 #define USE_SOFTWARE_RENDERER
 

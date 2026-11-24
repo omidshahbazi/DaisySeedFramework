@@ -65,7 +65,7 @@
     <ClCompile>
       <CPPLanguageStandard>CPP17</CPPLanguageStandard>
       <AdditionalIncludeDirectories>Include;DSP/Include;Libraries/;Libraries/libDaisy/src;Libraries/libDaisy/src/sys;Libraries/libDaisy/src/usbh;Libraries/libDaisy/Drivers/STM32H7xx_HAL_Driver/Inc;Libraries/libDaisy/Drivers/CMSIS-Device/ST/STM32H7xx/Include;Libraries/libDaisy/Drivers/CMSIS/Core/Include;Libraries/libDaisy/Drivers/CMSIS_5/CMSIS/Core/Include;Libraries/libDaisy/Middlewares/ST/STM32_USB_Host_Library/Core/Inc;Libraries/libDaisy/Middlewares/Third_Party/FatFs/src</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>ON_HARDWARE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PLATFORM_HARDWARE=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <ProduceRelocationRecords>true</ProduceRelocationRecords>
@@ -77,7 +77,7 @@
       <AdditionalIncludeDirectories>Include;DSP/Include;Libraries/;Libraries/libDaisy/src;Libraries/libDaisy/src/sys;Libraries/libDaisy/src/usbh;Libraries/libDaisy/Drivers/STM32H7xx_HAL_Driver/Inc;Libraries/libDaisy/Drivers/CMSIS-Device/ST/STM32H7xx/Include;Libraries/libDaisy/Drivers/CMSIS/Core/Include;Libraries/libDaisy/Drivers/CMSIS_5/CMSIS/Core/Include;Libraries/libDaisy/Middlewares/ST/STM32_USB_Host_Library/Core/Inc;Libraries/libDaisy/Middlewares/Third_Party/FatFs/src</AdditionalIncludeDirectories>
       <LinkTimeOptimization>true</LinkTimeOptimization>
       <Optimization>Os</Optimization>
-      <PreprocessorDefinitions>ON_HARDWARE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PLATFORM_HARDWARE=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <ProduceRelocationRecords>true</ProduceRelocationRecords>
@@ -90,14 +90,14 @@
     <ClCompile>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>Include;DSP/Include;Libraries/portaudio/include;Libraries/SDL/include;Libraries/vst3sdk;Libraries/vst3sdk/base;Libraries/vst3sdk/public.sdk;Libraries/vst3sdk/pluginterfaces</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>ON_WINDOWS;RELEASE=1</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PLATFORM_WINDOWS=1;RELEASE=1</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>Include;DSP/Include;Libraries/portaudio/include;Libraries/SDL/include;Libraries/vst3sdk;Libraries/vst3sdk/base;Libraries/vst3sdk/public.sdk;Libraries/vst3sdk/pluginterfaces</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>ON_WINDOWS;DEBUG=1</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PLATFORM_WINDOWS=1;DEBUG=1</PreprocessorDefinitions>
       <Optimization>Disabled</Optimization>
     </ClCompile>
   </ItemDefinitionGroup>
